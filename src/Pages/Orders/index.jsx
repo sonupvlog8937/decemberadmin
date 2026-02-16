@@ -302,6 +302,24 @@ export const Orders = () => {
                                   >
                                     Sub Total
                                   </th>
+                                  <th
+                                    scope="col"
+                                    className="px-6 py-3 whitespace-nowrap"
+                                  >
+                                    Size
+                                  </th>
+                                  <th
+                                    scope="col"
+                                    className="px-6 py-3 whitespace-nowrap"
+                                  >
+                                    Weight
+                                  </th>
+                                  <th
+                                    scope="col"
+                                    className="px-6 py-3 whitespace-nowrap"
+                                  >
+                                    Ram
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -334,6 +352,15 @@ export const Orders = () => {
                                         <td className="px-6 py-4 font-[500]">{item?.price?.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</td>
 
                                         <td className="px-6 py-4 font-[500]">{(item?.price * item?.quantity)?.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</td>
+                                        <td className="px-6 py-4 font-[500] whitespace-nowrap">
+                                          {item?.size}
+                                        </td>
+                                        <td className="px-6 py-4 font-[500] whitespace-nowrap">
+                                          {item?.weight}
+                                        </td>
+                                        <td className="px-6 py-4 font-[500] whitespace-nowrap">
+                                          {item?.ram}
+                                        </td>
                                       </tr>
                                     )
                                   })
