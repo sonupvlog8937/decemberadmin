@@ -1,10 +1,16 @@
 import axios from "axios";
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = (import.meta.env.VITE_API_URL || "").trim().replace(/\/+$/, "");
+
+const getApiUrl = (url) => {
+    if (!url) return apiUrl;
+    if (/^https?:\/\//i.test(url)) return url;
+    return apiUrl ? `${apiUrl}${url}` : url;
+};
 
 export const postData = async (url, formData) => {
     try {
         
-        const response = await fetch(apiUrl + url, {
+        const response = await fetch(getApiUrl(url), {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
@@ -42,7 +48,7 @@ export const fetchDataFromApi = async (url) => {
         
         } 
 
-        const { data } = await axios.get(apiUrl + url,params)
+         const { data } = await axios.get(getApiUrl(url),params)
         return data;
     } catch (error) {
         console.log(error);
@@ -61,7 +67,7 @@ export const uploadImage = async (url, updatedData ) => {
     } 
 
     var response;
-    await axios.put(apiUrl + url,updatedData, params).then((res)=>{
+    await axios.put(getApiUrl(url),updatedData, params).then((res)=>{
         response=res;
         
     })
@@ -80,7 +86,7 @@ export const uploadImages = async (url, formData ) => {
     } 
 
     var response;
-    await axios.post(apiUrl + url,formData, params).then((res)=>{
+    await axios.post(getApiUrl(url),formData, params).then((res)=>{
         response=res;
         
     })
@@ -100,7 +106,7 @@ export const editData = async (url, updatedData ) => {
     } 
 
     var response;
-    await axios.put(apiUrl + url,updatedData, params).then((res)=>{
+   await axios.put(getApiUrl(url),updatedData, params).then((res)=>{
         response=res;
         
     })
@@ -120,7 +126,7 @@ export const deleteImages = async (url,image ) => {
           },
     
     } 
-    const { res } = await axios.delete(apiUrl + url, params);
+    const { res } = await axios.delete(getApiUrl(url), params);
     return res;
 }
 
@@ -133,7 +139,7 @@ export const deleteData = async (url ) => {
           },
     
     } 
-    const { res } = await axios.delete(apiUrl + url,params)
+    const { res } = await axios.delete(getApiUrl(url),params)
     return res;
 }
 
@@ -145,6 +151,6 @@ export const deleteMultipleData = async (url,data ) => {
           },
     
     } 
-    const { res } = await axios.delete(apiUrl + url,data,params)
+    const { res } = await axios.delete(getApiUrl(url),data,params)
     return res;
 }
