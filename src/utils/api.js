@@ -55,7 +55,7 @@ export const uploadImage = async (url, updatedData ) => {
     const params={
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
-            'Content-Type': 'multipart/form-data', // Adjust the content type as needed
+          
           },
     
     } 
@@ -74,7 +74,7 @@ export const uploadImages = async (url, formData ) => {
     const params={
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
-            'Content-Type': 'multipart/form-data', // Adjust the content type as needed
+          
           },
     
     } 
