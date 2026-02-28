@@ -18,41 +18,40 @@ const UploadBox = (props) => {
     const onChangeFile = async (e, apiEndPoint) => {
 
         try {
-            setPreviews([]);
-            const files = e.target.files;
-
-            setUploading(true);
+           const files = Array.from(e.target.files || []);
 
 
-            for (var i = 0; i < files.length; i++) {
+             if (files.length === 0) {
+                return;
+            }
+                     setUploading(true);
 
-                if (files[i] && (files[i].type === "image/jpeg" || files[i].type === "image/jpg" ||
-                    files[i].type === "image/png" ||
-                    files[i].type === "image/webp" ||  files[i].type === "image/svg+xml")
-                ) {
+                    const formData = new FormData();
 
-                    const file = files[i];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
 
-                    selectedImages.push(file);
-                    formdata.append(props?.name, file);
+                if (file && (file.type === "image/jpeg" || file.type === "image/jpg" ||
+                    file.type === "image/png" ||
+                    file.type === "image/webp" || file.type === "image/svg+xml")) {
+                    formData.append(props?.name, file);
 
 
                 } else {
                     context.alertBox("error", "Please select a valid JPG , PNG or webp image file.");
-                    setUploading(false);
-                    return false;
+                    return;
                 }
             }
 
-            uploadImages(apiEndPoint, formdata).then((res) => {
-                setUploading(false);
-                //props.setPreviews(res?.data?.images)
-               // setPreviews((prevItems) => [...prevItems, res?.data?.images]);
-                props.setPreviewsFun(res?.data?.images);
-            })
+             const res = await uploadImages(apiEndPoint, formData);
+            props.setPreviewsFun(res?.data?.images || []);
 
         } catch (error) {
             console.log(error);
+            context.alertBox("error", error?.response?.data?.message || "Image upload failed. Please check live API URL/CORS configuration.");
+        } finally {
+            setUploading(false);
+            e.target.value = "";
         }
     }
 
