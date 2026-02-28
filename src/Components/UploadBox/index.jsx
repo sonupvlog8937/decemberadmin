@@ -48,6 +48,11 @@ const UploadBox = (props) => {
                 setUploading(false);
                 //props.setPreviews(res?.data?.images)
                // setPreviews((prevItems) => [...prevItems, res?.data?.images]);
+                if (!res?.data?.success) {
+                    context.alertBox("error", res?.data?.message || "Image upload failed on server.");
+                    return;
+                }
+
                 props.setPreviewsFun(res?.data?.images);
             })
 
