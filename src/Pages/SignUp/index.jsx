@@ -36,7 +36,7 @@ function PasswordStrength({ password }) {
         {[1,2,3,4].map(i => (
           <div key={i} style={{
             flex: 1, height: 3, borderRadius: 2,
-            background: i <= score ? colors[score] : "rgba(255,255,255,0.1)",
+            background: i <= score ? colors[score] : "rgba(0,0,0,0.08)",
             transition: "background 0.3s"
           }} />
         ))}
@@ -54,7 +54,7 @@ function Field({ label, icon: Icon, error, children, hint }) {
     <div style={{ marginBottom: 18 }}>
       <label style={{
         display: "flex", alignItems: "center", gap: 6,
-        fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)",
+        fontSize: 11, fontWeight: 600, color: "rgba(0,0,0,0.5)",
         marginBottom: 7, letterSpacing: "0.08em", textTransform: "uppercase",
         fontFamily: "'Space Mono', monospace"
       }}>
@@ -62,7 +62,7 @@ function Field({ label, icon: Icon, error, children, hint }) {
       </label>
       {children}
       {error && <p style={{ fontSize: 11, color: "#f87171", marginTop: 5 }}>{error}</p>}
-      {hint && !error && <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 5 }}>{hint}</p>}
+      {hint && !error && <p style={{ fontSize: 11, color: "rgba(0,0,0,0.35)", marginTop: 5 }}>{hint}</p>}
     </div>
   );
 }
@@ -189,10 +189,10 @@ const SellerSignUp = () => {
   // ─── Input Style ─────────────────────────────────────────────────────────────
   const inputStyle = (name) => ({
     width: "100%", height: 48,
-    background: errors[name] && touched[name] ? "rgba(239,68,68,0.07)" : "rgba(255,255,255,0.04)",
-    border: `1px solid ${errors[name] && touched[name] ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.09)"}`,
+    background: errors[name] && touched[name] ? "rgba(239,68,68,0.05)" : "#f9fafb",
+    border: `1px solid ${errors[name] && touched[name] ? "rgba(239,68,68,0.5)" : "rgba(0,0,0,0.1)"}`,
     borderRadius: 10, padding: "0 14px",
-    fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none",
+    fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#111827", outline: "none",
     boxSizing: "border-box", transition: "all 0.2s",
   });
 
@@ -202,7 +202,7 @@ const SellerSignUp = () => {
 
   const selectStyle = (name) => ({
     ...inputStyle(name), appearance: "none",
-    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffffff66' strokeWidth='1.5' fill='none'/%3E%3C/svg%3E")`,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23000000aa' strokeWidth='1.5' fill='none'/%3E%3C/svg%3E")`,
     backgroundRepeat: "no-repeat", backgroundPosition: "calc(100% - 14px) center", paddingRight: 38,
     cursor: "pointer"
   });
@@ -215,52 +215,52 @@ const SellerSignUp = () => {
 
   // ─── Review row ──────────────────────────────────────────────────────────────
   const ReviewRow = ({ label, value }) => value ? (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-      <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontFamily: "'Space Mono', monospace" }}>{label}</span>
-      <span style={{ fontSize: 13, color: "#fff", fontWeight: 500, maxWidth: "60%", textAlign: "right" }}>{value}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+      <span style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", fontFamily: "'Space Mono', monospace" }}>{label}</span>
+      <span style={{ fontSize: 13, color: "#111827", fontWeight: 500, maxWidth: "60%", textAlign: "right" }}>{value}</span>
     </div>
   ) : null;
 
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
-    <section style={{ minHeight: "100vh", background: "#060810", fontFamily: "'Outfit', sans-serif", position: "relative", overflowX: "hidden" }}>
+    <section style={{ minHeight: "100vh", background: "#f8f9fb", fontFamily: "'Outfit', sans-serif", position: "relative", overflowX: "hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
         * { box-sizing: border-box; }
-        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.2); }
-        input:focus, textarea:focus, select:focus { border-color: rgba(110,231,183,0.5) !important; background: rgba(110,231,183,0.04) !important; box-shadow: 0 0 0 3px rgba(110,231,183,0.08); }
-        select option { background: #131620; color: #fff; }
-        .next-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(110,231,183,0.25) !important; }
-        .back-btn:hover { background: rgba(255,255,255,0.08) !important; }
+        input::placeholder, textarea::placeholder { color: rgba(0,0,0,0.25); }
+        input:focus, textarea:focus, select:focus { border-color: rgba(249,115,22,0.5) !important; background: rgba(249,115,22,0.03) !important; box-shadow: 0 0 0 3px rgba(249,115,22,0.08); }
+        select option { background: #ffffff; color: #111827; }
+        .next-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(249,115,22,0.25) !important; }
+        .back-btn:hover { background: rgba(0,0,0,0.06) !important; }
         .step-card { animation: slideIn 0.35s cubic-bezier(0.34,1.56,0.64,1); }
         @keyframes slideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(110,231,183,0.3); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb { background: rgba(249,115,22,0.35); border-radius: 2px; }
         .field-input-focus { border-color: rgba(110, 231, 183, 0.5) !important; }
       `}</style>
 
       {/* Ambient Background */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle at 20% 20%, rgba(110,231,183,0.07) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(147,197,253,0.07) 0%, transparent 50%)" }} />
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 0%, rgba(110,231,183,0.06) 0%, transparent 60%)" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle at 20% 20%, rgba(249,115,22,0.06) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(249,115,22,0.04) 0%, transparent 50%)" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.05) 0%, transparent 60%)" }} />
       </div>
 
       {/* Header */}
       <header style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
         padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: "rgba(6,8,16,0.85)", backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)"
+        background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(0,0,0,0.07)"
       }}>
         <Link to="/">
           <img src={localStorage.getItem("logo") || "/icon.svg"} alt="Logo" style={{ height: 32, objectFit: "contain" }} />
         </Link>
         <NavLink to="/login" style={{
           display: "flex", alignItems: "center", gap: 6, padding: "8px 18px",
-          borderRadius: 100, fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.6)",
-          textDecoration: "none", border: "1px solid rgba(255,255,255,0.1)", transition: "all 0.2s"
+          borderRadius: 100, fontSize: 13, fontWeight: 500, color: "rgba(0,0,0,0.55)",
+          textDecoration: "none", border: "1px solid rgba(0,0,0,0.12)", transition: "all 0.2s"
         }}>
           <CgLogIn size={15} /> Sign In
         </NavLink>
@@ -273,16 +273,16 @@ const SellerSignUp = () => {
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 14px",
-            background: "rgba(110,231,183,0.1)", border: "1px solid rgba(110,231,183,0.2)",
-            borderRadius: 100, fontSize: 12, color: "#6ee7b7", fontFamily: "'Space Mono', monospace",
+            background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.2)",
+            borderRadius: 100, fontSize: 12, color: "#f97316", fontFamily: "'Space Mono', monospace",
             marginBottom: 16
           }}>
             <FaStore size={10} /> SELLER REGISTRATION
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 800, color: "#fff", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+          <h1 style={{ fontSize: 32, fontWeight: 800, color: "#111827", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
             Start Selling Today
           </h1>
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", margin: 0 }}>
+          <p style={{ fontSize: 14, color: "rgba(0,0,0,0.45)", margin: 0 }}>
             Join thousands of sellers. Set up your store in minutes.
           </p>
         </div>
@@ -292,24 +292,24 @@ const SellerSignUp = () => {
           {/* Steps */}
           <div style={{ display: "flex", justifyContent: "space-between", position: "relative", marginBottom: 16 }}>
             {/* Connector line */}
-            <div style={{ position: "absolute", top: 19, left: "8%", right: "8%", height: 1, background: "rgba(255,255,255,0.08)", zIndex: 0 }} />
-            <div style={{ position: "absolute", top: 19, left: "8%", height: 1, zIndex: 1, background: "linear-gradient(90deg, #6ee7b7, #93c5fd)", transition: "width 0.5s ease", width: `${((step - 1) / 3) * 84}%` }} />
+            <div style={{ position: "absolute", top: 19, left: "8%", right: "8%", height: 1, background: "rgba(0,0,0,0.08)", zIndex: 0 }} />
+            <div style={{ position: "absolute", top: 19, left: "8%", height: 1, zIndex: 1, background: "linear-gradient(90deg, #f97316, #fb923c)", transition: "width 0.5s ease", width: `${((step - 1) / 3) * 84}%` }} />
 
             {STEPS.map(s => (
               <div key={s.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, zIndex: 2, background: "transparent" }}>
                 <div style={{
                   width: 38, height: 38, borderRadius: "50%",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  background: step > s.id ? "#10b981" : step === s.id ? s.color : "rgba(255,255,255,0.05)",
-                  border: `2px solid ${step >= s.id ? (step > s.id ? "#10b981" : s.color) : "rgba(255,255,255,0.1)"}`,
-                  transition: "all 0.4s", fontSize: 14, color: step >= s.id ? "#000" : "rgba(255,255,255,0.3)",
+                  background: step > s.id ? "#10b981" : step === s.id ? s.color : "rgba(0,0,0,0.05)",
+                  border: `2px solid ${step >= s.id ? (step > s.id ? "#10b981" : s.color) : "rgba(0,0,0,0.12)"}`,
+                  transition: "all 0.4s", fontSize: 14, color: step >= s.id ? "#000" : "rgba(0,0,0,0.3)",
                   boxShadow: step === s.id ? `0 0 20px ${s.color}60` : "none"
                 }}>
                   {step > s.id ? <FaCheckCircle size={14} /> : <s.icon size={14} />}
                 </div>
                 <span style={{
                   fontSize: 11, fontFamily: "'Space Mono', monospace",
-                  color: step === s.id ? s.color : "rgba(255,255,255,0.35)",
+                  color: step === s.id ? s.color : "rgba(0,0,0,0.4)",
                   fontWeight: step === s.id ? 700 : 400, transition: "color 0.3s"
                 }}>{s.label}</span>
               </div>
@@ -318,14 +318,14 @@ const SellerSignUp = () => {
 
           {/* Step info */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", fontFamily: "'Space Mono', monospace" }}>
+            <span style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", fontFamily: "'Space Mono', monospace" }}>
               Step {step} of {STEPS.length}
             </span>
             <div style={{ display: "flex", gap: 3 }}>
               {STEPS.map(s => (
                 <div key={s.id} style={{
                   width: step === s.id ? 20 : 6, height: 4, borderRadius: 2,
-                  background: step > s.id ? "#10b981" : step === s.id ? STEPS[step-1].color : "rgba(255,255,255,0.1)",
+                  background: step > s.id ? "#10b981" : step === s.id ? STEPS[step-1].color : "rgba(0,0,0,0.1)",
                   transition: "all 0.4s"
                 }} />
               ))}
@@ -335,15 +335,15 @@ const SellerSignUp = () => {
 
         {/* Card */}
         <div className="step-card" key={step} style={{
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "#ffffff",
+          border: "1px solid rgba(0,0,0,0.07)",
           borderRadius: 20, padding: "32px 32px 28px",
           backdropFilter: "blur(20px)",
-          boxShadow: "0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)"
+          boxShadow: "0 4px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)"
         }}>
 
           {/* Step Header */}
-          <div style={{ marginBottom: 28, paddingBottom: 20, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ marginBottom: 28, paddingBottom: 20, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{
                 width: 40, height: 40, borderRadius: 12,
@@ -355,10 +355,10 @@ const SellerSignUp = () => {
                 {React.createElement(STEPS[step-1].icon, { size: 18 })}
               </div>
               <div>
-                <h2 style={{ fontSize: 17, fontWeight: 700, color: "#fff", margin: "0 0 2px" }}>
+                <h2 style={{ fontSize: 17, fontWeight: 700, color: "#111827", margin: "0 0 2px" }}>
                   {step === 1 ? "Personal Information" : step === 2 ? "Store Details" : step === 3 ? "Bank Details" : "Review & Submit"}
                 </h2>
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", margin: 0 }}>
+                <p style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", margin: 0 }}>
                   {step === 1 ? "Your account credentials & contact info"
                   : step === 2 ? "Tell customers about your store"
                   : step === 3 ? "For receiving payments (optional)"
@@ -396,7 +396,7 @@ const SellerSignUp = () => {
                       onChange={onChangeInput} onBlur={onBlur} style={{ ...inputStyle("password"), paddingRight: 44 }} />
                     <button type="button" onClick={() => setShowPass(!showPass)} style={{
                       position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)",
-                      background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer"
+                      background: "none", border: "none", color: "rgba(0,0,0,0.35)", cursor: "pointer"
                     }}>
                       {showPass ? <FaEyeSlash size={15} /> : <FaRegEye size={15} />}
                     </button>
@@ -411,7 +411,7 @@ const SellerSignUp = () => {
                       onChange={onChangeInput} onBlur={onBlur} style={{ ...inputStyle("confirmPassword"), paddingRight: 44 }} />
                     <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} style={{
                       position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)",
-                      background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer"
+                      background: "none", border: "none", color: "rgba(0,0,0,0.35)", cursor: "pointer"
                     }}>
                       {showConfirmPass ? <FaEyeSlash size={15} /> : <FaRegEye size={15} />}
                     </button>
@@ -460,11 +460,11 @@ const SellerSignUp = () => {
               <>
                 <div style={{
                   display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px",
-                  background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.2)",
+                  background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)",
                   borderRadius: 10, marginBottom: 22
                 }}>
                   <FaShieldAlt size={14} color="#fbbf24" style={{ marginTop: 2, flexShrink: 0 }} />
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", margin: 0, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 12, color: "rgba(0,0,0,0.5)", margin: 0, lineHeight: 1.5 }}>
                     Bank details are encrypted and used only for payment processing. All fields are optional at this stage.
                   </p>
                 </div>
@@ -501,7 +501,7 @@ const SellerSignUp = () => {
                     <FaUser size={12} color="#6ee7b7" />
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#6ee7b7", fontFamily: "'Space Mono', monospace", letterSpacing: "0.08em" }}>PERSONAL</span>
                   </div>
-                  <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "0 14px" }}>
+                  <div style={{ background: "#f9fafb", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 10, padding: "0 14px" }}>
                     <ReviewRow label="Name" value={formFields.name} />
                     <ReviewRow label="Email" value={formFields.email} />
                     <ReviewRow label="Mobile" value={formFields.mobile || "—"} />
@@ -514,7 +514,7 @@ const SellerSignUp = () => {
                     <FaStore size={12} color="#93c5fd" />
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#93c5fd", fontFamily: "'Space Mono', monospace", letterSpacing: "0.08em" }}>STORE</span>
                   </div>
-                  <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "0 14px" }}>
+                  <div style={{ background: "#f9fafb", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 10, padding: "0 14px" }}>
                     <ReviewRow label="Store Name" value={formFields.storeName} />
                     <ReviewRow label="Category" value={formFields.storeCategory} />
                     <ReviewRow label="Location" value={formFields.storeLocation || "—"} />
@@ -530,7 +530,7 @@ const SellerSignUp = () => {
                       <FaUniversity size={12} color="#fbbf24" />
                       <span style={{ fontSize: 11, fontWeight: 700, color: "#fbbf24", fontFamily: "'Space Mono', monospace", letterSpacing: "0.08em" }}>BANK</span>
                     </div>
-                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "0 14px" }}>
+                    <div style={{ background: "#f9fafb", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 10, padding: "0 14px" }}>
                       <ReviewRow label="Bank" value={formFields.bankName} />
                       <ReviewRow label="Account No." value={formFields.accountNumber ? `****${formFields.accountNumber.slice(-4)}` : "—"} />
                       <ReviewRow label="IFSC" value={formFields.ifscCode || "—"} />
@@ -542,11 +542,11 @@ const SellerSignUp = () => {
                 <label style={{ display: "flex", gap: 12, cursor: "pointer", padding: "14px", background: "rgba(110,231,183,0.04)", border: `1px solid ${errors.agreeTerms ? "rgba(239,68,68,0.4)" : "rgba(110,231,183,0.15)"}`, borderRadius: 10, marginTop: 12 }}>
                   <input type="checkbox" name="agreeTerms" checked={formFields.agreeTerms} onChange={onChangeInput}
                     style={{ marginTop: 3, accentColor: "#6ee7b7", width: 16, height: 16, flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
+                  <span style={{ fontSize: 13, color: "rgba(0,0,0,0.6)", lineHeight: 1.5 }}>
                     I agree to the{" "}
-                    <Link to="/terms" style={{ color: "#6ee7b7", textDecoration: "none" }}>Terms of Service</Link>{" "}
+                    <Link to="/terms" style={{ color: "#f97316", textDecoration: "none" }}>Terms of Service</Link>{" "}
                     and{" "}
-                    <Link to="/privacy" style={{ color: "#6ee7b7", textDecoration: "none" }}>Privacy Policy</Link>.
+                    <Link to="/privacy" style={{ color: "#f97316", textDecoration: "none" }}>Privacy Policy</Link>.
                   </span>
                 </label>
                 {errors.agreeTerms && <p style={{ fontSize: 11, color: "#f87171", marginTop: 6 }}>{errors.agreeTerms}</p>}
@@ -558,8 +558,8 @@ const SellerSignUp = () => {
               {step > 1 && (
                 <button type="button" className="back-btn" onClick={goPrev} style={{
                   flex: "0 0 auto", height: 50, padding: "0 20px",
-                  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 12, color: "rgba(255,255,255,0.7)", cursor: "pointer",
+                  background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.1)",
+                  borderRadius: 12, color: "rgba(0,0,0,0.6)", cursor: "pointer",
                   display: "flex", alignItems: "center", gap: 6, fontSize: 14, fontWeight: 500,
                   transition: "background 0.2s", fontFamily: "'Outfit', sans-serif"
                 }}>
@@ -599,9 +599,9 @@ const SellerSignUp = () => {
         </div>
 
         {/* Footer note */}
-        <p style={{ textAlign: "center", fontSize: 12, color: "rgba(255,255,255,0.25)", marginTop: 20 }}>
+        <p style={{ textAlign: "center", fontSize: 12, color: "rgba(0,0,0,0.4)", marginTop: 20 }}>
           Already have an account?{" "}
-          <Link to="/login" style={{ color: "#6ee7b7", textDecoration: "none", fontWeight: 600 }}>Sign In</Link>
+          <Link to="/login" style={{ color: "#f97316", textDecoration: "none", fontWeight: 600 }}>Sign In</Link>
         </p>
       </main>
     </section>
