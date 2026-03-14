@@ -509,7 +509,7 @@ const Login = () => {
           <p className="lp-welcome-sub">Sign in to your admin account to continue.</p>
 
           {/* Google */}
-          <button
+          {/* <button
             className="google-btn"
             onClick={authWithGoogle}
             disabled={loadingGoogle || isLoading}
@@ -522,7 +522,7 @@ const Login = () => {
             {loadingGoogle ? "Connecting to Google…" : "Continue with Google"}
           </button>
 
-          <div className="divider">or sign in with email</div>
+          <div className="divider">or sign in with email</div> */}
 
           {/* Form */}
           <form onSubmit={handleSubmit}>
