@@ -131,26 +131,25 @@ const EditProduct = () => {
     const handleChangeProductCat = (e) => {
         const id = e.target.value; const cat = context?.catData?.find((c) => c?._id === id);
         setProductCat(id); setProductSubCat(''); setProductThirdLavelCat('');
-        formFields.catId = id; formFields.category = id; formFields.catName = cat?.name || '';
-        formFields.subCatId = ''; formFields.subCat = ''; formFields.thirdsubCatId = ''; formFields.thirdsubCat = '';
+        setFormFields((p) => ({ ...p, catId: id, category: id, catName: cat?.name || '', subCatId: '', subCat: '', thirdsubCatId: '', thirdsubCat: '' }));
     };
     const handleChangeProductSubCat = (e) => {
         const id = e.target.value; const sc = availableSubCategories?.find((s) => s?._id === id);
         setProductSubCat(id); setProductThirdLavelCat('');
-        formFields.subCatId = id; formFields.subCat = sc?.name || '';
-        formFields.thirdsubCatId = ''; formFields.thirdsubCat = '';
+        setFormFields((p) => ({ ...p, subCatId: id, subCat: sc?.name || '', thirdsubCatId: '', thirdsubCat: '' }));
     };
     const handleChangeProductThirdLavelCat = (e) => {
         const id = e.target.value; const tc = availableThirdLevelCategories?.find((t) => t?._id === id);
-        setProductThirdLavelCat(id); formFields.thirdsubCatId = id; formFields.thirdsubCat = tc?.name || '';
+        setProductThirdLavelCat(id);
+        setFormFields((p) => ({ ...p, thirdsubCatId: id, thirdsubCat: tc?.name || '' }));
     };
-    const handleChangeProductFeatured = (e) => { setProductFeatured(e.target.value); formFields.isFeatured = e.target.value; };
-    const handleChangeProductRams = (e) => { const v = e.target.value; setProductRams(typeof v === 'string' ? v.split(',') : v); formFields.productRam = v; };
-    const handleChangeProductWeight = (e) => { const v = e.target.value; setProductWeight(typeof v === 'string' ? v.split(',') : v); formFields.productWeight = v; };
-    const handleChangeProductSize = (e) => { const v = e.target.value; setProductSize(typeof v === 'string' ? v.split(',') : v); formFields.size = v; };
+    const handleChangeProductFeatured = (e) => { setProductFeatured(e.target.value); setFormFields((p) => ({ ...p, isFeatured: e.target.value })); };
+    const handleChangeProductRams = (e) => { const v = e.target.value; const arr = typeof v === 'string' ? v.split(',') : v; setProductRams(arr); setFormFields((p) => ({ ...p, productRam: arr })); };
+    const handleChangeProductWeight = (e) => { const v = e.target.value; const arr = typeof v === 'string' ? v.split(',') : v; setProductWeight(arr); setFormFields((p) => ({ ...p, productWeight: arr })); };
+    const handleChangeProductSize = (e) => { const v = e.target.value; const arr = typeof v === 'string' ? v.split(',') : v; setProductSize(arr); setFormFields((p) => ({ ...p, size: arr })); };
     const onChangeInput = (e) => { const { name, value } = e.target; setFormFields((p) => ({ ...p, [name]: value })); };
     const onChangeRating = (e) => { setFormFields((p) => ({ ...p, rating: e.target.value })); };
-    const handleChangeSwitch = (e) => { setCheckedSwitch(e.target.checked); formFields.isDisplayOnHomeBanner = e.target.checked; };
+    const handleChangeSwitch = (e) => { setCheckedSwitch(e.target.checked); setFormFields((p) => ({ ...p, isDisplayOnHomeBanner: e.target.checked })); };
 
     const handleColorOptionChange = (i, field, value) => {
         const arr = [...formFields.colorOptions]; arr[i] = { ...arr[i], [field]: value };
@@ -168,22 +167,26 @@ const EditProduct = () => {
 
     const setPreviewsFun = (arr) => {
         const combined = [...previews, ...arr];
-        setPreviews([]); setTimeout(() => { setPreviews(combined); formFields.images = combined; }, 10);
+        setPreviews([]);
+        setTimeout(() => { setPreviews(combined); setFormFields((p) => ({ ...p, images: combined })); }, 10);
     };
     const setBannerImagesFun = (arr) => {
         const combined = [...bannerPreviews, ...arr];
-        setBannerPreviews([]); setTimeout(() => { setBannerPreviews(combined); formFields.bannerimages = combined; }, 10);
+        setBannerPreviews([]);
+        setTimeout(() => { setBannerPreviews(combined); setFormFields((p) => ({ ...p, bannerimages: combined })); }, 10);
     };
     const removeImg = (image, index) => {
         deleteImages(`/api/category/deteleImage?img=${image}`).then(() => {
             const arr = previews.filter((_, i) => i !== index);
-            setPreviews([]); setTimeout(() => { setPreviews(arr); formFields.images = arr; }, 100);
+            setPreviews([]);
+            setTimeout(() => { setPreviews(arr); setFormFields((p) => ({ ...p, images: arr })); }, 100);
         });
     };
     const removeBannerImg = (image, index) => {
         deleteImages(`/api/category/deteleImage?img=${image}`).then(() => {
             const arr = bannerPreviews.filter((_, i) => i !== index);
-            setBannerPreviews([]); setTimeout(() => { setBannerPreviews(arr); formFields.bannerimages = arr; }, 100);
+            setBannerPreviews([]);
+            setTimeout(() => { setBannerPreviews(arr); setFormFields((p) => ({ ...p, bannerimages: arr })); }, 100);
         });
     };
 
