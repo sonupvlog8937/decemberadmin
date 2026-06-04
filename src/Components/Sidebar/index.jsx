@@ -22,6 +22,16 @@ import {
 import { MyContext } from "../../App";
 import { fetchDataFromApi } from "../../utils/api";
 
+const SELLER_ROLES = ['SELLER', 'GROCERY_SELLER', 'RESTAURANT_SELLER'];
+const isSellerRole = (role) => SELLER_ROLES.includes(role);
+const roleLabels = {
+  ADMIN: '🛡️ Admin Panel',
+  SELLER: '🏪 Seller Panel',
+  GROCERY_SELLER: '🛒 Grocery Seller Panel',
+  RESTAURANT_SELLER: '🍽️ Restaurant Seller Panel',
+  DELIVERY_RIDER: '🚴 Delivery Rider Panel',
+};
+
 const Sidebar = () => {
   const context = useContext(MyContext);
   const navigate = useNavigate();
@@ -29,9 +39,12 @@ const Sidebar = () => {
 
   const userRole = context?.userData?.role || "USER";
   const isAdmin = userRole === "ADMIN";
-  const isSeller = userRole === "SELLER";
+  const isSeller = isSellerRole(userRole);
+  const isGrocerySeller = userRole === "GROCERY_SELLER";
+  const isRestaurantSeller = userRole === "RESTAURANT_SELLER";
+  const isDeliveryRider = userRole === "DELIVERY_RIDER";
 
-  const [openGroups, setOpenGroups] = useState({ catalog: false, media: false, banners: false });
+  const [openGroups, setOpenGroups] = useState({ catalog: false, media: false, banners: false, goMarket: false });
   const toggleGroup = (key) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const closeSidebar = () => {
@@ -129,7 +142,7 @@ const Sidebar = () => {
           <div className="mx-3 my-2 px-3 py-2.5 bg-gradient-to-r from-[#eef2ff] to-[#f0f9ff] rounded-xl border border-[#e0e7ff] hover:shadow-sm transition-all flex-shrink-0">
             <p className="text-[10px] uppercase tracking-widest text-[#6366f1] font-[600]">Signed in as</p>
             <p className="text-[13px] font-[700] text-[#1e293b] mt-0.5">
-              {isAdmin ? "🛡️ Admin Panel" : isSeller ? "🏪 Seller Panel" : "👤 Control Panel"}
+               {roleLabels[userRole] || "👤 Control Panel"}
             </p>
           </div>
         </Link>
@@ -138,8 +151,14 @@ const Sidebar = () => {
         <ul className="flex-1 overflow-y-auto px-3 py-1 space-y-0.5">
           <GroupLabel label="Main" />
           <NavItem to="/" icon={RxDashboard} label="Dashboard" />
-          <NavItem to="/products" icon={RiProductHuntLine} label={isSeller ? "My Products" : "Products"} />
-          <NavItem to="/orders" icon={IoBagCheckOutline} label={isSeller ? "My Orders" : "All Orders"} />
+          {(isAdmin || isSeller) && (
+            <NavItem
+              to="/products"
+              icon={RiProductHuntLine}
+              label={isGrocerySeller ? "My Grocery Products" : isRestaurantSeller ? "My Menu Items" : isSeller ? "My Products" : "Products"}
+            />
+          )}
+          {(isAdmin || isSeller) && <NavItem to="/orders" icon={IoBagCheckOutline} label={isSeller ? "My Orders" : "All Orders"} />}
           {isAdmin && <NavItem to="/reviews" icon={MdOutlineRateReview} label="All Reviews" />}
           {isSeller && <NavItem to="/reviews" icon={MdOutlineRateReview} label="My Reviews" />}
 
@@ -147,6 +166,7 @@ const Sidebar = () => {
             <>
               <GroupLabel label="Management" />
               <NavItem to="/users" icon={FiUsers} label="Users & Sellers" />
+              <NavItem to="/riders" icon={FiUsers} label="Delivery Riders" />
               <NavItem to="/coupons" icon={MdLocalOffer} label="Coupons" />
 
               <CollapseGroup groupKey="catalog" icon={TbCategory} label="Catalog">
@@ -174,6 +194,19 @@ const Sidebar = () => {
                 <SubItem to="/slider/featured" label="Featured Slider" />
               </CollapseGroup>
 
+              <GroupLabel label="Go Market" />
+              <CollapseGroup groupKey="goMarket" icon={IoStorefrontOutline} label="Go Market">
+                <SubItem to="/go-market/markets" label="Manage Markets" />
+                <SubItem to="/go-market/categories" label="Categories" />
+                <SubItem to="/go-market/subcategories" label="Sub Categories" />
+                <SubItem to="/go-market/grocery-shops" label="Grocery Shops" />
+                <SubItem to="/go-market/restaurants" label="Restaurants" />
+                <SubItem to="/go-market/products" label="Grocery Products" />
+                <SubItem to="/go-market/menus" label="Menus" />
+                <SubItem to="/go-market/items" label="Restaurant Items" />
+                <SubItem to="/go-market/owners" label="Shop Owners" />
+              </CollapseGroup>
+
               <GroupLabel label="Finance" />
               <NavItem to="/wallet/transactions" icon={IoWalletOutline} label="Wallet Requests" />
             </>
@@ -181,9 +214,25 @@ const Sidebar = () => {
 
           {isSeller && (
             <>
-              <GroupLabel label="My Store" />
+              <GroupLabel label={isGrocerySeller || isRestaurantSeller ? "Quick Commerce" : "My Store"} />
+              {(isGrocerySeller || isRestaurantSeller) && (
+                <>
+                  <NavItem to="/seller/store-ops" icon={IoStorefrontOutline} label={isGrocerySeller ? "Store Operations" : "Kitchen Operations"} />
+                  <NavItem to={isGrocerySeller ? "/seller/go-market/shop" : "/seller/go-market/restaurant"} icon={IoStorefrontOutline} label={isGrocerySeller ? "Shop Profile (GoMarket)" : "Restaurant Profile (GoMarket)"} />
+                  <NavItem to="/coupons" icon={MdLocalOffer} label="Coupons & Offers" />
+                </>
+              )}
               <NavItem to="/seller/store-profile" icon={IoStorefrontOutline} label="Store Profile" />
               <NavItem to="/wallet/transactions" icon={IoWalletOutline} label="Wallet & Transactions" />
+            </>
+          )}
+
+          {isDeliveryRider && (
+            <>
+              <GroupLabel label="Delivery" />
+              <NavItem to="/orders" icon={IoBagCheckOutline} label="Available Orders" />
+              <NavItem to="/wallet/transactions" icon={IoWalletOutline} label="Earnings & Wallet" />
+              <NavItem to="/profile" icon={FiUsers} label="My Profile" />
             </>
           )}
         </ul>

@@ -4,7 +4,7 @@ import { CgLogIn } from "react-icons/cg";
 import {
   FaRegEye, FaEyeSlash, FaCheckCircle, FaUser, FaStore,
   FaUniversity, FaArrowRight, FaArrowLeft, FaShieldAlt,
-  FaPhone, FaMapMarkerAlt, FaFileAlt, FaLock, FaEnvelope
+  FaPhone, FaMapMarkerAlt, FaFileAlt, FaLock, FaEnvelope, FaImage, FaMotorcycle
 } from "react-icons/fa";
 import CircularProgress from "@mui/material/CircularProgress";
 import { fetchDataFromApi, postData } from "../../utils/api.js";
@@ -13,10 +13,27 @@ import { MyContext } from "../../App.jsx";
 // ─── Step Config ──────────────────────────────────────────────────────────────
 const STEPS = [
   { id: 1, label: "Personal",  icon: FaUser,      color: "#6ee7b7" },
-  { id: 2, label: "Store",     icon: FaStore,     color: "#93c5fd" },
+  { id: 2, label: "Profile",   icon: FaStore,     color: "#93c5fd" },
   { id: 3, label: "Bank",      icon: FaUniversity,color: "#fbbf24" },
   { id: 4, label: "Review",    icon: FaShieldAlt, color: "#f9a8d4" },
 ];
+
+const ROLE_OPTIONS = [
+  { value: "SELLER", label: "Seller", tone: "#2874f0", description: "General marketplace seller with complete catalog controls." },
+  { value: "GROCERY_SELLER", label: "Grocery Seller", tone: "#10b981", description: "Creates a grocery shop in your selected Go Market instantly." },
+  { value: "RESTAURANT_SELLER", label: "Restaurant Seller", tone: "#f97316", description: "Creates a restaurant in your selected Go Market instantly." },
+  { value: "DELIVERY_RIDER", label: "Delivery Rider", tone: "#8b5cf6", description: "Join as a delivery partner to pick up and deliver orders." },
+];
+
+const COMMON_FEATURES = ["All Products", "Add Product", "All Orders", "Manage Orders", "All Reviews", "Store Information", "Wallet Transactions", "More Features"];
+const ROLE_FEATURES = {
+  SELLER: COMMON_FEATURES,
+  GROCERY_SELLER: ["Quick Commerce Dashboard", "Store Operations", "Inventory", "Live Orders", "Wallet"],
+  RESTAURANT_SELLER: ["Quick Commerce Dashboard", "Kitchen Operations", "Menu Items", "Live Orders", "Wallet"],
+  DELIVERY_RIDER: ["Delivery Dashboard", "Available Orders", "My Deliveries", "Earnings", "Route Navigation", "Performance Stats"],
+};
+
+const getRoleMeta = (role) => ROLE_OPTIONS.find((item) => item.value === role) || ROLE_OPTIONS[0];
 
 // ─── Strength Meter ───────────────────────────────────────────────────────────
 function PasswordStrength({ password }) {
@@ -79,12 +96,13 @@ const SellerSignUp = () => {
   const formRef = useRef(null);
 
   const [formFields, setFormFields] = useState({
-    name: "", email: "", mobile: "", password: "", confirmPassword: "",
-    storeName: "", storeLocation: "", storeContact: "", storeDescription: "", storeCategory: "",
+    name: "", email: "", mobile: "", password: "", confirmPassword: "", role: "SELLER",
+    storeName: "", storeLocation: "", storeContact: "", storeDescription: "", shopBanner: "", marketId: "", drivingLicense: "",
     accountHolderName: "", bankName: "", accountNumber: "", ifscCode: "",
     agreeTerms: false
   });
 
+  const [markets, setMarkets] = useState([]);
   const context = useContext(MyContext);
   const history = useNavigate();
 
@@ -92,11 +110,17 @@ const SellerSignUp = () => {
     fetchDataFromApi("/api/logo").then((res) => {
       localStorage.setItem("logo", res?.logo?.[0]?.logo || "");
     });
+    fetchDataFromApi("/api/go-market/markets?limit=100&status=active").then((res) => {
+      setMarkets(res?.data || []);
+    });
   }, []);
 
   const onChangeInput = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormFields(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+     setFormFields(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
@@ -119,8 +143,11 @@ const SellerSignUp = () => {
       else if (formFields.password !== formFields.confirmPassword) e.confirmPassword = "Passwords do not match";
     }
     if (s === 2) {
-      if (!formFields.storeName.trim()) e.storeName = "Store name is required";
-      if (!formFields.storeCategory) e.storeCategory = "Please select a category";
+      if (!formFields.marketId) e.marketId = "Please select a Go Market";
+      if (formFields.role !== "DELIVERY_RIDER") {
+        if (!formFields.storeName.trim()) e.storeName = "Store name is required";
+        if (!(formFields.storeContact || formFields.mobile)) e.storeContact = "Store contact or mobile number is required";
+      }
     }
     if (s === 4) {
       if (!formFields.agreeTerms) e.agreeTerms = "You must agree to the terms";
@@ -161,11 +188,14 @@ const SellerSignUp = () => {
         email: formFields.email,
         password: formFields.password,
         mobile: formFields.mobile,
+        role: formFields.role,
         storeName: formFields.storeName,
         storeLocation: formFields.storeLocation,
         storeContact: formFields.storeContact || formFields.mobile,
         storeDescription: formFields.storeDescription,
-        storeCategory: formFields.storeCategory,
+        shopBanner: formFields.shopBanner,
+        marketId: formFields.marketId,
+        drivingLicense: formFields.drivingLicense,
         accountHolderName: formFields.accountHolderName,
         bankName: formFields.bankName,
         accountNumber: formFields.accountNumber,
@@ -173,8 +203,9 @@ const SellerSignUp = () => {
       };
       const res = await postData("/api/user/register-seller", payload);
       if (res?.error !== true) {
-        context.alertBox("success", res?.message || "Registered! Check your email.");
+        context.alertBox("success", res?.message || "Registered! Please verify your email OTP.");
         localStorage.setItem("userEmail", formFields.email);
+        localStorage.setItem("actionType", "seller-signup");
         history("/verify-account");
       } else {
         context.alertBox("error", res?.message);
@@ -207,11 +238,8 @@ const SellerSignUp = () => {
     cursor: "pointer"
   });
 
-  const CATEGORIES = [
-    "Electronics", "Fashion & Apparel", "Home & Garden", "Sports & Outdoors",
-    "Beauty & Personal Care", "Books & Stationery", "Food & Beverages",
-    "Toys & Games", "Automotive", "Jewelry & Accessories", "Health & Wellness", "Other"
-  ];
+  const selectedRole = getRoleMeta(formFields.role);
+  const isRiderSignup = formFields.role === "DELIVERY_RIDER";
 
   // ─── Review row ──────────────────────────────────────────────────────────────
   const ReviewRow = ({ label, value }) => value ? (
@@ -356,12 +384,12 @@ const SellerSignUp = () => {
               </div>
               <div>
                 <h2 style={{ fontSize: 17, fontWeight: 700, color: "#111827", margin: "0 0 2px" }}>
-                  {step === 1 ? "Personal Information" : step === 2 ? "Store Details" : step === 3 ? "Bank Details" : "Review & Submit"}
+                  {step === 1 ? "Personal Information" : step === 2 ? (isRiderSignup ? "Delivery Rider Details" : "Store Details") : step === 3 ? "Bank Details" : "Review & Submit"}
                 </h2>
                 <p style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", margin: 0 }}>
                   {step === 1 ? "Your account credentials & contact info"
-                  : step === 2 ? "Tell customers about your store"
-                  : step === 3 ? "For receiving payments (optional)"
+                  : step === 2 ? (isRiderSignup ? "Choose your service market and optional licence" : "Tell customers about your store")
+                  : step === 3 ? "For receiving payouts (optional)"
                   : "Verify all details before submitting"}
                 </p>
               </div>
@@ -373,6 +401,22 @@ const SellerSignUp = () => {
             {/* ── STEP 1: PERSONAL ─────────────────────────────────────── */}
             {step === 1 && (
               <>
+                 <Field label="Account Role" icon={FaShieldAlt} error={touched.role && errors.role} hint={selectedRole.description}>
+                  <select name="role" value={formFields.role}
+                    onChange={onChangeInput} onBlur={onBlur} style={selectStyle("role")}>
+                    {ROLE_OPTIONS.map(role => <option key={role.value} value={role.value}>{role.label}</option>)}
+                  </select>
+                </Field>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "-4px 0 18px" }}>
+                  {(ROLE_FEATURES[formFields.role] || COMMON_FEATURES).map(feature => (
+                    <span key={feature} style={{
+                      fontSize: 11, fontWeight: 700, color: selectedRole.tone,
+                      background: `${selectedRole.tone}12`, border: `1px solid ${selectedRole.tone}25`,
+                      borderRadius: 999, padding: "5px 9px", fontFamily: "'Space Mono', monospace"
+                    }}>{feature}</span>
+                  ))}
+                </div>
                 <Field label="Full Name" icon={FaUser} error={touched.name && errors.name}>
                   <input type="text" name="name" placeholder="John Doe" value={formFields.name}
                     onChange={onChangeInput} onBlur={onBlur} style={inputStyle("name")} />
@@ -423,35 +467,55 @@ const SellerSignUp = () => {
             {/* ── STEP 2: STORE ─────────────────────────────────────────── */}
             {step === 2 && (
               <>
-                <Field label="Store Name" icon={FaStore} error={touched.storeName && errors.storeName}>
-                  <input type="text" name="storeName" placeholder="My Awesome Store" value={formFields.storeName}
-                    onChange={onChangeInput} onBlur={onBlur} style={inputStyle("storeName")} />
-                </Field>
+                {!isRiderSignup && (
+                  <Field label="Store Name" icon={FaStore} error={touched.storeName && errors.storeName}>
+                    <input type="text" name="storeName" placeholder="My Awesome Store" value={formFields.storeName}
+                      onChange={onChangeInput} onBlur={onBlur} style={inputStyle("storeName")} />
+                  </Field>
+                )}
 
-                <Field label="Business Category" icon={FaFileAlt} error={touched.storeCategory && errors.storeCategory}>
-                  <select name="storeCategory" value={formFields.storeCategory}
-                    onChange={onChangeInput} onBlur={onBlur} style={selectStyle("storeCategory")}>
-                    <option value="">Select a category…</option>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                <Field label={isRiderSignup ? "Delivery Market" : "Go Market"} icon={FaMapMarkerAlt} error={touched.marketId && errors.marketId} hint={isRiderSignup ? "Only orders from this selected market will be assigned to you." : "Your shop will be created inside this market instantly."}>
+                  <select name="marketId" value={formFields.marketId}
+                    onChange={onChangeInput} onBlur={onBlur} style={selectStyle("marketId")}>
+                    <option value="">Select market…</option>
+                    {markets.map((market) => (
+                      <option key={market._id} value={market._id}>
+                        {market.name} — {market.city}, {market.state}
+                      </option>
+                    ))}
                   </select>
                 </Field>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <Field label="Store Contact" icon={FaPhone} error={touched.storeContact && errors.storeContact}>
-                    <input type="tel" name="storeContact" placeholder="Business Phone" value={formFields.storeContact}
-                      onChange={onChangeInput} onBlur={onBlur} style={inputStyle("storeContact")} />
+                {isRiderSignup ? (
+                  <Field label="Driving Licence (Optional)" icon={FaMotorcycle} hint="You can add or update licence details later from your profile.">
+                    <input type="text" name="drivingLicense" placeholder="DL number (optional)" value={formFields.drivingLicense}
+                      onChange={onChangeInput} onBlur={onBlur} style={inputStyle("drivingLicense")} />
                   </Field>
-                  <Field label="City / Location" icon={FaMapMarkerAlt}>
-                    <input type="text" name="storeLocation" placeholder="e.g. Mumbai" value={formFields.storeLocation}
-                      onChange={onChangeInput} onBlur={onBlur} style={inputStyle("storeLocation")} />
-                  </Field>
-                </div>
+                
+                ) : (
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                      <Field label="Store Contact" icon={FaPhone} error={touched.storeContact && errors.storeContact}>
+                        <input type="tel" name="storeContact" placeholder="Business Phone" value={formFields.storeContact}
+                          onChange={onChangeInput} onBlur={onBlur} style={inputStyle("storeContact")} />
+                      </Field>
+                      <Field label="City / Location" icon={FaMapMarkerAlt}>
+                        <input type="text" name="storeLocation" placeholder="e.g. Mumbai" value={formFields.storeLocation}
+                          onChange={onChangeInput} onBlur={onBlur} style={inputStyle("storeLocation")} />
+                      </Field>
+                    </div>
 
                 <Field label="Store Description" icon={FaFileAlt} hint="What do you sell? (optional)">
-                  <textarea name="storeDescription" placeholder="Describe your store and what you sell..."
-                    value={formFields.storeDescription} onChange={onChangeInput} onBlur={onBlur}
-                    style={textareaStyle("storeDescription")} />
-                </Field>
+                      <textarea name="storeDescription" placeholder="Describe your store and what you sell..."
+                        value={formFields.storeDescription} onChange={onChangeInput} onBlur={onBlur}
+                        style={textareaStyle("storeDescription")} />
+                    </Field>
+                    <Field label="Shop Banner URL" icon={FaImage} error={touched.shopBanner && errors.shopBanner} hint="Paste a wide banner image URL that will appear on your shop page.">
+                      <input type="url" name="shopBanner" placeholder="https://example.com/banner.jpg" value={formFields.shopBanner}
+                        onChange={onChangeInput} onBlur={onBlur} style={inputStyle("shopBanner")} />
+                    </Field>
+                  </>
+                )}
               </>
             )}
 
@@ -502,6 +566,7 @@ const SellerSignUp = () => {
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#6ee7b7", fontFamily: "'Space Mono', monospace", letterSpacing: "0.08em" }}>PERSONAL</span>
                   </div>
                   <div style={{ background: "#f9fafb", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 10, padding: "0 14px" }}>
+                    <ReviewRow label="Role" value={selectedRole.label} />
                     <ReviewRow label="Name" value={formFields.name} />
                     <ReviewRow label="Email" value={formFields.email} />
                     <ReviewRow label="Mobile" value={formFields.mobile || "—"} />
@@ -512,14 +577,17 @@ const SellerSignUp = () => {
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                     <FaStore size={12} color="#93c5fd" />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#93c5fd", fontFamily: "'Space Mono', monospace", letterSpacing: "0.08em" }}>STORE</span>
+                     <span style={{ fontSize: 11, fontWeight: 700, color: "#93c5fd", fontFamily: "'Space Mono', monospace", letterSpacing: "0.08em" }}>{isRiderSignup ? "DELIVERY" : "STORE"}</span>
                   </div>
                   <div style={{ background: "#f9fafb", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 10, padding: "0 14px" }}>
-                    <ReviewRow label="Store Name" value={formFields.storeName} />
-                    <ReviewRow label="Category" value={formFields.storeCategory} />
-                    <ReviewRow label="Location" value={formFields.storeLocation || "—"} />
-                    <ReviewRow label="Contact" value={formFields.storeContact || "—"} />
-                    {formFields.storeDescription && <ReviewRow label="Description" value={formFields.storeDescription} />}
+                     {!isRiderSignup && <ReviewRow label="Store Name" value={formFields.storeName} />}
+                    {!isRiderSignup && <ReviewRow label="Shop Banner" value={formFields.shopBanner || "—"} />}
+                    <ReviewRow label="Market" value={markets.find((market) => market._id === formFields.marketId)?.name || "—"} />
+                    {isRiderSignup && <ReviewRow label="Driving Licence" value={formFields.drivingLicense || "Optional / not added"} />}
+                    {!isRiderSignup && <ReviewRow label="Location" value={formFields.storeLocation || "—"} />}
+                    {!isRiderSignup && <ReviewRow label="Contact" value={formFields.storeContact || "—"} />}
+                    <ReviewRow label="Enabled Features" value={(ROLE_FEATURES[formFields.role] || COMMON_FEATURES).join(", ")} />
+                    {!isRiderSignup && formFields.storeDescription && <ReviewRow label="Description" value={formFields.storeDescription} />}
                   </div>
                 </div>
 
@@ -576,7 +644,7 @@ const SellerSignUp = () => {
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   transition: "all 0.2s", fontFamily: "'Outfit', sans-serif"
                 }}>
-                  {step === 1 ? "Continue to Store Details" : step === 2 ? "Continue to Bank Details" : "Review & Submit"}
+                  {step === 1 ? (isRiderSignup ? "Continue to Rider Details" : "Continue to Store Details") : step === 2 ? "Continue to Bank Details" : "Review & Submit"}
                   <FaArrowRight size={12} />
                 </button>
               ) : (
