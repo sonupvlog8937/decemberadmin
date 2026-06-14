@@ -68,6 +68,7 @@ export const Products = () => {
     const [productThirdLavelCat, setProductThirdLavelCat] = useState('');
     const [sortedIds, setSortedIds] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [pageOrder, setPageOrder] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [photos, setPhotos] = useState([]);
@@ -75,6 +76,7 @@ export const Products = () => {
     const [lightboxIdx, setLightboxIdx] = useState(0);
     const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, name: '', multiple: false });
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
 
     const context = useContext(MyContext);
     const isGrocerySeller = context?.userData?.role === 'GROCERY_SELLER';
@@ -84,7 +86,8 @@ export const Products = () => {
         col.id === 'stock' && isRestaurantSeller ? { ...col, label: 'AVAILABILITY' } : col
     );
 
-    useEffect(() => { getProducts(page, rowsPerPage); }, [context?.isOpenFullScreenPanel, page, rowsPerPage]);
+    useEffect(() => { setPage(0); setProductData([]); setHasMore(true); getProducts(0, rowsPerPage, false); }, [context?.isOpenFullScreenPanel]);
+    useEffect(() => { setPage(0); setProductData([]); setHasMore(true); getProducts(0, rowsPerPage, false); }, [productCat, productSubCat, productThirdLavelCat]);
 
     useEffect(() => {
         if (searchQuery !== '') {
@@ -121,15 +124,30 @@ export const Products = () => {
         setSortedIds(updatedItems.filter((i) => i.checked).map((i) => i._id));
     };
 
-    const getProducts = async (pg, limit) => {
-        setIsLoading(true);
+    const getProducts = async (pg, limit, append = false) => {
+        if (append) setLoadingMore(true);
+        else setIsLoading(true);
+        
         const endpoint = isSellerRole(context?.userData?.role)
             ? `/api/product/seller/products?page=${pg + 1}&limit=${limit}`
             : `/api/product/getAllProducts?page=${pg + 1}&limit=${limit}`;
+        
         fetchDataFromApi(endpoint).then((res) => {
-            setProductData(res);
+            const newProducts = res?.products || [];
+            
+            if (append) {
+                setProductData(prev => ({
+                    ...prev,
+                    products: [...(prev.products || []), ...newProducts]
+                }));
+            } else {
+                setProductData(res);
+            }
+            
             setProductTotalData(res);
+            setHasMore(newProducts.length >= limit);
             setIsLoading(false);
+            setLoadingMore(false);
             setPhotos((res?.products || []).map((p) => ({ src: p.images?.[0] })));
         });
     };
@@ -182,11 +200,28 @@ export const Products = () => {
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(+event.target.value);
         setPage(0);
+        setProductData([]);
+        setHasMore(true);
+        getProducts(0, +event.target.value, false);
     };
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
-        getProducts(newPage, rowsPerPage);
+        getProducts(newPage, rowsPerPage, false);
+    };
+
+    const handleLoadMore = () => {
+        if (!hasMore || loadingMore || isLoading) return;
+        const nextPage = page + 1;
+        setPage(nextPage);
+        getProducts(nextPage, rowsPerPage, true);
+    };
+
+    const handleScroll = (e) => {
+        const target = e.target;
+        if (target.scrollHeight - target.scrollTop <= target.clientHeight + 100) {
+            handleLoadMore();
+        }
     };
 
     const confirmDelete = (id, name, multiple = false) => setDeleteDialog({ open: true, id, name, multiple });
@@ -356,7 +391,7 @@ export const Products = () => {
                 )}
 
                 {/* Table */}
-                <TableContainer sx={{ maxHeight: 520 }}>
+                <TableContainer sx={{ maxHeight: 520 }} onScroll={handleScroll}>
                     <Table stickyHeader size="small" aria-label="products table">
                         <TableHead>
                             <TableRow>
@@ -526,16 +561,14 @@ export const Products = () => {
                     </Table>
                 </TableContainer>
 
-                <TablePagination
-                    rowsPerPageOptions={[50, 100, 150, 200]}
-                    component="div"
-                    count={(productData?.totalPages || 0) * rowsPerPage}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                    sx={{ borderTop: '1px solid #f3f4f6' }}
-                />
+                {/* Infinity Scroll Loading Indicator */}
+                <div style={{ padding: '16px', borderTop: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    {loadingMore && <CircularProgress size={20} />}
+                    {loadingMore && <span style={{ fontSize: 13, color: '#6b7280' }}>Loading more products...</span>}
+                    {!hasMore && productData?.products?.length > 0 && (
+                        <span style={{ fontSize: 12, color: '#9ca3af' }}>You've reached the end</span>
+                    )}
+                </div>
             </div>
 
             {/* ── Delete Dialog ── */}
