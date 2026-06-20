@@ -677,6 +677,7 @@ function App() {
             fontWeight: 600,
             borderRadius: 10,
             boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+            zIndex: 1000
           },
         }}
       />
