@@ -160,23 +160,23 @@ const MarketplaceAddProduct = () => {
     const handleChangeProductWeight = (e) => { const v = e.target.value; setProductWeight(typeof v === 'string' ? v.split(',') : v); formFields.productWeight = v; };
     const handleChangeProductSize = (e) => { const v = e.target.value; setProductSize(typeof v === 'string' ? v.split(',') : v); formFields.size = v; };
     const onChangeInput = (e) => {
-        const { name, value } = e.target;
-        setFormFields((p) => {
-            const updated = { ...p, [name]: value };
+    const { name, value } = e.target;
+    setFormFields((p) => {
+        const updated = { ...p, [name]: value };
 
-            // Auto-calculate discount when price or oldPrice changes
-            const price = name === 'price' ? parseFloat(value) : parseFloat(updated.price);
-            const oldPrice = name === 'oldPrice' ? parseFloat(value) : parseFloat(updated.oldPrice);
+        // Auto-calculate discount when price or oldPrice changes
+        const price = name === 'price' ? parseFloat(value) : parseFloat(updated.price);
+        const oldPrice = name === 'oldPrice' ? parseFloat(value) : parseFloat(updated.oldPrice);
 
-            if (price > 0 && oldPrice > 0 && oldPrice > price) {
-                updated.discount = Math.round(((oldPrice - price) / oldPrice) * 100);
-            } else {
-                updated.discount = 0;
-            }
+        if (price > 0 && oldPrice > 0 && oldPrice > price) {
+            updated.discount = Math.round(((oldPrice - price) / oldPrice) * 100);
+        } else {
+            updated.discount = 0;
+        }
 
-            return updated;
-        });
-    };
+        return updated;
+    });
+};
     const onChangeRating = (e) => { setFormFields((p) => ({ ...p, rating: e.target.value })); };
     const handleChangeSwitch = (e) => { setCheckedSwitch(e.target.checked); formFields.isDisplayOnHomeBanner = e.target.checked; };
 
@@ -365,16 +365,7 @@ const MarketplaceAddProduct = () => {
                             {!isGoMarketSeller && (
                                 <>
                                     <Field label="MRP Price *"><input style={inp} type="number" name="oldPrice" value={formFields.oldPrice} onChange={onChangeInput} placeholder="0.00" /></Field>
-                                    <Field label="Discount %">
-                                        <input
-                                            style={{ ...inp, background: '#f3f4f6', color: '#6b7280', cursor: 'not-allowed' }}
-                                            type="number"
-                                            name="discount"
-                                            value={formFields.discount}
-                                            readOnly
-                                            placeholder="Auto calculated"
-                                        />
-                                    </Field>
+                                    <Field label="Discount % *"><input style={inp} type="number" name="discount" value={formFields.discount} onChange={onChangeInput} placeholder="0" /></Field>
                                 </>
                             )}
                             {isGoMarketSeller && (
