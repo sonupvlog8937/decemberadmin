@@ -1035,8 +1035,8 @@ const ReceiptModal = ({ order, onClose }) => {
 /* ═══════════════════════════════════════════════════════
    MAIN ORDERS COMPONENT
 ═══════════════════════════════════════════════════════ */
-
-const SELLER_ROLES = ["SELLER", "GROCERY_SELLER", "RESTAURANT_SELLER"];
+const GO_MARKET_SHOP_SELLERS = ["GROCERY_SELLER", "FASHION_SELLER", "ELECTRONICS_SELLER", "MEDICAL_SELLER", "BEAUTY_SELLER", "HOME_KITCHEN_SELLER", "GIFTS_TOYS_SELLER", "BOOKS_STATIONERY_SELLER", "JEWELLERY_SELLER", "HARDWARE_SELLER", "AUTOMOBILE_SELLER"];
+const SELLER_ROLES = ["SELLER", "GROCERY_SELLER", "RESTAURANT_SELLER", "FASHION_SELLER", "ELECTRONICS_SELLER", "MEDICAL_SELLER", "BEAUTY_SELLER", "HOME_KITCHEN_SELLER", "GIFTS_TOYS_SELLER", "BOOKS_STATIONERY_SELLER", "JEWELLERY_SELLER", "HARDWARE_SELLER", "AUTOMOBILE_SELLER"];
 const isSellerRole = (role) => SELLER_ROLES.includes(role);
 
 const Orders = () => {
@@ -1055,7 +1055,7 @@ const Orders = () => {
   const context = useContext(MyContext);
 const isSellerView = isSellerRole(context?.userData?.role);
   const isDeliveryRider = context?.userData?.role === "DELIVERY_RIDER";
-  const isGrocerySeller = context?.userData?.role === "GROCERY_SELLER";
+  const isGoMarketShopSeller = GO_MARKET_SHOP_SELLERS.includes(context?.userData?.role);
   const isRestaurantSeller = context?.userData?.role === "RESTAURANT_SELLER";
   const ordersListEndpoint = isDeliveryRider
     ? "/api/order/rider/orders"
@@ -1064,10 +1064,10 @@ const isSellerView = isSellerRole(context?.userData?.role);
       : "/api/order/order-list";
   const ordersTitle = isDeliveryRider
     ? "My Assigned Orders"
-    : isGrocerySeller ? "Live Grocery Orders" : isRestaurantSeller ? "Live Kitchen Orders" : isSellerView ? "Store Orders" : "Orders";
+     : isGoMarketShopSeller ? "Live Shop Orders" : isRestaurantSeller ? "Live Kitchen Orders" : isSellerView ? "Store Orders" : "Orders";
   const ordersSubtitle = isDeliveryRider
     ? "Orders assigned to you for delivery"
-    : isGrocerySeller
+    : isGoMarketShopSeller
     ? "Accept, pack, and dispatch quick-commerce orders"
     : isRestaurantSeller
       ? "Accept and prepare orders for minutes delivery"
@@ -1087,10 +1087,10 @@ const isSellerView = isSellerRole(context?.userData?.role);
   };
 
   useEffect(() => {
-    if (isGrocerySeller || isRestaurantSeller || context?.userData?.role === "ADMIN") {
+    if (isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") {
       fetchDataFromApi('/api/order/delivery-riders').then((res) => setRiders(res?.riders || res?.data || []));
     }
-  }, [isGrocerySeller, isRestaurantSeller, context?.userData?.role]);
+  }, [isGoMarketShopSeller, isRestaurantSeller, context?.userData?.role]);
 
   const assignRider = (orderId, riderId) => {
     if (!riderId) return;
@@ -1462,7 +1462,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             >
                               🧾 Receipt
                             </button>
-                            {(isGrocerySeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && order?.order_status !== "delivered" && (
+                             {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && order?.order_status !== "delivered" && (
                               <Select size="small" displayEmpty value={order?.deliveryAssignment?.riderId?._id || order?.deliveryAssignment?.riderId || ""} onChange={(e) => assignRider(order._id, e.target.value)} disabled={assigningOrderId === order._id} sx={{ minWidth: 150, fontSize: 11, background: '#eef2ff', borderRadius: '8px' }}>
                                 <MenuItem value="" disabled>{order?.deliveryAssignment?.riderId ? 'Assigned rider' : 'Assign rider'}</MenuItem>
                                 {riders.map((r) => <MenuItem key={r._id} value={r._id}>{r.name}</MenuItem>)}

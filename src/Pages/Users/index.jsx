@@ -59,6 +59,8 @@ const initialSellerForm = {
     password: '',
     mobile: '',
     role: 'SELLER',
+    storeName: '',
+    marketId: '',
 };
 
 const ROLE_OPTIONS = [
@@ -66,17 +68,40 @@ const ROLE_OPTIONS = [
     { value: 'SELLER', label: 'SELLER' },
     { value: 'GROCERY_SELLER', label: 'GROCERY SELLER' },
     { value: 'RESTAURANT_SELLER', label: 'RESTAURANT SELLER' },
+    { value: 'FASHION_SELLER', label: 'FASHION SELLER' },
+    { value: 'ELECTRONICS_SELLER', label: 'ELECTRONICS SELLER' },
+    { value: 'MEDICAL_SELLER', label: 'MEDICAL SELLER' },
+    { value: 'BEAUTY_SELLER', label: 'BEAUTY SELLER' },
+    { value: 'HOME_KITCHEN_SELLER', label: 'HOME & KITCHEN SELLER' },
+    { value: 'GIFTS_TOYS_SELLER', label: 'GIFTS & TOYS SELLER' },
+    { value: 'BOOKS_STATIONERY_SELLER', label: 'BOOKS & STATIONERY SELLER' },
+    { value: 'JEWELLERY_SELLER', label: 'JEWELLERY SELLER' },
+    { value: 'HARDWARE_SELLER', label: 'HARDWARE SELLER' },
+    { value: 'AUTOMOBILE_SELLER', label: 'AUTOMOBILE SELLER' },
     { value: 'DELIVERY_RIDER', label: 'DELIVERY RIDER' },
     { value: 'ADMIN', label: 'ADMIN' },
 ];
-const SELLER_ROLES = ['SELLER', 'GROCERY_SELLER', 'RESTAURANT_SELLER'];
+const SELLER_ROLES = ['SELLER', 'GROCERY_SELLER', 'RESTAURANT_SELLER', 'FASHION_SELLER', 'ELECTRONICS_SELLER', 'MEDICAL_SELLER', 'BEAUTY_SELLER', 'HOME_KITCHEN_SELLER', 'GIFTS_TOYS_SELLER', 'BOOKS_STATIONERY_SELLER', 'JEWELLERY_SELLER', 'HARDWARE_SELLER', 'AUTOMOBILE_SELLER'];
 const isSellerRole = (role) => SELLER_ROLES.includes(role);
+
+// GoMarket seller roles that need store + market provisioning
+const GO_MARKET_SELLER_ROLES = SELLER_ROLES.filter((r) => r !== 'SELLER');
 
 const roleConfig = {
     ADMIN: { color: '#7c3aed', bg: '#ede9fe', icon: <FaUserShield size={11} /> },
     SELLER: { color: '#0369a1', bg: '#e0f2fe', icon: <FaStore size={11} /> },
     GROCERY_SELLER: { color: '#047857', bg: '#d1fae5', icon: <FaStore size={11} /> },
     RESTAURANT_SELLER: { color: '#c2410c', bg: '#ffedd5', icon: <FaStore size={11} /> },
+    FASHION_SELLER: { color: '#ec4899', bg: '#fce7f3', icon: <FaStore size={11} /> },
+    ELECTRONICS_SELLER: { color: '#3b82f6', bg: '#dbeafe', icon: <FaStore size={11} /> },
+    MEDICAL_SELLER: { color: '#ef4444', bg: '#fee2e2', icon: <FaStore size={11} /> },
+    BEAUTY_SELLER: { color: '#d946ef', bg: '#fae8ff', icon: <FaStore size={11} /> },
+    HOME_KITCHEN_SELLER: { color: '#f59e0b', bg: '#fef3c7', icon: <FaStore size={11} /> },
+    GIFTS_TOYS_SELLER: { color: '#f472b6', bg: '#fce7f3', icon: <FaStore size={11} /> },
+    BOOKS_STATIONERY_SELLER: { color: '#8b5cf6', bg: '#ede9fe', icon: <FaStore size={11} /> },
+    JEWELLERY_SELLER: { color: '#fbbf24', bg: '#fef3c7', icon: <FaStore size={11} /> },
+    HARDWARE_SELLER: { color: '#6b7280', bg: '#f3f4f6', icon: <FaStore size={11} /> },
+    AUTOMOBILE_SELLER: { color: '#14b8a6', bg: '#ccfbf1', icon: <FaStore size={11} /> },
     DELIVERY_RIDER: { color: '#0891b2', bg: '#cffafe', icon: <FaTruckFast size={11} /> },
     USER: { color: '#374151', bg: '#f3f4f6', icon: <FaUsers size={11} /> },
 };
@@ -142,6 +167,9 @@ export const Users = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null); // { id, name, multiple }
     const [formErrors, setFormErrors] = useState({});
+    const [markets, setMarkets] = useState([]);
+
+    const isGoMarketRole = GO_MARKET_SELLER_ROLES.includes(sellerForm.role);
 
     const context = useContext(MyContext);
 
@@ -238,6 +266,7 @@ export const Users = () => {
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sellerForm.email)) errors.email = 'Invalid email';
         if (!sellerForm.password) errors.password = 'Password is required';
         else if (sellerForm.password.length < 6) errors.password = 'Min 6 characters';
+        if (isGoMarketRole && !sellerForm.marketId) errors.marketId = 'Please select a market';
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -827,7 +856,7 @@ export const Users = () => {
                         onChange={(e) => setSellerForm((prev) => ({ ...prev, mobile: e.target.value }))}
                         fullWidth
                     />
-                     <Select
+                    <Select
                         size="small"
                         value={sellerForm.role}
                         onChange={(e) => setSellerForm((prev) => ({ ...prev, role: e.target.value }))}
@@ -837,6 +866,49 @@ export const Users = () => {
                             <MenuItem key={role.value} value={role.value}>{role.label}</MenuItem>
                         ))}
                     </Select>
+
+                    {/* GoMarket seller fields: Store Name + Market */}
+                    {isGoMarketRole && (
+                        <>
+                            <TextField
+                                size="small"
+                                label="Store Name"
+                                value={sellerForm.storeName}
+                                onChange={(e) => setSellerForm((prev) => ({ ...prev, storeName: e.target.value }))}
+                                placeholder={sellerForm.name || 'Enter store name'}
+                                fullWidth
+                            />
+                            <Select
+                                size="small"
+                                value={sellerForm.marketId}
+                                onChange={(e) => setSellerForm((prev) => ({ ...prev, marketId: e.target.value }))}
+                                displayEmpty
+                                fullWidth
+                                error={!!formErrors.marketId}
+                                onOpen={() => {
+                                    if (markets.length === 0) {
+                                        fetchDataFromApi('/api/go-market/markets').then((res) => {
+                                            if (res?.data) setMarkets(res.data);
+                                        });
+                                    }
+                                }}
+                            >
+                                <MenuItem value="" disabled>
+                                    <em>Select Market</em>
+                                </MenuItem>
+                                {markets.map((m) => (
+                                    <MenuItem key={m._id} value={m._id}>
+                                        {m.name} — {m.city}, {m.state}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            {formErrors.marketId && (
+                                <span style={{ color: '#d32f2f', fontSize: 12, marginTop: -4 }}>
+                                    {formErrors.marketId}
+                                </span>
+                            )}
+                        </>
+                    )}
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
                     <Button

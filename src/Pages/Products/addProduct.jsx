@@ -569,7 +569,15 @@ const MarketplaceAddProduct = () => {
 const AddProduct = () => {
     const context = useContext(MyContext);
     const role = context?.userData?.role;
-    if (role === 'GROCERY_SELLER') return <GroceryAddProduct />;
+    
+    // All GoMarket shop sellers use GroceryAddProduct
+    const GO_MARKET_SHOP_SELLERS = [
+        'GROCERY_SELLER', 'FASHION_SELLER', 'ELECTRONICS_SELLER', 'MEDICAL_SELLER',
+        'BEAUTY_SELLER', 'HOME_KITCHEN_SELLER', 'GIFTS_TOYS_SELLER',
+        'BOOKS_STATIONERY_SELLER', 'JEWELLERY_SELLER', 'HARDWARE_SELLER', 'AUTOMOBILE_SELLER'
+    ];
+    
+    if (GO_MARKET_SHOP_SELLERS.includes(role)) return <GroceryAddProduct />;
     if (role === 'RESTAURANT_SELLER') return <RestaurantAddProduct />;
     return <MarketplaceAddProduct />;
 };

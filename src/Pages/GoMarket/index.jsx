@@ -18,6 +18,7 @@ const configs = {
     icon: MdStorefront,
     color: "#6366f1",
     endpoint: "/api/go-market/markets",
+    tableColumns: ["name", "city", "latitude", "longitude"],
     fields: [
       { key: "name",      label: "Market Name",  type: "text",   required: true },
       { key: "city",      label: "City",         type: "text",   required: true },
@@ -52,7 +53,7 @@ const configs = {
     endpoint: "/api/go-market/categories",
     fields: [
       { key: "name", label: "Category Name", type: "text", required: true },
-      { key: "type", label: "Category Type", type: "select", options: ["grocery", "restaurant"], required: true },
+      { key: "type", label: "Category Type", type: "select", options: ["grocery", "restaurant", "fashion", "electronics", "medical", "beauty", "home_kitchen", "gifts_toys", "books_stationery", "jewellery", "hardware", "automobile"], required: true },
       { key: "image", label: "Image URL", type: "url" },
       { key: "description", label: "Description", type: "textarea" },
       { key: "status", label: "Status", type: "select", options: ["active", "inactive"] },
@@ -67,7 +68,7 @@ const configs = {
     fields: [
       { key: "parentId", label: "Parent Category", type: "parentCategory", required: true },
       { key: "name", label: "Sub Category Name", type: "text", required: true },
-      { key: "type", label: "Category Type", type: "select", options: ["grocery", "restaurant"], required: true },
+      { key: "type", label: "Category Type", type: "select", options: ["grocery", "restaurant", "fashion", "electronics", "medical", "beauty", "home_kitchen", "gifts_toys", "books_stationery", "jewellery", "hardware", "automobile"], required: true },
       { key: "image", label: "Image URL", type: "url" },
       { key: "description", label: "Description", type: "textarea" },
       { key: "status", label: "Status", type: "select", options: ["active", "inactive"] },
@@ -79,6 +80,7 @@ const configs = {
     icon: MdShoppingCart,
     color: "#10b981",
     endpoint: "/api/go-market/grocery-shops",
+    tableColumns: ["shopName", "address", "latitude", "longitude"],
     fields: [
       { key: "marketId",      label: "Market",         type: "marketSelect",     required: true },
       { key: "ownerId",       label: "Owner",          type: "ownerSelect",     required: true },
@@ -88,6 +90,7 @@ const configs = {
       { key: "address",       label: "Address",        type: "text" },
       { key: "latitude",      label: "Latitude",       type: "number" },
       { key: "longitude",     label: "Longitude",      type: "number" },
+      { key: "deliveryMinutes", label: "Delivery Minutes", type: "number" },
       { key: "rating",        label: "Rating",         type: "number" },
       { key: "totalProducts", label: "Total Products", type: "number" },
       { key: "description",   label: "Description",    type: "textarea" },
@@ -100,6 +103,7 @@ const configs = {
     icon: MdRestaurant,
     color: "#ef4444",
     endpoint: "/api/go-market/restaurants",
+    tableColumns: ["restaurantName", "address", "latitude", "longitude"],
     fields: [
       { key: "marketId",        label: "Market",        type: "marketSelect",     required: true },
       { key: "ownerId",         label: "Owner",         type: "ownerSelect",     required: true },
@@ -109,6 +113,7 @@ const configs = {
       { key: "address",         label: "Address",       type: "text" },
       { key: "latitude",        label: "Latitude",      type: "number" },
       { key: "longitude",       label: "Longitude",     type: "number" },
+      { key: "deliveryMinutes", label: "Delivery Minutes", type: "number" },
       { key: "rating",          label: "Rating",        type: "number" },
       { key: "totalMenus",      label: "Total Menus",   type: "number" },
       { key: "totalItems",      label: "Total Items",   type: "number" },
@@ -276,8 +281,27 @@ const GoMarketAdminPage = () => {
   const Icon = config.icon;
   const context = useContext(MyContext);
   const userRole = context?.userData?.role || "";
-  const sellerCategoryType =
-    userRole === "GROCERY_SELLER" ? "grocery" : userRole === "RESTAURANT_SELLER" ? "restaurant" : "";
+  
+  // Map seller role to category type
+  const getRoleCategoryType = (role) => {
+    const mapping = {
+      GROCERY_SELLER: "grocery",
+      RESTAURANT_SELLER: "restaurant",
+      FASHION_SELLER: "fashion",
+      ELECTRONICS_SELLER: "electronics",
+      MEDICAL_SELLER: "medical",
+      BEAUTY_SELLER: "beauty",
+      HOME_KITCHEN_SELLER: "home_kitchen",
+      GIFTS_TOYS_SELLER: "gifts_toys",
+      BOOKS_STATIONERY_SELLER: "books_stationery",
+      JEWELLERY_SELLER: "jewellery",
+      HARDWARE_SELLER: "hardware",
+      AUTOMOBILE_SELLER: "automobile",
+    };
+    return mapping[role] || "";
+  };
+  
+  const sellerCategoryType = getRoleCategoryType(userRole);
   const isSpecialtySeller = Boolean(sellerCategoryType);
 
   useEffect(() => {
@@ -398,7 +422,12 @@ const GoMarketAdminPage = () => {
 
   const visibleFields = useMemo(() => config.fields, [config.fields]);
 
-  const displayColumns = useMemo(() => visibleFields.slice(0, 4), [visibleFields]);
+  const displayColumns = useMemo(
+    () => config.tableColumns
+      ? visibleFields.filter(f => config.tableColumns.includes(f.key))
+      : visibleFields.slice(0, 4),
+    [visibleFields, config.tableColumns]
+  );
 
   const getCellValue = (row, key) => {
     const v = row[key];
@@ -406,6 +435,13 @@ const GoMarketAdminPage = () => {
     if (typeof v === "boolean") return v
       ? <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-xs"><MdCheck /> Yes</span>
       : <span className="text-gray-400 text-xs">No</span>;
+    // Highlight missing/zero coordinates in red
+    if ((key === "latitude" || key === "longitude") && (!v || v === 0 || v === "0")) {
+      return <span className="text-red-500 font-bold text-xs">⚠ {v || "not set"}</span>;
+    }
+    if (key === "latitude" || key === "longitude") {
+      return <span className="text-emerald-700 font-mono font-bold text-xs">📍 {v}</span>;
+    }
     const str = String(v?.name || v?.shopName || v?.restaurantName || v);
     return <span className="truncate block max-w-[160px]" title={str}>{str}</span>;
   };
@@ -487,6 +523,39 @@ const GoMarketAdminPage = () => {
             </div>
 
             <form onSubmit={submit} className="p-5">
+              {/* Get Current Location button — shown for resources that have lat/lng fields */}
+              {visibleFields.some(f => f.key === "latitude") && (
+                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="text-xs font-bold text-emerald-700">📍 Location Coordinates</p>
+                    <p className="text-[11px] text-emerald-600 mt-0.5">
+                      Current: lat <strong>{form.latitude || "—"}</strong>, lng <strong>{form.longitude || "—"}</strong>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!navigator.geolocation) { toast.error("Geolocation not supported"); return; }
+                      toast.loading("Getting location…", { id: "geo" });
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          setForm(f => ({
+                            ...f,
+                            latitude: pos.coords.latitude.toFixed(6),
+                            longitude: pos.coords.longitude.toFixed(6),
+                          }));
+                          toast.success(`Location set: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`, { id: "geo" });
+                        },
+                        (err) => toast.error("Could not get location: " + err.message, { id: "geo" }),
+                        { enableHighAccuracy: true, timeout: 10000 }
+                      );
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition"
+                  >
+                    📍 Use My Location
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-5">
                 {visibleFields.map((field) => (
                   <label key={field.key} className={`flex flex-col gap-1.5 ${field.type === "textarea" ? "sm:col-span-2" : ""}`}>
