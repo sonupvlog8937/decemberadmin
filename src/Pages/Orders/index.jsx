@@ -80,6 +80,12 @@ const STYLES = `
   to { transform: rotate(360deg); }
 }
 
+/* Pulse animation for live location indicator */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
 /* ── Stats strip ── */
 .ao-stats {
   display: flex; gap: 1px;
@@ -710,6 +716,7 @@ const ReceiptModal = ({ order, onClose }) => {
 
   // Filter products for seller view - only show products that belong to this seller
   const isSellerView = SELLER_ROLES.includes(context?.userData?.role);
+  const isDeliveryRider = context?.userData?.role === "DELIVERY_RIDER";
   const currentSellerId = context?.userData?._id || context?.userData?.id;
   
   const products = isSellerView && currentSellerId
@@ -920,26 +927,229 @@ const ReceiptModal = ({ order, onClose }) => {
                   
                   const attrs = attrParts.join(" · ");
                   
+                  // Get seller info for this product (for delivery riders)
+                  const seller = item.sellerId;
+                  const sellerProfile = seller?.sellerProfile || seller?.storeProfile || {};
+                  const storeName = sellerProfile?.storeName || seller?.name || 'N/A';
+                  const storeAddress = sellerProfile?.storeAddress || sellerProfile?.address || '';
+                  const phone = seller?.mobile || seller?.phone || sellerProfile?.mobile || '';
+                  const storeLatitude = sellerProfile?.latitude || sellerProfile?.storeLatitude;
+                  const storeLongitude = sellerProfile?.longitude || sellerProfile?.storeLongitude;
+                  
+                  // Current/live location (if available, different from store address)
+                  const currentLatitude = seller?.currentLatitude || seller?.liveLatitude;
+                  const currentLongitude = seller?.currentLongitude || seller?.liveLongitude;
+                  const hasCurrentLocation = currentLatitude && currentLongitude;
+                  const locationUpdatedAt = seller?.locationUpdatedAt;
+                  
                   return (
-                    <tr key={i}>
-                      <td style={{ paddingLeft:14 }}>
-                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                          {item.image
-                            ? <img src={item.image} alt={item.productTitle} className="ao-rcpt-prod-img" />
-                            : <div className="ao-rcpt-prod-noimg">🖼️</div>
-                          }
-                          <div>
-                            <div className="ao-rcpt-prod-name">{item.productTitle || "—"}</div>
-                            {attrs && <div className="ao-rcpt-prod-attr">{attrs}</div>}
-                            <div className="ao-rcpt-prod-attr" style={{ marginTop:2 }}>{fmt(item.price)} / unit</div>
+                    <React.Fragment key={i}>
+                      <tr>
+                        <td style={{ paddingLeft:14 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                            {item.image
+                              ? <img src={item.image} alt={item.productTitle} className="ao-rcpt-prod-img" />
+                              : <div className="ao-rcpt-prod-noimg">🖼️</div>
+                            }
+                            <div>
+                              <div className="ao-rcpt-prod-name">{item.productTitle || "—"}</div>
+                              {attrs && <div className="ao-rcpt-prod-attr">{attrs}</div>}
+                              <div className="ao-rcpt-prod-attr" style={{ marginTop:2 }}>{fmt(item.price)} / unit</div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td style={{ textAlign:"center", fontWeight:700, fontSize:13 }}>×{item.quantity || 1}</td>
-                      <td style={{ paddingRight:14 }}>
-                        <div className="ao-rcpt-prod-amt">{fmt((item.price || 0) * (item.quantity || 1))}</div>
-                      </td>
-                    </tr>
+                        </td>
+                        <td style={{ textAlign:"center", fontWeight:700, fontSize:13 }}>×{item.quantity || 1}</td>
+                        <td style={{ paddingRight:14 }}>
+                          <div className="ao-rcpt-prod-amt">{fmt((item.price || 0) * (item.quantity || 1))}</div>
+                        </td>
+                      </tr>
+                      
+                      {/* Seller info row - only for delivery riders */}
+                      {isDeliveryRider && seller && (
+                        <tr>
+                          <td colSpan="3" style={{ paddingLeft:14, paddingRight:14, paddingTop:4, paddingBottom:10, background:"#fffbeb", borderBottom:"1px solid #fef3c7" }}>
+                            <div style={{ 
+                              display:"flex", 
+                              alignItems:"center", 
+                              gap:10, 
+                              background:"#fff", 
+                              border:"1px solid #fde68a", 
+                              borderRadius:8, 
+                              padding:"8px 12px"
+                            }}>
+                              {/* Store icon */}
+                              <div style={{ 
+                                width:32, 
+                                height:32, 
+                                background:"#fef3c7", 
+                                borderRadius:6, 
+                                display:"flex", 
+                                alignItems:"center", 
+                                justifyContent:"center", 
+                                fontSize:16,
+                                flexShrink:0
+                              }}>
+                                🏪
+                              </div>
+                              
+                              {/* Seller details */}
+                              <div style={{ flex:1, minWidth:0 }}>
+                                <div style={{ 
+                                  fontSize:12, 
+                                  fontWeight:700, 
+                                  color:"#92400e", 
+                                  marginBottom:3,
+                                  display:"flex",
+                                  alignItems:"center",
+                                  gap:6
+                                }}>
+                                  <span>Pickup from: {storeName}</span>
+                                  {storeLatitude && storeLongitude && (
+                                    <a
+                                      href={`https://www.google.com/maps?q=${storeLatitude},${storeLongitude}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{
+                                        display:"inline-flex",
+                                        alignItems:"center",
+                                        gap:3,
+                                        fontSize:10,
+                                        fontWeight:600,
+                                        color:"#2563eb",
+                                        textDecoration:"none",
+                                        padding:"2px 6px",
+                                        background:"#dbeafe",
+                                        border:"1px solid #93c5fd",
+                                        borderRadius:4,
+                                        transition:"all 0.15s"
+                                      }}
+                                      onMouseOver={(e) => {
+                                        e.currentTarget.style.background = "#bfdbfe";
+                                      }}
+                                      onMouseOut={(e) => {
+                                        e.currentTarget.style.background = "#dbeafe";
+                                      }}
+                                    >
+                                      📍 Navigate
+                                    </a>
+                                  )}
+                                </div>
+                                <div style={{ 
+                                  fontSize:11, 
+                                  color:"#78716c",
+                                  display:"flex",
+                                  flexWrap:"wrap",
+                                  gap:8,
+                                  alignItems:"center"
+                                }}>
+                                  {storeAddress && (
+                                    <span>📍 {storeAddress}</span>
+                                  )}
+                                  {phone && (
+                                    <span>
+                                      📞 <a 
+                                        href={`tel:${phone}`} 
+                                        style={{ 
+                                          color:"#2563eb", 
+                                          textDecoration:"none", 
+                                          fontWeight:600 
+                                        }}
+                                      >
+                                        {phone}
+                                      </a>
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* Current Location - Live location of seller */}
+                                {hasCurrentLocation && (
+                                  <div style={{ 
+                                    marginTop: 8,
+                                    padding: "6px 10px",
+                                    background: "#dcfce7",
+                                    border: "1px solid #86efac",
+                                    borderRadius: 6,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    fontSize: 11
+                                  }}>
+                                    <span style={{ 
+                                      width: 6, 
+                                      height: 6, 
+                                      background: "#16a34a", 
+                                      borderRadius: "50%",
+                                      display: "inline-block",
+                                      animation: "pulse 2s infinite"
+                                    }} />
+                                    <span style={{ fontWeight: 600, color: "#15803d" }}>
+                                      Current Location:
+                                    </span>
+                                    <a
+                                      href={`https://www.google.com/maps?q=${currentLatitude},${currentLongitude}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{
+                                        color: "#15803d",
+                                        textDecoration: "none",
+                                        fontWeight: 600
+                                      }}
+                                    >
+                                      {currentLatitude.toFixed(6)}, {currentLongitude.toFixed(6)}
+                                    </a>
+                                    <a
+                                      href={`https://www.google.com/maps?q=${currentLatitude},${currentLongitude}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{
+                                        display:"inline-flex",
+                                        alignItems:"center",
+                                        gap:3,
+                                        fontSize:10,
+                                        fontWeight:600,
+                                        color:"#15803d",
+                                        textDecoration:"none",
+                                        padding:"2px 6px",
+                                        background:"#bbf7d0",
+                                        border:"1px solid #86efac",
+                                        borderRadius:4,
+                                        transition:"all 0.15s",
+                                        marginLeft: "auto"
+                                      }}
+                                      onMouseOver={(e) => {
+                                        e.currentTarget.style.background = "#a7f3d0";
+                                      }}
+                                      onMouseOut={(e) => {
+                                        e.currentTarget.style.background = "#bbf7d0";
+                                      }}
+                                    >
+                                      🚀 Track Live
+                                    </a>
+                                    {locationUpdatedAt && (
+                                      <span style={{ 
+                                        fontSize: 9, 
+                                        color: "#16a34a",
+                                        marginLeft: 4
+                                      }}>
+                                        {(() => {
+                                          const now = new Date();
+                                          const updated = new Date(locationUpdatedAt);
+                                          const diffMinutes = Math.floor((now - updated) / (1000 * 60));
+                                          if (diffMinutes < 1) return "Just now";
+                                          if (diffMinutes < 60) return `${diffMinutes}m ago`;
+                                          const diffHours = Math.floor(diffMinutes / 60);
+                                          return `${diffHours}h ago`;
+                                        })()}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
