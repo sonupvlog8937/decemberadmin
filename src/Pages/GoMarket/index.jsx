@@ -61,12 +61,12 @@ const configs = {
   },
   subcategories: {
     title: "Go Market Sub Categories",
-    subtitle: "Admin only — linked to a parent category",
+    subtitle: "Admin only — linked to a parent category or subcategory",
     icon: MdCategory,
     color: "#0d9488",
     endpoint: "/api/go-market/subcategories",
     fields: [
-      { key: "parentId", label: "Parent Category", type: "parentCategory", required: true },
+      { key: "parentId", label: "Parent Category / Subcategory", type: "parentCategory", required: true },
       { key: "name", label: "Sub Category Name", type: "text", required: true },
       { key: "type", label: "Category Type", type: "select", options: ["grocery", "restaurant", "fashion", "electronics", "medical", "beauty", "home_kitchen", "gifts_toys", "books_stationery", "jewellery", "hardware", "automobile"], required: true },
       { key: "image", label: "Image URL", type: "url" },
@@ -218,12 +218,36 @@ const FieldInput = ({ field, value, onChange, parentCategoryOptions = [], market
     );
   }
   if (field.type === "parentCategory") {
+    const selectedValue = value && typeof value === "object"
+      ? JSON.stringify({ id: value.id, model: value.model, type: value.type })
+      : value ?? "";
+
     return (
-      <select className={base} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
+      <select
+        className={base}
+        value={selectedValue}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (!raw) return onChange("");
+          try {
+            const parsed = JSON.parse(raw);
+            return onChange(parsed);
+          } catch {
+            return onChange(raw);
+          }
+        }}
+      >
         <option value="">Select parent category</option>
-        {parentCategoryOptions.map((cat) => (
-          <option key={cat._id} value={cat._id}>{cat.name}</option>
-        ))}
+        {parentCategoryOptions.map((cat) => {
+          const isSubcategory = Boolean(cat.parentId);
+          const model = cat.parentModel || (isSubcategory ? "GoMarketSubCategory" : "GoMarketCategory");
+          const optionValue = JSON.stringify({ id: cat._id, model, type: cat.type });
+          return (
+            <option key={`${cat._id}-${model}`} value={optionValue}>
+              {isSubcategory ? "Subcategory" : "Category"}: {cat.name}
+            </option>
+          );
+        })}
       </select>
     );
   }
@@ -312,6 +336,7 @@ const GoMarketAdminPage = () => {
 
   const [rows, setRows] = useState([]);
   const [parentCategories, setParentCategories] = useState([]);
+  const [parentSubcategories, setParentSubcategories] = useState([]);
   const [markets, setMarkets] = useState([]);
   const [owners, setOwners] = useState([]);
   const [form, setForm] = useState(blankFor(config.fields));
@@ -325,7 +350,7 @@ const GoMarketAdminPage = () => {
   const [formOpen, setFormOpen] = useState(false);
 
   useEffect(() => {
-    setForm(blankFor(config.fields));
+    setForm({ ...blankFor(config.fields), parentModel: "GoMarketCategory" });
     setEditingId(null);
     setPage(1);
     setFormOpen(false);
@@ -349,6 +374,10 @@ const GoMarketAdminPage = () => {
     let url = "/api/go-market/categories?limit=100&status=active";
     if (sellerCategoryType) url += `&type=${sellerCategoryType}`;
     fetchDataFromApi(url).then((res) => setParentCategories(res?.data || []));
+
+    let subUrl = "/api/go-market/subcategories?limit=1000&status=active";
+    if (sellerCategoryType) subUrl += `&type=${sellerCategoryType}`;
+    fetchDataFromApi(subUrl).then((res) => setParentSubcategories(res?.data || []));
   }, [resource, sellerCategoryType]);
 
   useEffect(() => {
@@ -373,13 +402,22 @@ const GoMarketAdminPage = () => {
     e.preventDefault();
     setSaving(true);
     const payload = Object.fromEntries(
-      Object.entries(form).map(([k, v]) => [k, v === "true" ? true : v === "false" ? false : v])
+      Object.entries(form).map(([k, v]) => {
+        let value = v === "true" ? true : v === "false" ? false : v;
+        if (k === "parentId" && value && typeof value === "object") {
+          value = value.id;
+        }
+        return [k, value];
+      })
     );
     if (sellerCategoryType && resource === "categories") {
       payload.type = sellerCategoryType;
     }
     if (resource === "subcategories" && sellerCategoryType) {
       payload.type = sellerCategoryType;
+    }
+    if (resource === "subcategories") {
+      payload.parentModel = form.parentModel || "GoMarketCategory";
     }
     const res = editingId
       ? await editData(`${config.endpoint}/${editingId}`, payload)
@@ -389,7 +427,7 @@ const GoMarketAdminPage = () => {
       toast.error(res?.message || "Save failed");
     } else {
       toast.success(res?.message || (editingId ? "Record updated" : "Record created"));
-      setForm(blankFor(config.fields));
+      setForm({ ...blankFor(config.fields), parentModel: "GoMarketCategory" });
       setEditingId(null);
       setFormOpen(false);
       load();
@@ -398,11 +436,12 @@ const GoMarketAdminPage = () => {
 
   const edit = (row) => {
     setEditingId(row._id);
-    setForm(
-      Object.fromEntries(
+    setForm({
+      ...Object.fromEntries(
         config.fields.map((f) => [f.key, (row[f.key]?._id ?? row[f.key]) ?? ""])
-      )
-    );
+      ),
+      parentModel: row.parentModel || "GoMarketCategory",
+    });
     setFormOpen(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -567,7 +606,7 @@ const GoMarketAdminPage = () => {
                       field={field}
                       value={form[field.key]}
                       onChange={(v) => setForm((f) => ({ ...f, [field.key]: v }))}
-                      parentCategoryOptions={parentCategories}
+                      parentCategoryOptions={resource === "subcategories" ? [...parentCategories, ...parentSubcategories] : parentCategories}
                       marketOptions={markets}
                       ownerOptions={owners}
                     />
