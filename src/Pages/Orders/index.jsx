@@ -1252,6 +1252,7 @@ const isSellerRole = (role) => SELLER_ROLES.includes(role);
 const Orders = () => {
   const [openOrderId,      setOpenOrderId]       = useState(null);
   const [orderStatus,      setOrderStatus]        = useState("");
+  const [riderFilter,      setRiderFilter]        = useState("available");
   const [ordersData,       setOrdersData]         = useState([]);
   const [orders,           setOrders]             = useState([]);
   const [pageOrder,        setPageOrder]          = useState(1);
@@ -1273,10 +1274,14 @@ const isSellerView = isSellerRole(context?.userData?.role);
       ? "/api/order/seller/orders" 
       : "/api/order/order-list";
   const ordersTitle = isDeliveryRider
-    ? "My Assigned Orders"
+    ? riderFilter === "available"
+      ? "Available Orders"
+      : "My Assigned Orders"
      : isGoMarketShopSeller ? "Live Shop Orders" : isRestaurantSeller ? "Live Kitchen Orders" : isSellerView ? "Store Orders" : "Orders";
   const ordersSubtitle = isDeliveryRider
-    ? "Orders assigned to you for delivery"
+    ? riderFilter === "available"
+      ? "Browse open rider orders in your market"
+      : "Orders you have accepted or confirmed"
     : isGoMarketShopSeller
     ? "Accept, pack, and dispatch quick-commerce orders"
     : isRestaurantSeller
@@ -1315,11 +1320,42 @@ const isSellerView = isSellerRole(context?.userData?.role);
     }).finally(() => setAssigningOrderId(null));
   };
 
+  const broadcastOrder = (orderId) => {
+    setAssigningOrderId(orderId);
+    editData(`/api/order/broadcast-order/${orderId}`, {}).then((res) => {
+      if (res?.data?.success || res?.data?.error === false) {
+        context.alertBox('success', res?.data?.message || 'Order broadcast to market riders');
+        refreshOrders();
+      } else {
+        context.alertBox('error', res?.data?.message || 'Could not broadcast order');
+      }
+    }).finally(() => setAssigningOrderId(null));
+  };
+
+  const buildOrdersListUrl = (includeTotals = false) => {
+    if (!isDeliveryRider) {
+      return includeTotals ? ordersListEndpoint : `${ordersListEndpoint}?page=${pageOrder}&limit=20`;
+    }
+
+    const params = new URLSearchParams();
+    if (!includeTotals) {
+      params.set('page', pageOrder);
+      params.set('limit', 20);
+    }
+    if (riderFilter === 'available') {
+      params.set('status', 'broadcast');
+    } else if (riderFilter === 'assigned') {
+      params.set('status', 'assigned');
+    }
+    const queryString = params.toString();
+    return `${ordersListEndpoint}${queryString ? `?${queryString}` : ''}`;
+  };
+
   const refreshOrders = () => {
-    fetchDataFromApi(`${ordersListEndpoint}?page=${pageOrder}&limit=20`).then((res) => {
+    fetchDataFromApi(buildOrdersListUrl()).then((res) => {
       if (res?.error === false) { setOrdersData(res?.data || []); setOrders(res); }
     });
-    fetchDataFromApi(`${ordersListEndpoint}`).then((res) => {
+    fetchDataFromApi(buildOrdersListUrl(true)).then((res) => {
       if (res?.error === false) setTotalOrdersData(res);
     });
   };
@@ -1394,13 +1430,13 @@ const isSellerView = isSellerRole(context?.userData?.role);
   /* fetch on page / status change */
   useEffect(() => {
     context?.setProgress(50);
-    fetchDataFromApi(`${ordersListEndpoint}?page=${pageOrder}&limit=20`).then((res) => {
+    fetchDataFromApi(buildOrdersListUrl()).then((res) => {
       if (res?.error === false) { setOrdersData(res?.data); setOrders(res); context?.setProgress(100); }
     });
-    fetchDataFromApi(`${ordersListEndpoint}`).then((res) => {
+    fetchDataFromApi(buildOrdersListUrl(true)).then((res) => {
       if (res?.error === false) setTotalOrdersData(res);
     });
-  }, [orderStatus, pageOrder]);
+  }, [orderStatus, pageOrder, riderFilter]);
 
   /* search filter */
   useEffect(() => {
@@ -1448,6 +1484,40 @@ const isSellerView = isSellerRole(context?.userData?.role);
           <div className="ao-topbar-left">
            <h2 className="ao-topbar-title">{ordersTitle}</h2>
             <p className="ao-topbar-sub">{ordersSubtitle}</p>
+            {isDeliveryRider && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setRiderFilter('available')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 10,
+                    border: riderFilter === 'available' ? '1px solid #2563eb' : '1px solid #d1d5db',
+                    background: riderFilter === 'available' ? '#eff6ff' : '#ffffff',
+                    color: riderFilter === 'available' ? '#1d4ed8' : '#374151',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Available Orders
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRiderFilter('assigned')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 10,
+                    border: riderFilter === 'assigned' ? '1px solid #2563eb' : '1px solid #d1d5db',
+                    background: riderFilter === 'assigned' ? '#eff6ff' : '#ffffff',
+                    color: riderFilter === 'assigned' ? '#1d4ed8' : '#374151',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  My Orders
+                </button>
+              </div>
+            )}
           </div>
           <button 
             className="ao-refresh-btn" 
@@ -1673,10 +1743,19 @@ const isSellerView = isSellerRole(context?.userData?.role);
                               🧾 Receipt
                             </button>
                              {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && order?.order_status !== "delivered" && (
-                              <Select size="small" displayEmpty value={order?.deliveryAssignment?.riderId?._id || order?.deliveryAssignment?.riderId || ""} onChange={(e) => assignRider(order._id, e.target.value)} disabled={assigningOrderId === order._id} sx={{ minWidth: 150, fontSize: 11, background: '#eef2ff', borderRadius: '8px' }}>
-                                <MenuItem value="" disabled>{order?.deliveryAssignment?.riderId ? 'Assigned rider' : 'Assign rider'}</MenuItem>
-                                {riders.map((r) => <MenuItem key={r._id} value={r._id}>{r.name}</MenuItem>)}
-                              </Select>
+                              <>
+                                {(isGoMarketShopSeller || isRestaurantSeller) && (
+                                  <button className="ao-receipt-btn" onClick={() => broadcastOrder(order._id)} disabled={assigningOrderId === order._id || order?.deliveryAssignment?.status === 'broadcast'}>
+                                    {order?.deliveryAssignment?.status === 'broadcast' ? 'Broadcasted to riders' : 'Broadcast to market riders'}
+                                  </button>
+                                )}
+                                {context?.userData?.role === "ADMIN" && (
+                                  <Select size="small" displayEmpty value={order?.deliveryAssignment?.riderId?._id || order?.deliveryAssignment?.riderId || ""} onChange={(e) => assignRider(order._id, e.target.value)} disabled={assigningOrderId === order._id} sx={{ minWidth: 150, fontSize: 11, background: '#eef2ff', borderRadius: '8px' }}>
+                                    <MenuItem value="" disabled>{order?.deliveryAssignment?.riderId ? 'Assigned rider' : 'Assign rider'}</MenuItem>
+                                    {riders.map((r) => <MenuItem key={r._id} value={r._id}>{r.name}</MenuItem>)}
+                                  </Select>
+                                )}
+                              </>
                             )}
                             {order?.deliveryAssignment?.status && <span className="ao-badge ao-badge-online">Rider: {order.deliveryAssignment.status}</span>}
                             {isDeliveryRider && (
