@@ -312,8 +312,7 @@ const GoMarketStoreProfile = () => {
       else delete payload.latitude;
       if (payload.longitude !== "") payload.longitude = parseFloat(payload.longitude);
       else delete payload.longitude;
-      if (payload.deliveryMinutes !== "") payload.deliveryMinutes = parseInt(payload.deliveryMinutes, 10);
-      else delete payload.deliveryMinutes;
+      delete payload.deliveryMinutes;
       const res = await editData(endpoint, payload);
       const resData = res?.data || res;
       const isSuccess = resData?.success === true || resData?.error === false;
@@ -521,14 +520,14 @@ const GoMarketStoreProfile = () => {
                   <Field icon={FiTruck} label="Shipping Minutes">
                     <input
                       name="deliveryMinutes"
-                      value={editForm.deliveryMinutes}
-                      onChange={onChange}
-                      placeholder="e.g. 10"
+                      value="0"
+                      disabled
                       type="number"
-                      min="5"
-                      max="12"
                       style={S.input(false)}
                     />
+                    <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 6 }}>
+                      Shipping time is managed by the platform and cannot be edited.
+                    </p>
                   </Field>
                 </div>
               </>
@@ -544,7 +543,7 @@ const GoMarketStoreProfile = () => {
                 </div>
                 <div>
                   <label style={S.label}><FiTruck size={10} />Shipping Minutes</label>
-                  <div style={S.viewValue}>{form.deliveryMinutes ? `${form.deliveryMinutes} min` : "Not set"}</div>
+                  <div style={S.viewValue}>0 min</div>
                 </div>
               </div>
             )}
