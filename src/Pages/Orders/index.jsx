@@ -1262,6 +1262,7 @@ const Orders = () => {
   const [receiptOrder,     setReceiptOrder]       = useState(null);
   const [riders,           setRiders]             = useState([]);
   const [assigningOrderId, setAssigningOrderId]   = useState(null);
+  const [deliveryLoadingOrderId, setDeliveryLoadingOrderId] = useState(null);
 
   const context = useContext(MyContext);
 const isSellerView = isSellerRole(context?.userData?.role);
@@ -1364,23 +1365,28 @@ const isSellerView = isSellerRole(context?.userData?.role);
     editData(`/api/order/rider/orders/${orderId}/confirm`, {}).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         context.alertBox('success', res?.data?.message || 'Order confirmed for delivery');
+        setRiderFilter('assigned');
         refreshOrders();
       } else context.alertBox('error', res?.data?.message || 'Could not confirm order');
     });
   };
 
   const sendOtpAndDeliver = async (orderId) => {
-    const sent = await postData(`/api/order/rider/orders/${orderId}/send-otp`, {});
-    if (sent?.error === true) return context.alertBox('error', sent?.message || 'Could not send delivery OTP');
-    context.alertBox('success', sent?.message || 'OTP sent to customer email');
-    const otp = window.prompt('Enter the OTP received by customer to mark this order delivered');
-    if (!otp) return;
-    editData(`/api/order/rider/orders/${orderId}/deliver`, { otp }).then((res) => {
+    setDeliveryLoadingOrderId(orderId);
+    try {
+      const sent = await postData(`/api/order/rider/orders/${orderId}/send-otp`, {});
+      if (sent?.error === true) return context.alertBox('error', sent?.message || 'Could not send delivery OTP');
+      context.alertBox('success', sent?.message || 'OTP sent to customer email');
+      const otp = window.prompt('Enter the OTP received by customer to mark this order delivered');
+      if (!otp) return;
+      const res = await editData(`/api/order/rider/orders/${orderId}/deliver`, { otp });
       if (res?.data?.success || res?.data?.error === false) {
         context.alertBox('success', res?.data?.message || 'Order delivered and ₹20 earning credited');
         refreshOrders();
       } else context.alertBox('error', res?.data?.message || 'Delivery OTP verification failed');
-    });
+    } finally {
+      setDeliveryLoadingOrderId(null);
+    }
   };
 
   const callCustomer = (order) => {
@@ -1589,6 +1595,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                   const addr   = order?.delivery_address || {};
                   const isCOD  = !order?.paymentId;
                   const sc     = getStatusStyle(order?.order_status);
+                  const assignedRiderName = order?.deliveryAssignment?.riderId?.name || "";
 
                   // Calculate seller-specific total
                   const currentSellerId = context?.userData?._id || context?.userData?.id;
@@ -1745,11 +1752,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
                              {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && order?.order_status !== "delivered" && (
                               <>
                                 {(isGoMarketShopSeller || isRestaurantSeller) && (
-                                  <button className="ao-receipt-btn" onClick={() => broadcastOrder(order._id)} disabled={assigningOrderId === order._id || order?.deliveryAssignment?.status === 'broadcast'}>
-                                    {order?.deliveryAssignment?.status === 'broadcast' ? 'Broadcasted to riders' : 'Broadcast to market riders'}
+                                  <button className="ao-receipt-btn" onClick={() => broadcastOrder(order._id)} disabled={assigningOrderId === order._id || order?.deliveryAssignment?.status === 'broadcast' || Boolean(order?.deliveryAssignment?.riderId)}>
+                                    {order?.deliveryAssignment?.status === 'broadcast' ? 'Assigned to market riders' : 'Assign to market riders'}
                                   </button>
                                 )}
-                                {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && (
+                                {context?.userData?.role === "ADMIN" && (
                                   <Select size="small" displayEmpty value={order?.deliveryAssignment?.riderId?._id || order?.deliveryAssignment?.riderId || ""} onChange={(e) => assignRider(order._id, e.target.value)} disabled={assigningOrderId === order._id || Boolean(order?.deliveryAssignment?.riderId) || order?.deliveryAssignment?.status === 'delivered'} sx={{ minWidth: 150, fontSize: 11, background: '#eef2ff', borderRadius: '8px' }}>
                                     <MenuItem value="" disabled>{order?.deliveryAssignment?.riderId ? 'Assigned rider' : 'Assign rider'}</MenuItem>
                                     {riders.map((r) => <MenuItem key={r._id} value={r._id}>{r.name}</MenuItem>)}
@@ -1757,7 +1764,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                 )}
                               </>
                             )}
-                            {order?.deliveryAssignment?.status && <span className="ao-badge ao-badge-online">Rider: {order.deliveryAssignment.status}</span>}
+                            {order?.deliveryAssignment?.status && (
+                              <span className="ao-badge ao-badge-online">
+                                {assignedRiderName ? `Assigned to: ${assignedRiderName}` : `Rider: ${order.deliveryAssignment.status}`}
+                              </span>
+                            )}
                             {isDeliveryRider && (
                               <>
                                 <button className="ao-receipt-btn" onClick={() => callCustomer(order)}>📞 Call Customer</button>
@@ -1765,7 +1776,9 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                   <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)}>✅ Confirm Order</button>
                                 )}
                                 {order?.deliveryAssignment?.status !== "delivered" && order?.deliveryAssignment?.status !== "assigned" && (
-                                  <button className="ao-receipt-btn" onClick={() => sendOtpAndDeliver(order._id)}>📬 Deliver with OTP</button>
+                                  <button className="ao-receipt-btn" onClick={() => sendOtpAndDeliver(order._id)} disabled={deliveryLoadingOrderId === order._id}>
+                                    {deliveryLoadingOrderId === order._id ? '⏳ Sending OTP...' : '📬 Deliver with OTP'}
+                                  </button>
                                 )}
                                 <span className="ao-badge ao-badge-online">Earning: ₹{Number(order?.deliveryAssignment?.earningAmount || 20).toFixed(0)}</span>
                               </>
