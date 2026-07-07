@@ -1749,8 +1749,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                     {order?.deliveryAssignment?.status === 'broadcast' ? 'Broadcasted to riders' : 'Broadcast to market riders'}
                                   </button>
                                 )}
-                                {context?.userData?.role === "ADMIN" && (
-                                  <Select size="small" displayEmpty value={order?.deliveryAssignment?.riderId?._id || order?.deliveryAssignment?.riderId || ""} onChange={(e) => assignRider(order._id, e.target.value)} disabled={assigningOrderId === order._id} sx={{ minWidth: 150, fontSize: 11, background: '#eef2ff', borderRadius: '8px' }}>
+                                {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && (
+                                  <Select size="small" displayEmpty value={order?.deliveryAssignment?.riderId?._id || order?.deliveryAssignment?.riderId || ""} onChange={(e) => assignRider(order._id, e.target.value)} disabled={assigningOrderId === order._id || Boolean(order?.deliveryAssignment?.riderId) || order?.deliveryAssignment?.status === 'delivered'} sx={{ minWidth: 150, fontSize: 11, background: '#eef2ff', borderRadius: '8px' }}>
                                     <MenuItem value="" disabled>{order?.deliveryAssignment?.riderId ? 'Assigned rider' : 'Assign rider'}</MenuItem>
                                     {riders.map((r) => <MenuItem key={r._id} value={r._id}>{r.name}</MenuItem>)}
                                   </Select>
