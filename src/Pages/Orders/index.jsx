@@ -1262,7 +1262,8 @@ const Orders = () => {
   const [receiptOrder,     setReceiptOrder]       = useState(null);
   const [riders,           setRiders]             = useState([]);
   const [assigningOrderId, setAssigningOrderId]   = useState(null);
-  const [deliveryLoadingOrderId, setDeliveryLoadingOrderId] = useState(null);
+  const [isRefreshing,    setIsRefreshing]      = useState(false);
+  const [processingOrderId, setProcessingOrderId] = useState(null);
 
   const context = useContext(MyContext);
 const isSellerView = isSellerRole(context?.userData?.role);
@@ -1345,54 +1346,78 @@ const isSellerView = isSellerRole(context?.userData?.role);
     }
     if (riderFilter === 'available') {
       params.set('status', 'broadcast');
-    } else if (riderFilter === 'assigned') {
-      params.set('status', 'assigned');
     }
+    // For 'assigned' filter, don't set status parameter to show all assigned orders (assigned, confirmed, otp_sent)
     const queryString = params.toString();
     return `${ordersListEndpoint}${queryString ? `?${queryString}` : ''}`;
   };
 
   const refreshOrders = () => {
+    setIsRefreshing(true);
     fetchDataFromApi(buildOrdersListUrl()).then((res) => {
       if (res?.error === false) { setOrdersData(res?.data || []); setOrders(res); }
     });
-    fetchDataFromApi(buildOrdersListUrl(true)).then((res) => {
-      if (res?.error === false) setTotalOrdersData(res);
-    });
+    // For rider, we don't need separate totals call since pagination is included in the same response
+    if (!isDeliveryRider) {
+      fetchDataFromApi(buildOrdersListUrl(true)).then((res) => {
+        if (res?.error === false) setTotalOrdersData(res);
+      }).finally(() => setIsRefreshing(false));
+    } else {
+      // For rider, use the same response for totals
+      fetchDataFromApi(buildOrdersListUrl()).then((res) => {
+        if (res?.error === false) setTotalOrdersData(res);
+      }).finally(() => setIsRefreshing(false));
+    }
   };
 
   const confirmAssignedOrder = (orderId) => {
+    setProcessingOrderId(orderId);
     editData(`/api/order/rider/orders/${orderId}/confirm`, {}).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         context.alertBox('success', res?.data?.message || 'Order confirmed for delivery');
-        setRiderFilter('assigned');
         refreshOrders();
       } else context.alertBox('error', res?.data?.message || 'Could not confirm order');
-    });
+    }).finally(() => setProcessingOrderId(null));
   };
 
   const sendOtpAndDeliver = async (orderId) => {
-    setDeliveryLoadingOrderId(orderId);
-    try {
-      const sent = await postData(`/api/order/rider/orders/${orderId}/send-otp`, {});
-      if (sent?.error === true) return context.alertBox('error', sent?.message || 'Could not send delivery OTP');
-      context.alertBox('success', sent?.message || 'OTP sent to customer email');
-      const otp = window.prompt('Enter the OTP received by customer to mark this order delivered');
-      if (!otp) return;
-      const res = await editData(`/api/order/rider/orders/${orderId}/deliver`, { otp });
+    setProcessingOrderId(orderId);
+    const sent = await postData(`/api/order/rider/orders/${orderId}/send-otp`, {});
+    if (sent?.error === true) {
+      setProcessingOrderId(null);
+      return context.alertBox('error', sent?.message || 'Could not send delivery OTP');
+    }
+    context.alertBox('success', sent?.message || 'OTP sent to customer email');
+    const otp = window.prompt('Enter the OTP received by customer to mark this order delivered');
+    if (!otp) {
+      setProcessingOrderId(null);
+      return;
+    }
+    editData(`/api/order/rider/orders/${orderId}/deliver`, { otp }).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         context.alertBox('success', res?.data?.message || 'Order delivered and ₹20 earning credited');
         refreshOrders();
       } else context.alertBox('error', res?.data?.message || 'Delivery OTP verification failed');
-    } finally {
-      setDeliveryLoadingOrderId(null);
-    }
+    }).finally(() => setProcessingOrderId(null));
   };
 
   const callCustomer = (order) => {
     const phone = order?.delivery_address?.mobile || order?.userId?.mobile;
     if (!phone) return context.alertBox('error', 'Customer phone number is not available');
     window.location.href = `tel:${phone}`;
+  };
+
+  const cancelRiderOrder = (orderId) => {
+    if (!window.confirm('Are you sure you want to cancel this order? This will remove it from your assignments and the order will be available for other riders.')) {
+      return;
+    }
+    setProcessingOrderId(orderId);
+    editData(`/api/order/rider/orders/${orderId}/cancel`, {}).then((res) => {
+      if (res?.data?.success || res?.data?.error === false) {
+        context.alertBox('success', res?.data?.message || 'Order cancelled successfully');
+        refreshOrders();
+      } else context.alertBox('error', res?.data?.message || 'Could not cancel order');
+    }).finally(() => setProcessingOrderId(null));
   };
 
   const handleReturnRefundUpdate = (id, mode) => {
@@ -1528,11 +1553,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
           <button 
             className="ao-refresh-btn" 
             onClick={refreshOrders}
-            disabled={false}
+            disabled={isRefreshing}
             title="Refresh orders"
           >
-            <span className="ao-refresh-icon">🔄</span>
-            Refresh
+            <span className={`ao-refresh-icon${isRefreshing ? ' spinning' : ''}`}>🔄</span>
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </button>
           <div className="ao-search-wrap">
             <SearchBox
@@ -1595,7 +1620,6 @@ const isSellerView = isSellerRole(context?.userData?.role);
                   const addr   = order?.delivery_address || {};
                   const isCOD  = !order?.paymentId;
                   const sc     = getStatusStyle(order?.order_status);
-                  const assignedRiderName = order?.deliveryAssignment?.riderId?.name || "";
 
                   // Calculate seller-specific total
                   const currentSellerId = context?.userData?._id || context?.userData?.id;
@@ -1752,35 +1776,90 @@ const isSellerView = isSellerRole(context?.userData?.role);
                              {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && order?.order_status !== "delivered" && (
                               <>
                                 {(isGoMarketShopSeller || isRestaurantSeller) && (
-                                  <button className="ao-receipt-btn" onClick={() => broadcastOrder(order._id)} disabled={assigningOrderId === order._id || order?.deliveryAssignment?.status === 'broadcast' || Boolean(order?.deliveryAssignment?.riderId)}>
-                                    {order?.deliveryAssignment?.status === 'broadcast' ? 'Assigned to market riders' : 'Assign to market riders'}
+                                  <button className="ao-receipt-btn" onClick={() => broadcastOrder(order._id)} disabled={assigningOrderId === order._id || order?.deliveryAssignment?.status === 'broadcast'}>
+                                    {assigningOrderId === order._id ? (
+                                      <>
+                                        <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
+                                        {' Broadcasting...'}
+                                      </>
+                                    ) : order?.deliveryAssignment?.status === 'broadcast' ? 'Broadcasted to riders' : 'Broadcast to market riders'}
                                   </button>
                                 )}
                                 {context?.userData?.role === "ADMIN" && (
-                                  <Select size="small" displayEmpty value={order?.deliveryAssignment?.riderId?._id || order?.deliveryAssignment?.riderId || ""} onChange={(e) => assignRider(order._id, e.target.value)} disabled={assigningOrderId === order._id || Boolean(order?.deliveryAssignment?.riderId) || order?.deliveryAssignment?.status === 'delivered'} sx={{ minWidth: 150, fontSize: 11, background: '#eef2ff', borderRadius: '8px' }}>
+                                  <Select size="small" displayEmpty value={order?.deliveryAssignment?.riderId?._id || order?.deliveryAssignment?.riderId || ""} onChange={(e) => assignRider(order._id, e.target.value)} disabled={assigningOrderId === order._id} sx={{ minWidth: 150, fontSize: 11, background: '#eef2ff', borderRadius: '8px' }}>
                                     <MenuItem value="" disabled>{order?.deliveryAssignment?.riderId ? 'Assigned rider' : 'Assign rider'}</MenuItem>
                                     {riders.map((r) => <MenuItem key={r._id} value={r._id}>{r.name}</MenuItem>)}
                                   </Select>
                                 )}
                               </>
                             )}
-                            {order?.deliveryAssignment?.status && (
-                              <span className="ao-badge ao-badge-online">
-                                {assignedRiderName ? `Assigned to: ${assignedRiderName}` : `Rider: ${order.deliveryAssignment.status}`}
-                              </span>
-                            )}
+                            {order?.deliveryAssignment?.status && <span className="ao-badge ao-badge-online">Rider: {order.deliveryAssignment.status}</span>}
                             {isDeliveryRider && (
                               <>
-                                <button className="ao-receipt-btn" onClick={() => callCustomer(order)}>📞 Call Customer</button>
-                                {order?.deliveryAssignment?.status === "assigned" && (
-                                  <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)}>✅ Confirm Order</button>
-                                )}
-                                {order?.deliveryAssignment?.status !== "delivered" && order?.deliveryAssignment?.status !== "assigned" && (
-                                  <button className="ao-receipt-btn" onClick={() => sendOtpAndDeliver(order._id)} disabled={deliveryLoadingOrderId === order._id}>
-                                    {deliveryLoadingOrderId === order._id ? '⏳ Sending OTP...' : '📬 Deliver with OTP'}
+                                {order?.deliveryAssignment?.status === "broadcast" && (
+                                  <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)} disabled={processingOrderId === order._id}>
+                                    {processingOrderId === order._id ? (
+                                      <>
+                                        <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
+                                        {' Confirming...'}
+                                      </>
+                                    ) : '✅ Confirm Order'}
                                   </button>
                                 )}
-                                <span className="ao-badge ao-badge-online">Earning: ₹{Number(order?.deliveryAssignment?.earningAmount || 20).toFixed(0)}</span>
+                                {order?.deliveryAssignment?.status === "assigned" && (
+                                  <>
+                                    <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)} disabled={processingOrderId === order._id}>
+                                      {processingOrderId === order._id ? (
+                                        <>
+                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
+                                          {' Confirming...'}
+                                        </>
+                                      ) : '✅ Confirm Order'}
+                                    </button>
+                                    <button className="ao-receipt-btn" onClick={() => cancelRiderOrder(order._id)} disabled={processingOrderId === order._id} style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
+                                      {processingOrderId === order._id ? (
+                                        <>
+                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
+                                          {' Cancelling...'}
+                                        </>
+                                      ) : '❌ Cancel Order'}
+                                    </button>
+                                  </>
+                                )}
+                                {order?.deliveryAssignment?.status === "confirmed" && (
+                                  <>
+                                    <button className="ao-receipt-btn" onClick={() => callCustomer(order)}>📞 Call Customer</button>
+                                    <button className="ao-receipt-btn" onClick={() => sendOtpAndDeliver(order._id)} disabled={processingOrderId === order._id}>
+                                      {processingOrderId === order._id ? (
+                                        <>
+                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
+                                          {' Delivering...'}
+                                        </>
+                                      ) : '📬 Deliver with OTP'}
+                                    </button>
+                                    <button className="ao-receipt-btn" onClick={() => cancelRiderOrder(order._id)} disabled={processingOrderId === order._id} style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
+                                      {processingOrderId === order._id ? (
+                                        <>
+                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
+                                          {' Cancelling...'}
+                                        </>
+                                      ) : '❌ Cancel Order'}
+                                    </button>
+                                  </>
+                                )}
+                                {order?.deliveryAssignment?.status === "otp_sent" && (
+                                  <>
+                                    <button className="ao-receipt-btn" onClick={() => callCustomer(order)}>📞 Call Customer</button>
+                                    <button className="ao-receipt-btn" onClick={() => sendOtpAndDeliver(order._id)} disabled={processingOrderId === order._id}>
+                                      {processingOrderId === order._id ? (
+                                        <>
+                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>�</span>
+                                          {' Delivering...'}
+                                        </>
+                                      ) : '�📬 Deliver with OTP'}
+                                    </button>
+                                  </>
+                                )}
                               </>
                             )}
                             {order?.returnRequest?.requested && order?.refund?.status !== "processed" && (
