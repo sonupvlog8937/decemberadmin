@@ -559,7 +559,7 @@ const fmt = (n) =>
   Number(n || 0).toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
 const fmtDate = (d) =>
-  d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+  d ? new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }) : "—";
 
 /* ── Status badge ── */
 const STATUS_COLORS = {
@@ -888,6 +888,117 @@ const ReceiptModal = ({ order, onClose }) => {
               )}
             </div>
           </div>
+
+          {/* User's Current Location (Go Market) - Show if user clicked "Use Current Location" */}
+          {order?.goMarketData?.userLocation?.coordinates && order.goMarketData.userLocation.coordinates[0] !== 0 && order.goMarketData.userLocation.coordinates[1] !== 0 && (
+            <div style={{ marginTop: '16px' }}>
+              <div className="ao-rcpt-info-card" style={{ background: '#ecfdf5', border: '1.5px solid #86efac' }}>
+                <div className="ao-rcpt-info-title" style={{ color: '#15803d' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  Customer's Current Location (Go Market)
+                </div>
+                <div style={{ 
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.07em',
+                  background: '#d1fae5',
+                  color: '#065f46',
+                  padding: '3px 8px',
+                  borderRadius: 5,
+                  marginBottom: 8
+                }}>
+                  <span style={{ 
+                    width: 6, 
+                    height: 6, 
+                    background: '#10b981', 
+                    borderRadius: '50%',
+                    display: 'inline-block'
+                  }} />
+                  Live GPS Location
+                </div>
+                <div className="ao-rcpt-info-line" style={{ fontWeight: 600, color: '#065f46', fontSize: '12px' }}>
+                  📍 {order.goMarketData.userLocation.coordinates[1].toFixed(6)}, {order.goMarketData.userLocation.coordinates[0].toFixed(6)}
+                </div>
+                {order.goMarketData.distanceDisplay && (
+                  <div className="ao-rcpt-info-line" style={{ color: '#059669', fontSize: '11px', marginTop: '4px' }}>
+                    📏 Distance: {order.goMarketData.distanceDisplay}
+                  </div>
+                )}
+                {order.goMarketData.userLocation.address && (
+                  <div className="ao-rcpt-info-line" style={{ color: '#047857', fontSize: '11px', marginTop: '4px' }}>
+                    {order.goMarketData.userLocation.address}
+                  </div>
+                )}
+                <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <a
+                    href={`https://www.google.com/maps?q=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#15803d',
+                      textDecoration: 'none',
+                      padding: '5px 12px',
+                      background: '#bbf7d0',
+                      border: '1px solid #86efac',
+                      borderRadius: '6px',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = '#a7f3d0';
+                      e.currentTarget.style.borderColor = '#6ee7b7';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = '#bbf7d0';
+                      e.currentTarget.style.borderColor = '#86efac';
+                    }}
+                  >
+                    🗺️ View on Map
+                  </a>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#2563eb',
+                      textDecoration: 'none',
+                      padding: '5px 12px',
+                      background: '#dbeafe',
+                      border: '1px solid #93c5fd',
+                      borderRadius: '6px',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = '#bfdbfe';
+                      e.currentTarget.style.borderColor = '#60a5fa';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = '#dbeafe';
+                      e.currentTarget.style.borderColor = '#93c5fd';
+                    }}
+                  >
+                    🧭 Get Directions
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Products */}
           <div className="ao-rcpt-sec-lbl">
@@ -1264,6 +1375,7 @@ const Orders = () => {
   const [assigningOrderId, setAssigningOrderId]   = useState(null);
   const [isRefreshing,    setIsRefreshing]      = useState(false);
   const [processingOrderId, setProcessingOrderId] = useState(null);
+  const [processingAction, setProcessingAction] = useState(null);
 
   const context = useContext(MyContext);
 const isSellerView = isSellerRole(context?.userData?.role);
@@ -1334,7 +1446,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
     }).finally(() => setAssigningOrderId(null));
   };
 
-  const buildOrdersListUrl = (includeTotals = false) => {
+  const buildOrdersListUrl = (includeTotals = false, filterValue = riderFilter) => {
     if (!isDeliveryRider) {
       return includeTotals ? ordersListEndpoint : `${ordersListEndpoint}?page=${pageOrder}&limit=20`;
     }
@@ -1344,53 +1456,73 @@ const isSellerView = isSellerRole(context?.userData?.role);
       params.set('page', pageOrder);
       params.set('limit', 20);
     }
-    if (riderFilter === 'available') {
+    if (filterValue === 'available') {
       params.set('status', 'broadcast');
+    } else if (filterValue === 'assigned') {
+      params.set('status', 'assigned');
     }
-    // For 'assigned' filter, don't set status parameter to show all assigned orders (assigned, confirmed, otp_sent)
     const queryString = params.toString();
     return `${ordersListEndpoint}${queryString ? `?${queryString}` : ''}`;
   };
 
-  const refreshOrders = () => {
+  const refreshOrders = (filterValue = riderFilter) => {
     setIsRefreshing(true);
-    fetchDataFromApi(buildOrdersListUrl()).then((res) => {
+    fetchDataFromApi(buildOrdersListUrl(false, filterValue)).then((res) => {
       if (res?.error === false) { setOrdersData(res?.data || []); setOrders(res); }
     });
     // For rider, we don't need separate totals call since pagination is included in the same response
     if (!isDeliveryRider) {
-      fetchDataFromApi(buildOrdersListUrl(true)).then((res) => {
+      fetchDataFromApi(buildOrdersListUrl(true, filterValue)).then((res) => {
         if (res?.error === false) setTotalOrdersData(res);
       }).finally(() => setIsRefreshing(false));
     } else {
       // For rider, use the same response for totals
-      fetchDataFromApi(buildOrdersListUrl()).then((res) => {
+      fetchDataFromApi(buildOrdersListUrl(false, filterValue)).then((res) => {
         if (res?.error === false) setTotalOrdersData(res);
       }).finally(() => setIsRefreshing(false));
     }
   };
 
-  const confirmAssignedOrder = (orderId) => {
+  const handleRiderFilterChange = (nextFilter) => {
+    setRiderFilter(nextFilter);
+    setPageOrder(1);
+    refreshOrders(nextFilter);
+  };
+
+  const startOrderProcessing = (orderId, action) => {
     setProcessingOrderId(orderId);
+    setProcessingAction(action);
+  };
+
+  const finishOrderProcessing = () => {
+    setProcessingOrderId(null);
+    setProcessingAction(null);
+  };
+
+  const isProcessingAction = (orderId, action) => processingOrderId === orderId && processingAction === action;
+
+  const confirmAssignedOrder = (orderId) => {
+    startOrderProcessing(orderId, 'confirm');
     editData(`/api/order/rider/orders/${orderId}/confirm`, {}).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         context.alertBox('success', res?.data?.message || 'Order confirmed for delivery');
-        refreshOrders();
+        setRiderFilter('assigned');
+        refreshOrders('assigned');
       } else context.alertBox('error', res?.data?.message || 'Could not confirm order');
-    }).finally(() => setProcessingOrderId(null));
+    }).finally(() => finishOrderProcessing());
   };
 
   const sendOtpAndDeliver = async (orderId) => {
-    setProcessingOrderId(orderId);
+    startOrderProcessing(orderId, 'deliver');
     const sent = await postData(`/api/order/rider/orders/${orderId}/send-otp`, {});
     if (sent?.error === true) {
-      setProcessingOrderId(null);
+      finishOrderProcessing();
       return context.alertBox('error', sent?.message || 'Could not send delivery OTP');
     }
     context.alertBox('success', sent?.message || 'OTP sent to customer email');
     const otp = window.prompt('Enter the OTP received by customer to mark this order delivered');
     if (!otp) {
-      setProcessingOrderId(null);
+      finishOrderProcessing();
       return;
     }
     editData(`/api/order/rider/orders/${orderId}/deliver`, { otp }).then((res) => {
@@ -1398,7 +1530,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
         context.alertBox('success', res?.data?.message || 'Order delivered and ₹20 earning credited');
         refreshOrders();
       } else context.alertBox('error', res?.data?.message || 'Delivery OTP verification failed');
-    }).finally(() => setProcessingOrderId(null));
+    }).finally(() => finishOrderProcessing());
   };
 
   const callCustomer = (order) => {
@@ -1411,13 +1543,13 @@ const isSellerView = isSellerRole(context?.userData?.role);
     if (!window.confirm('Are you sure you want to cancel this order? This will remove it from your assignments and the order will be available for other riders.')) {
       return;
     }
-    setProcessingOrderId(orderId);
+    startOrderProcessing(orderId, 'cancel');
     editData(`/api/order/rider/orders/${orderId}/cancel`, {}).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         context.alertBox('success', res?.data?.message || 'Order cancelled successfully');
         refreshOrders();
       } else context.alertBox('error', res?.data?.message || 'Could not cancel order');
-    }).finally(() => setProcessingOrderId(null));
+    }).finally(() => finishOrderProcessing());
   };
 
   const handleReturnRefundUpdate = (id, mode) => {
@@ -1481,11 +1613,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
       );
       setOrdersData(filtered);
     } else {
-      fetchDataFromApi(`${ordersListEndpoint}?page=${pageOrder}&limit=20`).then((res) => {
+      fetchDataFromApi(buildOrdersListUrl()).then((res) => {
         if (res?.error === false) { setOrders(res); setOrdersData(res?.data); }
       });
     }
-  }, [searchQuery]);
+  }, [searchQuery, riderFilter, pageOrder]);
 
   /* stats */
   const allOrders   = totalOrdersData?.data || [];
@@ -1519,7 +1651,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
               <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  onClick={() => setRiderFilter('available')}
+                  onClick={() => handleRiderFilterChange('available')}
                   style={{
                     padding: '8px 14px',
                     borderRadius: 10,
@@ -1534,7 +1666,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                 </button>
                 <button
                   type="button"
-                  onClick={() => setRiderFilter('assigned')}
+                  onClick={() => handleRiderFilterChange('assigned')}
                   style={{
                     padding: '8px 14px',
                     borderRadius: 10,
@@ -1552,7 +1684,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
           </div>
           <button 
             className="ao-refresh-btn" 
-            onClick={refreshOrders}
+            onClick={() => refreshOrders(riderFilter)}
             disabled={isRefreshing}
             title="Refresh orders"
           >
@@ -1685,6 +1817,58 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             {[addr.city, addr.state].filter(Boolean).join(", ")}
                           </div>
                           <div className="ao-addr-pin">PIN {addr.pincode}</div>
+                          
+                          {/* DEBUG: Log goMarketData */}
+                          {console.log('Order goMarketData:', order._id, order?.goMarketData)}
+                          
+                          {/* User's Current Location (Go Market) - Show if coordinates are valid */}
+                          {order?.goMarketData?.userLocation?.coordinates && 
+                           Array.isArray(order.goMarketData.userLocation.coordinates) &&
+                           order.goMarketData.userLocation.coordinates.length >= 2 &&
+                           order.goMarketData.userLocation.coordinates[0] !== 0 && 
+                           order.goMarketData.userLocation.coordinates[1] !== 0 && (
+                            <div style={{ marginTop: '6px' }}>
+                              <a
+                                href={`https://www.google.com/maps?q=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  fontSize: '10px',
+                                  fontWeight: 600,
+                                  color: '#059669',
+                                  textDecoration: 'none',
+                                  background: '#d1fae5',
+                                  padding: '3px 7px',
+                                  borderRadius: '5px',
+                                  border: '1px solid #86efac',
+                                  transition: 'all 0.15s'
+                                }}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.background = '#bbf7d0';
+                                  e.currentTarget.style.borderColor = '#6ee7b7';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.background = '#d1fae5';
+                                  e.currentTarget.style.borderColor = '#86efac';
+                                }}
+                                title={`GPS Location: ${order.goMarketData.userLocation.coordinates[1].toFixed(6)}, ${order.goMarketData.userLocation.coordinates[0].toFixed(6)}`}
+                              >
+                                <span style={{ 
+                                  width: 5, 
+                                  height: 5, 
+                                  background: '#10b981', 
+                                  borderRadius: '50%',
+                                  display: 'inline-block',
+                                  animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                                }} />
+                                📍 Live GPS
+                              </a>
+                            </div>
+                          )}
+                          
                           {addr?.latitude && addr?.longitude && (
                             <div style={{ marginTop: '6px' }}>
                               <a
@@ -1775,7 +1959,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             </button>
                              {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && order?.order_status !== "delivered" && (
                               <>
-                                {(isGoMarketShopSeller || isRestaurantSeller) && (
+                                {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && (
                                   <button className="ao-receipt-btn" onClick={() => broadcastOrder(order._id)} disabled={assigningOrderId === order._id || order?.deliveryAssignment?.status === 'broadcast'}>
                                     {assigningOrderId === order._id ? (
                                       <>
@@ -1797,8 +1981,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             {isDeliveryRider && (
                               <>
                                 {order?.deliveryAssignment?.status === "broadcast" && (
-                                  <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)} disabled={processingOrderId === order._id}>
-                                    {processingOrderId === order._id ? (
+                                  <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)} disabled={isProcessingAction(order._id, 'confirm')}>
+                                    {isProcessingAction(order._id, 'confirm') ? (
                                       <>
                                         <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
                                         {' Confirming...'}
@@ -1808,16 +1992,16 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                 )}
                                 {order?.deliveryAssignment?.status === "assigned" && (
                                   <>
-                                    <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)} disabled={processingOrderId === order._id}>
-                                      {processingOrderId === order._id ? (
+                                    <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)} disabled={isProcessingAction(order._id, 'confirm')}>
+                                      {isProcessingAction(order._id, 'confirm') ? (
                                         <>
                                           <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
                                           {' Confirming...'}
                                         </>
                                       ) : '✅ Confirm Order'}
                                     </button>
-                                    <button className="ao-receipt-btn" onClick={() => cancelRiderOrder(order._id)} disabled={processingOrderId === order._id} style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
-                                      {processingOrderId === order._id ? (
+                                    <button className="ao-receipt-btn" onClick={() => cancelRiderOrder(order._id)} disabled={isProcessingAction(order._id, 'cancel')} style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
+                                      {isProcessingAction(order._id, 'cancel') ? (
                                         <>
                                           <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
                                           {' Cancelling...'}
@@ -1829,16 +2013,16 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                 {order?.deliveryAssignment?.status === "confirmed" && (
                                   <>
                                     <button className="ao-receipt-btn" onClick={() => callCustomer(order)}>📞 Call Customer</button>
-                                    <button className="ao-receipt-btn" onClick={() => sendOtpAndDeliver(order._id)} disabled={processingOrderId === order._id}>
-                                      {processingOrderId === order._id ? (
+                                    <button className="ao-receipt-btn" onClick={() => sendOtpAndDeliver(order._id)} disabled={isProcessingAction(order._id, 'deliver')}>
+                                      {isProcessingAction(order._id, 'deliver') ? (
                                         <>
                                           <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
                                           {' Delivering...'}
                                         </>
                                       ) : '📬 Deliver with OTP'}
                                     </button>
-                                    <button className="ao-receipt-btn" onClick={() => cancelRiderOrder(order._id)} disabled={processingOrderId === order._id} style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
-                                      {processingOrderId === order._id ? (
+                                    <button className="ao-receipt-btn" onClick={() => cancelRiderOrder(order._id)} disabled={isProcessingAction(order._id, 'cancel')} style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
+                                      {isProcessingAction(order._id, 'cancel') ? (
                                         <>
                                           <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
                                           {' Cancelling...'}
@@ -1850,13 +2034,13 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                 {order?.deliveryAssignment?.status === "otp_sent" && (
                                   <>
                                     <button className="ao-receipt-btn" onClick={() => callCustomer(order)}>📞 Call Customer</button>
-                                    <button className="ao-receipt-btn" onClick={() => sendOtpAndDeliver(order._id)} disabled={processingOrderId === order._id}>
-                                      {processingOrderId === order._id ? (
+                                    <button className="ao-receipt-btn" onClick={() => sendOtpAndDeliver(order._id)} disabled={isProcessingAction(order._id, 'deliver')}>
+                                      {isProcessingAction(order._id, 'deliver') ? (
                                         <>
-                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>�</span>
+                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
                                           {' Delivering...'}
                                         </>
-                                      ) : '�📬 Deliver with OTP'}
+                                      ) : '📬 Deliver with OTP'}
                                     </button>
                                   </>
                                 )}
