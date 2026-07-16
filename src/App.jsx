@@ -667,7 +667,7 @@ function App() {
         className="topLoadingBar"
         height={3}
       />
-      <OrderSoundNotifier />
+      {/* <OrderSoundNotifier /> */}
       <Toaster
         position="top-right"
         toastOptions={{
