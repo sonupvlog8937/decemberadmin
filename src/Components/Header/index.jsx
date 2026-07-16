@@ -13,6 +13,7 @@ import Divider from "@mui/material/Divider";
 import { FaRegUser } from "react-icons/fa6";
 import { IoMdLogOut } from "react-icons/io";
 import { MyContext } from "../../App";
+import OrderSoundNotifier from "../OrderSoundNotifier";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { fetchDataFromApi } from "../../utils/api";
 import AddProduct from "../../Pages/Products/addProduct";
@@ -245,6 +246,8 @@ const Header = () => {
                     <span className="text-[14px]">Profile</span>
                   </MenuItem>
                 </Link>
+
+                <OrderSoundNotifier inline />
 
                 <MenuItem
                   onClick={logout}

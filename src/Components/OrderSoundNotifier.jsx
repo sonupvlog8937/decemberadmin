@@ -388,7 +388,7 @@ const OrderSoundNotifier = ({ inline = false }) => {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "12px", fontWeight: 600, color: "#212121", lineHeight: 1.3 }}>
-          {label}
+          {/* {label} */}
         </div>
         <div style={{ fontSize: "11px", color: "#757575", overflow: "hidden", textOverflow: "ellipsis" }}>
           {lastEvent ? `${lastEvent.text} #${lastEvent.orderNo}` : ""}
