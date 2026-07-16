@@ -503,7 +503,7 @@ const OrderSoundNotifier = ({ inline = false }) => {
   return (
     <>
       {permissionDialog}
-      {ReactDOM.createPortal(widget, document.body)}
+      {/* {ReactDOM.createPortal(widget, document.body)} */}
     </>
   );
 };
