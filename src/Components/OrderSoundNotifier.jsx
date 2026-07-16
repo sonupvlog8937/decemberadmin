@@ -349,92 +349,92 @@ const OrderSoundNotifier = ({ inline = false }) => {
     document.body
   );
 
-  const widget = (
-    <div
-      aria-label="Order notification sound controls"
-      style={{
-        position: "fixed",
-        top: "0px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 2147483647,
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-        background: "#ffffff",
-        border: "1px solid #e0e0e0",
-        borderRadius: "10px",
-        padding: "7px 14px",
-        boxShadow: "0 2px 16px rgba(0,0,0,0.13)",
-        minWidth: "220px",
-        maxWidth: "90vw",
-        whiteSpace: "nowrap",
-        pointerEvents: "auto",
-      }}
-    >
-      <div
-        aria-hidden="true"
-        style={{
-          width: "8px",
-          height: "8px",
-          borderRadius: "50%",
-          flexShrink: 0,
-          background: dotColor,
-          boxShadow: settings.enabled && status !== "offline"
-            ? "0 0 0 3px rgba(76,175,80,0.20)"
-            : "none",
-        }}
-      />
+  // const widget = (
+  //   <div
+  //     aria-label="Order notification sound controls"
+  //     style={{
+  //       position: "fixed",
+  //       top: "0px",
+  //       left: "50%",
+  //       transform: "translateX(-50%)",
+  //       zIndex: 2147483647,
+  //       display: "flex",
+  //       alignItems: "center",
+  //       gap: "10px",
+  //       background: "#ffffff",
+  //       border: "1px solid #e0e0e0",
+  //       borderRadius: "10px",
+  //       padding: "7px 14px",
+  //       boxShadow: "0 2px 16px rgba(0,0,0,0.13)",
+  //       minWidth: "220px",
+  //       maxWidth: "90vw",
+  //       whiteSpace: "nowrap",
+  //       pointerEvents: "auto",
+  //     }}
+  //   >
+  //     <div
+  //       aria-hidden="true"
+  //       style={{
+  //         width: "8px",
+  //         height: "8px",
+  //         borderRadius: "50%",
+  //         flexShrink: 0,
+  //         background: dotColor,
+  //         boxShadow: settings.enabled && status !== "offline"
+  //           ? "0 0 0 3px rgba(76,175,80,0.20)"
+  //           : "none",
+  //       }}
+  //     />
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {/* <div style={{ fontSize: "12px", fontWeight: 600, color: "#212121", lineHeight: 1.3 }}>
-          {label}
-        </div> */}
-        <div style={{ fontSize: "11px", color: "#757575", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {lastEvent ? `${lastEvent.text} #${lastEvent.orderNo}` : ""}
-        </div>
-      </div>
+  //     <div style={{ flex: 1, minWidth: 0 }}>
+  //       <div style={{ fontSize: "12px", fontWeight: 600, color: "#212121", lineHeight: 1.3 }}>
+  //         {label}
+  //       </div>
+  //       <div style={{ fontSize: "11px", color: "#757575", overflow: "hidden", textOverflow: "ellipsis" }}>
+  //         {lastEvent ? `${lastEvent.text} #${lastEvent.orderNo}` : ""}
+  //       </div>
+  //     </div>
 
-      <button
-        onClick={handleToggleClick}
-        type="button"
-        style={{
-          fontSize: "11px",
-          fontWeight: 600,
-          padding: "4px 10px",
-          borderRadius: "6px",
-          border: "none",
-          cursor: "pointer",
-          background: settings.enabled ? "#212121" : "#eeeeee",
-          color: settings.enabled ? "#ffffff" : "#616161",
-          transition: "background 0.2s, color 0.2s",
-          flexShrink: 0,
-        }}
-      >
-        {statusLabel}
-      </button>
+  //     <button
+  //       onClick={handleToggleClick}
+  //       type="button"
+  //       style={{
+  //         fontSize: "11px",
+  //         fontWeight: 600,
+  //         padding: "4px 10px",
+  //         borderRadius: "6px",
+  //         border: "none",
+  //         cursor: "pointer",
+  //         background: settings.enabled ? "#212121" : "#eeeeee",
+  //         color: settings.enabled ? "#ffffff" : "#616161",
+  //         transition: "background 0.2s, color 0.2s",
+  //         flexShrink: 0,
+  //       }}
+  //     >
+  //       {statusLabel}
+  //     </button>
 
-      {settings.enabled && !settings.unlocked && (
-        <button
-          onClick={(event) => { event.stopPropagation(); unlockAudio(); }}
-          type="button"
-          style={{
-            fontSize: "11px",
-            fontWeight: 600,
-            padding: "4px 10px",
-            borderRadius: "6px",
-            border: "1px solid #212121",
-            cursor: "pointer",
-            background: "transparent",
-            color: "#212121",
-            flexShrink: 0,
-          }}
-        >
-          Enable sound
-        </button>
-      )}
-    </div>
-  );
+  //     {settings.enabled && !settings.unlocked && (
+  //       <button
+  //         onClick={(event) => { event.stopPropagation(); unlockAudio(); }}
+  //         type="button"
+  //         style={{
+  //           fontSize: "11px",
+  //           fontWeight: 600,
+  //           padding: "4px 10px",
+  //           borderRadius: "6px",
+  //           border: "1px solid #212121",
+  //           cursor: "pointer",
+  //           background: "transparent",
+  //           color: "#212121",
+  //           flexShrink: 0,
+  //         }}
+  //       >
+  //         Enable sound
+  //       </button>
+  //     )}
+  //   </div>
+  // );
 
   if (inline) {
     return (
