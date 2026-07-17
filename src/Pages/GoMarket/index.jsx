@@ -65,6 +65,7 @@ const configs = {
     icon: MdCategory,
     color: "#0d9488",
     endpoint: "/api/go-market/subcategories",
+    tableColumns: ["name", "categoryId", "status"],
     fields: [
       { key: "type", label: "Category Type", type: "select", options: ["grocery", "restaurant", "fashion", "electronics", "medical", "beauty", "home_kitchen", "gifts_toys", "books_stationery", "jewellery", "hardware", "automobile"], required: true },
       { key: "categoryId", label: "Parent Category", type: "categorySelect", required: true },
@@ -80,6 +81,7 @@ const configs = {
     icon: MdCategory,
     color: "#0f766e",
     endpoint: "/api/go-market/subsubcategories",
+    tableColumns: ["name", "categoryId", "subCategoryId", "status"],
     fields: [
       { key: "type", label: "Category Type", type: "select", options: ["grocery", "restaurant", "fashion", "electronics", "medical", "beauty", "home_kitchen", "gifts_toys", "books_stationery", "jewellery", "hardware", "automobile"], required: true },
       { key: "categoryId", label: "Parent Category", type: "categorySelect", required: true },
@@ -577,6 +579,19 @@ const GoMarketAdminPage = () => {
     }
     if (key === "latitude" || key === "longitude") {
       return <span className="text-emerald-700 font-mono font-bold text-xs">📍 {v}</span>;
+    }
+    // For subcategories, show parent category name if populated
+    if (key === "parentId" && v?.name) {
+      return <span className="truncate block max-w-[160px]" title={v.name}>{v.name}</span>;
+    }
+    // For sub-sub-categories, show parent category and subcategory names
+    if (resource === "subsubcategories") {
+      if (key === "categoryId" && v?.name) {
+        return <span className="truncate block max-w-[160px]" title={v.name}>{v.name}</span>;
+      }
+      if (key === "subCategoryId" && v?.name) {
+        return <span className="truncate block max-w-[160px]" title={v.name}>{v.name}</span>;
+      }
     }
     const str = String(v?.name || v?.shopName || v?.restaurantName || v);
     return <span className="truncate block max-w-[160px]" title={str}>{str}</span>;
