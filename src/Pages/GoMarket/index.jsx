@@ -80,7 +80,7 @@ const configs = {
     subtitle: "Admin only — linked to a parent subcategory",
     icon: MdCategory,
     color: "#0f766e",
-    endpoint: "/api/go-market/subsubcategories",
+    endpoint: "/api/go-market/subcategories",
     tableColumns: ["name", "categoryId", "subCategoryId", "status"],
     fields: [
       { key: "type", label: "Category Type", type: "select", options: ["grocery", "restaurant", "fashion", "electronics", "medical", "beauty", "home_kitchen", "gifts_toys", "books_stationery", "jewellery", "hardware", "automobile"], required: true },
@@ -429,8 +429,11 @@ const GoMarketAdminPage = () => {
   const load = useCallback(async () => {
     setLoading(true);
     let url = `${config.endpoint}?page=${page}&limit=10&search=${encodeURIComponent(search)}`;
-    if (sellerCategoryType && (resource === "categories" || resource === "subcategories")) {
+    if (sellerCategoryType && (resource === "categories" || resource === "subcategories" || resource === "subsubcategories")) {
       url += `&type=${sellerCategoryType}`;
+    }
+    if (resource === "subsubcategories") {
+      url += "&parentModel=GoMarketSubCategory";
     }
     const res = await fetchDataFromApi(url);
     setRows(res?.data || []);
@@ -533,18 +536,13 @@ const GoMarketAdminPage = () => {
         payload.categoryId = getRefId(selectedSubCategory.categoryId || selectedSubCategory.parentId || payload.categoryId);
         payload.type = selectedSubCategory.type || payload.type;
       }
+      payload.parentId = payload.subCategoryId;
+      payload.parentModel = "GoMarketSubCategory";
     }
     let res = editingId
       ? await editData(`${config.endpoint}/${editingId}`, payload)
       : await postData(config.endpoint, payload);
       let responseBody = res?.data || res;
-
-    if (resource === "subsubcategories" && responseBody?.status === 404) {
-      res = editingId
-        ? await editData(`/api/go-market/sub-subcategories/${editingId}`, payload)
-        : await postData("/api/go-market/sub-subcategories", payload);
-      responseBody = res?.data || res;
-    }
     setSaving(false);
     if (responseBody?.error || responseBody?.success === false) {
       toast.error(getApiErrorMessage(responseBody));
@@ -565,6 +563,9 @@ const GoMarketAdminPage = () => {
     // For subcategories, ensure categoryId is set from parentId if not present
     if (resource === "subcategories" && row.parentId && !formValues.categoryId) {
       formValues.categoryId = row.parentId._id || row.parentId;
+    }
+    if (resource === "subsubcategories" && row.parentId && !formValues.subCategoryId) {
+      formValues.subCategoryId = row.parentId._id || row.parentId;
     }
     setForm({
       ...formValues,
@@ -620,8 +621,11 @@ const GoMarketAdminPage = () => {
     }
     // For sub-sub-categories, show parent category and subcategory names
     if (resource === "subsubcategories") {
-      if (key === "categoryId" && v?.name) {
-        return <span className="truncate block max-w-[160px]" title={v.name}>{v.name}</span>;
+      if (key === "subCategoryId") {
+        const parentSubCategory = v || row.parentId;
+        if (parentSubCategory?.name) {
+          return <span className="truncate block max-w-[160px]" title={parentSubCategory.name}>{parentSubCategory.name}</span>;
+        }
       }
       if (key === "subCategoryId" && v?.name) {
         return <span className="truncate block max-w-[160px]" title={v.name}>{v.name}</span>;
