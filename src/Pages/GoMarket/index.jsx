@@ -498,8 +498,8 @@ const GoMarketAdminPage = () => {
     const payload = Object.fromEntries(
       Object.entries(form).map(([k, v]) => {
         let value = v === "true" ? true : v === "false" ? false : v;
-        if (k === "parentId" && value && typeof value === "object") {
-          value = value.id;
+        if ((k === "parentId" || k === "categoryId" || k === "subCategoryId") && value && typeof value === "object") {
+          value = value.id || value._id;
         }
         return [k, value];
       })
