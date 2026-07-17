@@ -506,7 +506,7 @@ const GoMarketAdminPage = () => {
     if (resource === "subcategories") {
       if (payload.categoryId) {
         payload.parentId = payload.categoryId;
-        delete payload.categoryId;
+        // Keep categoryId as well for sub-sub-category filtering
       }
       payload.parentModel = "GoMarketCategory";
     }
@@ -581,8 +581,13 @@ const GoMarketAdminPage = () => {
       return <span className="text-emerald-700 font-mono font-bold text-xs">📍 {v}</span>;
     }
     // For subcategories, show parent category name if populated
-    if (key === "parentId" && v?.name) {
-      return <span className="truncate block max-w-[160px]" title={v.name}>{v.name}</span>;
+    if (key === "categoryId" && resource === "subcategories") {
+      if (v?.name) {
+        return <span className="truncate block max-w-[160px]" title={v.name}>{v.name}</span>;
+      }
+      if (row.parentId?.name) {
+        return <span className="truncate block max-w-[160px]" title={row.parentId.name}>{row.parentId.name}</span>;
+      }
     }
     // For sub-sub-categories, show parent category and subcategory names
     if (resource === "subsubcategories") {
