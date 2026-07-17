@@ -498,8 +498,8 @@ const GoMarketAdminPage = () => {
     const payload = Object.fromEntries(
       Object.entries(form).map(([k, v]) => {
         let value = v === "true" ? true : v === "false" ? false : v;
-        if ((k === "parentId" || k === "categoryId" || k === "subCategoryId") && value && typeof value === "object") {
-          value = value.id || value._id;
+        if ((k === "parentId" || k === "categoryId" || k === "subCategoryId") && value) {
+          value = getRefId(value);
         }
         return [k, value];
       })
@@ -508,6 +508,9 @@ const GoMarketAdminPage = () => {
       payload.type = sellerCategoryType;
     }
     if (resource === "subcategories" && sellerCategoryType) {
+      payload.type = sellerCategoryType;
+    }
+    if (resource === "subsubcategories" && sellerCategoryType) {
       payload.type = sellerCategoryType;
     }
     // For subcategories, map categoryId to parentId for backend compatibility
@@ -525,13 +528,24 @@ const GoMarketAdminPage = () => {
         setSaving(false);
         return;
       }
+      if (!payload.name || !payload.name.trim()) {
+        toast.error("Please enter sub sub category name");
+        setSaving(false);
+        return;
+      }
+      if (!payload.type) {
+        toast.error("Please select category type");
+        setSaving(false);
+        return;
+      }
     }
     const res = editingId
       ? await editData(`${config.endpoint}/${editingId}`, payload)
       : await postData(config.endpoint, payload);
     setSaving(false);
+    console.log("Save response:", res);
     if (res?.data?.error || res?.error) {
-      toast.error(res?.message || "Save failed");
+      toast.error(res?.message || res?.data?.message || "Save failed");
     } else {
       toast.success(res?.message || (editingId ? "Record updated" : "Record created"));
       setForm({ ...blankFor(config.fields), parentModel: "GoMarketCategory" });
