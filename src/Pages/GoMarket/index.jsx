@@ -234,7 +234,7 @@ const FieldInput = ({ field, value, onChange, parentCategoryOptions = [], parent
     );
   }
   if (field.type === "categorySelect") {
-    const optionsToUse = filteredCategories.length > 0 ? filteredCategories : parentCategoryOptions;
+    const optionsToUse = form.type ? filteredCategories : [];
     return (
       <select
         className={base}
@@ -253,7 +253,7 @@ const FieldInput = ({ field, value, onChange, parentCategoryOptions = [], parent
     );
   }
   if (field.type === "subcategorySelect") {
-    const optionsToUse = filteredSubcategories.length > 0 ? filteredSubcategories : parentSubcategories;
+    const optionsToUse = form.categoryId ? filteredSubcategories : [];
     return (
       <select
         className={base}
@@ -441,10 +441,13 @@ const GoMarketAdminPage = () => {
     if ((resource === "subcategories" || resource === "subsubcategories") && form.type) {
       const filtered = parentCategories.filter(cat => cat.type === form.type);
       setFilteredCategories(filtered);
+      if (form.categoryId && !filtered.some((cat) => String(cat._id) === String(form.categoryId))) {
+        setForm((prev) => ({ ...prev, categoryId: "", subCategoryId: "" }));
+      }
     } else {
       setFilteredCategories(parentCategories);
     }
-  }, [form.type, parentCategories, resource]);
+  }, [form.type, form.categoryId, parentCategories, resource]);
 
   // Filter subcategories based on selected category
   useEffect(() => {
@@ -453,10 +456,13 @@ const GoMarketAdminPage = () => {
         String(sub.parentId) === String(form.categoryId)
       );
       setFilteredSubcategories(filtered);
+      if (form.subCategoryId && !filtered.some((sub) => String(sub._id) === String(form.subCategoryId))) {
+        setForm((prev) => ({ ...prev, subCategoryId: "" }));
+      }
     } else {
       setFilteredSubcategories(parentSubcategories);
     }
-  }, [form.categoryId, parentSubcategories, resource]);
+  }, [form.categoryId, form.subCategoryId, parentSubcategories, resource]);
 
   useEffect(() => {
     if (resource !== "grocery-shops" && resource !== "restaurants") return;
