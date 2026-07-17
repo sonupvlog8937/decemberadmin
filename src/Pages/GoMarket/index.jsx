@@ -60,7 +60,7 @@ const configs = {
     ],
   },
   subcategories: {
-    title: "Go Market Parent Categories",
+    title: "Go Market Sub Categories",
     subtitle: "Admin only — linked to a parent category",
     icon: MdCategory,
     color: "#0d9488",
@@ -455,7 +455,7 @@ const GoMarketAdminPage = () => {
   useEffect(() => {
     if (resource === "subsubcategories" && form.categoryId) {
       const filtered = parentSubcategories.filter(sub => 
-        String(sub.categoryId) === String(form.categoryId)
+        String(sub.categoryId) === String(form.categoryId) || String(sub.parentId) === String(form.categoryId)
       );
       setFilteredSubcategories(filtered);
       if (form.subCategoryId && !filtered.some((sub) => String(sub._id) === String(form.subCategoryId))) {
@@ -535,10 +535,15 @@ const GoMarketAdminPage = () => {
 
   const edit = (row) => {
     setEditingId(row._id);
+    const formValues = Object.fromEntries(
+      config.fields.map((f) => [f.key, (row[f.key]?._id ?? row[f.key]) ?? ""])
+    );
+    // For subcategories, ensure categoryId is set from parentId if not present
+    if (resource === "subcategories" && row.parentId && !formValues.categoryId) {
+      formValues.categoryId = row.parentId._id || row.parentId;
+    }
     setForm({
-      ...Object.fromEntries(
-        config.fields.map((f) => [f.key, (row[f.key]?._id ?? row[f.key]) ?? ""])
-      ),
+      ...formValues,
       parentModel: row.parentModel || "GoMarketCategory",
     });
     setFormOpen(true);
