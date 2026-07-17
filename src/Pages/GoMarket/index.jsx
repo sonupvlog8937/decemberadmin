@@ -201,6 +201,9 @@ const blankFor = (fields) =>
 
 const sameId = (left, right) => String(getRefId(left)) === String(getRefId(right));
 
+const getApiErrorMessage = (responseBody, fallback = "Save failed") =>
+  responseBody?.message || responseBody?.error?.message || responseBody?.data?.message || responseBody?.data?.error?.message || fallback;
+
 /* ─── Field Input ───────────────────────────────────────────────── */
 const FieldInput = ({ field, value, onChange, parentCategoryOptions = [], parentSubcategories = [], filteredSubcategories = [], filteredCategories = [], marketOptions = [], ownerOptions = [], form = {} }) => {
   const base =
@@ -531,13 +534,20 @@ const GoMarketAdminPage = () => {
         payload.type = selectedSubCategory.type || payload.type;
       }
     }
-    const res = editingId
+    let res = editingId
       ? await editData(`${config.endpoint}/${editingId}`, payload)
       : await postData(config.endpoint, payload);
-      const responseBody = res?.data || res;
+      let responseBody = res?.data || res;
+
+    if (resource === "subsubcategories" && responseBody?.status === 404) {
+      res = editingId
+        ? await editData(`/api/go-market/sub-subcategories/${editingId}`, payload)
+        : await postData("/api/go-market/sub-subcategories", payload);
+      responseBody = res?.data || res;
+    }
     setSaving(false);
     if (responseBody?.error || responseBody?.success === false) {
-      toast.error(responseBody?.message || "Save failed");
+      toast.error(getApiErrorMessage(responseBody));
     } else {
       toast.success(responseBody?.message || (editingId ? "Record updated" : "Record created"));
       setForm({ ...blankFor(config.fields), parentModel: "GoMarketCategory" });
