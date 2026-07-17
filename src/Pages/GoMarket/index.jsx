@@ -453,7 +453,7 @@ const GoMarketAdminPage = () => {
   useEffect(() => {
     if (resource === "subsubcategories" && form.categoryId) {
       const filtered = parentSubcategories.filter(sub => 
-        String(sub.parentId) === String(form.categoryId)
+        String(sub.categoryId) === String(form.categoryId)
       );
       setFilteredSubcategories(filtered);
       if (form.subCategoryId && !filtered.some((sub) => String(sub._id) === String(form.subCategoryId))) {
