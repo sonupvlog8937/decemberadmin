@@ -18,29 +18,41 @@ const ProductViewer = () => {
   useEffect(() => {
     if (!id) return;
     
-    fetchDataFromApi(`/api/go-market/products/${id}`)
-      .then((res) => {
-        if (res instanceof Error || res?.name === 'AxiosError' || res?.error === true || res?.success === false || res?.response?.status === 404) {
-          return fetchDataFromApi(`/api/product/${id}`);
+    const fetchProduct = async () => {
+      setLoading(true);
+      try {
+        const endpoints = [
+          `/api/product/${id}`,
+          `/api/go-market/products/${id}`,
+          `/api/go-market/items/${id}`
+        ];
+
+        let foundProduct = null;
+
+        for (const endpoint of endpoints) {
+          const res = await fetchDataFromApi(endpoint);
+          
+          let p = res?.data || res?.product || res;
+          if (p?.data && typeof p.data === 'object' && !Array.isArray(p.data)) {
+            p = p.data;
+          }
+          
+          if (p && !(p instanceof Error) && p.name !== 'AxiosError' && p.error !== true) {
+            foundProduct = p;
+            break; // Stop searching once we find it
+          }
         }
-        return res;
-      })
-      .then((res) => {
-        let p = res?.data || res?.product || res;
-        if (p?.data && typeof p.data === 'object' && !Array.isArray(p.data)) {
-          p = p.data;
-        }
-        if (p && !(p instanceof Error) && p.name !== 'AxiosError' && p.error !== true) {
-          setProduct(p);
-        } else {
-          setProduct(null);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
+
+        setProduct(foundProduct);
+      } catch (err) {
         console.error("Error loading product:", err);
+        setProduct(null);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchProduct();
   }, [id]);
 
   if (loading) {
