@@ -423,10 +423,7 @@ export const Products = () => {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                (productData?.products?.length > rowsPerPage 
-                                    ? productData.products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                    : productData?.products
-                                )?.map((product, index) => {
+                                productData?.products?.map((product, index) => {
                                     const sc = stockColor(product.countInStock);
                                     return (
                                         <TableRow key={product._id || index} hover
