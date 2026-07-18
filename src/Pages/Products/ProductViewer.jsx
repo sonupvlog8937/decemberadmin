@@ -19,14 +19,21 @@ const ProductViewer = () => {
     if (!id) return;
     
     fetchDataFromApi(`/api/go-market/products/${id}`)
-      .catch(() => fetchDataFromApi(`/api/product/${id}`))
+      .then((res) => {
+        if (res instanceof Error || res?.name === 'AxiosError' || res?.error === true || res?.success === false || res?.response?.status === 404) {
+          return fetchDataFromApi(`/api/product/${id}`);
+        }
+        return res;
+      })
       .then((res) => {
         let p = res?.data || res?.product || res;
         if (p?.data && typeof p.data === 'object' && !Array.isArray(p.data)) {
           p = p.data;
         }
-        if (p) {
+        if (p && !(p instanceof Error) && p.name !== 'AxiosError' && p.error !== true) {
           setProduct(p);
+        } else {
+          setProduct(null);
         }
         setLoading(false);
       })
