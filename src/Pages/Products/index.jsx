@@ -243,12 +243,11 @@ export const Products = () => {
         setDeleteDialog({ open: false, id: null, name: '', multiple: false });
     };
 
-    // Stats
     const totalCount = productData?.totalCount || productData?.total || 0;
     const outOfStock = productData?.outOfStock || 0;
     const featuredCount = productData?.featuredCount || 0;
     const lowStockCount = productData?.lowStockCount || 0;
-    const onMenuCount = productData?.totalOnMenu || 0;
+    const totalMenuCount = productData?.totalMenuCount || 0;
 
     const stockColor = (stock) => {
         if (stock === 0) return { color: '#991b1b', bg: '#fee2e2', label: 'Out' };
@@ -329,7 +328,7 @@ export const Products = () => {
                 {isGoMarketShopSeller ? (
                     <StatCard lbl="Low Stock" value={lowStockCount || 0} color="#d97706" bg="#fef3c7" icon={<IoMdAdd />} label="Low Stock" />
                 ) : isRestaurantSeller ? (
-                    <StatCard lbl="Total Menu" value={onMenuCount || 0} color="#ea580c" bg="#ffedd5" icon={<IoMdAdd />} label="Total Menu" />
+                    <StatCard lbl="Total Menu" value={totalMenuCount || 0} color="#ea580c" bg="#ffedd5" icon={<IoMdAdd />} label="Total Menu" />
                 ) : (
                     <StatCard lbl="Featured" value={featuredCount || 0} color="#0369a1" bg="#e0f2fe" icon={<IoMdAdd />} label="Featured" />
                 )}
