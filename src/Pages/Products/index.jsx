@@ -330,7 +330,7 @@ export const Products = () => {
                 {isGoMarketShopSeller ? (
                     <StatCard lbl="Low Stock" value={lowStockCount || 0} color="#d97706" bg="#fef3c7" icon={<IoMdAdd />} label="Low Stock" />
                 ) : isRestaurantSeller ? (
-                    <StatCard lbl="On Menu" value={onMenuCount || 0} color="#ea580c" bg="#ffedd5" icon={<IoMdAdd />} label="On Menu" />
+                    <StatCard lbl="Total Menu" value={totalCount || 0} color="#ea580c" bg="#ffedd5" icon={<IoMdAdd />} label="Total Menu" />
                 ) : (
                     <StatCard lbl="Featured" value={featuredCount || 0} color="#0369a1" bg="#e0f2fe" icon={<IoMdAdd />} label="Featured" />
                 )}
