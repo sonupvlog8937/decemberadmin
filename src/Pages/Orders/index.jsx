@@ -1064,6 +1064,11 @@ const ReceiptModal = ({ order, onClose }) => {
                             }
                             <div>
                               <div className="ao-rcpt-prod-name">{item.productTitle || "—"}</div>
+                              {storeName && storeName !== 'N/A' && (
+                                <div className="ao-rcpt-prod-attr" style={{ marginTop:2, color:"#6366f1", fontWeight:600 }}>
+                                  Seller: {storeName}
+                                </div>
+                              )}
                               {attrs && <div className="ao-rcpt-prod-attr">{attrs}</div>}
                               <div className="ao-rcpt-prod-attr" style={{ marginTop:2 }}>{fmt(item.price)} / unit</div>
                             </div>
@@ -2102,6 +2107,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                     {/* Info */}
                                     <div className="ao-prod-info">
                                       <div className="ao-prod-name">{item.productTitle}</div>
+                                      {item.sellerId && (
+                                        <div style={{ fontSize:11, color:"#6366f1", fontWeight:600, marginTop:2 }}>
+                                          Seller: {item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A'}
+                                        </div>
+                                      )}
                                       <div className="ao-prod-tags">
                                         {/* Show selectedOptions if available, else show weight/size/color/ram */}
                                         {item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0 ? (
