@@ -729,10 +729,13 @@ const ReceiptModal = ({ order, onClose }) => {
   
   console.log('ReceiptModal Debug:', {
     isSellerView,
+    isDeliveryRider,
+    isAdmin: context?.userData?.role === "ADMIN",
     currentSellerId,
     allProductsCount: allProducts.length,
     filteredProductsCount: products.length,
     sampleProduct: allProducts[0],
+    sampleSellerData: allProducts[0]?.sellerId,
   });
 
   // Subtotal = sum of (price × qty)
