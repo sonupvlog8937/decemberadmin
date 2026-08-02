@@ -1038,10 +1038,10 @@ const ReceiptModal = ({ order, onClose }) => {
                   
                   const attrs = attrParts.join(" · ");
                   
-                  // Get seller info for this product (for delivery riders)
+                  // Get seller info for this product (for delivery riders and admin)
                   const seller = item.sellerId;
+                  const storeName = seller?.sellerProfile?.storeName || seller?.storeProfile?.storeName || seller?.name || 'N/A';
                   const sellerProfile = seller?.sellerProfile || seller?.storeProfile || {};
-                  const storeName = sellerProfile?.storeName || seller?.name || 'N/A';
                   const storeAddress = sellerProfile?.storeAddress || sellerProfile?.address || '';
                   const phone = seller?.mobile || seller?.phone || sellerProfile?.mobile || '';
                   const storeLatitude = sellerProfile?.latitude || sellerProfile?.storeLatitude;
@@ -1076,7 +1076,7 @@ const ReceiptModal = ({ order, onClose }) => {
                       </tr>
                       
                       {/* Seller info row - for delivery riders and admin */}
-                      {(isDeliveryRider || context?.userData?.role === "ADMIN") && seller && (
+                      {(isDeliveryRider || context?.userData?.role === "ADMIN") && seller && storeName && storeName !== 'N/A' && (
                         <tr>
                           <td colSpan="3" style={{ paddingLeft:14, paddingRight:14, paddingTop:4, paddingBottom:10, background:"#fffbeb", borderBottom:"1px solid #fef3c7" }}>
                             <div style={{ 
