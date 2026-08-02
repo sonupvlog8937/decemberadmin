@@ -2107,9 +2107,20 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                       <div className="ao-prod-name">{item.productTitle}</div>
                                       {item.sellerId && (
                                         <div style={{ fontSize:11, color:"#6366f1", fontWeight:600, marginTop:2 }}>
-                                          Seller: {item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A'}
+                                          Seller: {(() => {
+                                            const sellerName = item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A';
+                                            console.log('🔍 Expanded Panel - Seller Debug:', {
+                                              productTitle: item.productTitle,
+                                              sellerId: item.sellerId,
+                                              sellerProfile: item.sellerId?.sellerProfile,
+                                              storeProfile: item.sellerId?.storeProfile,
+                                              sellerName: sellerName,
+                                            });
+                                            return sellerName;
+                                          })()}
                                         </div>
                                       )}
+                                      {!item.sellerId && console.log('⚠️ No sellerId for product:', item.productTitle)}
                                       <div className="ao-prod-tags">
                                         {/* Show selectedOptions if available, else show weight/size/color/ram */}
                                         {item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0 ? (
