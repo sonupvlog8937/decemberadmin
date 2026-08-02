@@ -1064,11 +1064,6 @@ const ReceiptModal = ({ order, onClose }) => {
                             }
                             <div>
                               <div className="ao-rcpt-prod-name">{item.productTitle || "—"}</div>
-                              {storeName && storeName !== 'N/A' && (
-                                <div className="ao-rcpt-prod-attr" style={{ marginTop:2, color:"#6366f1", fontWeight:600 }}>
-                                  Seller: {storeName}
-                                </div>
-                              )}
                               {attrs && <div className="ao-rcpt-prod-attr">{attrs}</div>}
                               <div className="ao-rcpt-prod-attr" style={{ marginTop:2 }}>{fmt(item.price)} / unit</div>
                             </div>
@@ -1080,8 +1075,8 @@ const ReceiptModal = ({ order, onClose }) => {
                         </td>
                       </tr>
                       
-                      {/* Seller info row - only for delivery riders */}
-                      {isDeliveryRider && seller && (
+                      {/* Seller info row - for delivery riders and admin */}
+                      {(isDeliveryRider || context?.userData?.role === "ADMIN") && seller && (
                         <tr>
                           <td colSpan="3" style={{ paddingLeft:14, paddingRight:14, paddingTop:4, paddingBottom:10, background:"#fffbeb", borderBottom:"1px solid #fef3c7" }}>
                             <div style={{ 
