@@ -1533,7 +1533,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
       finishOrderProcessing();
       return context.alertBox('error', sent?.message || 'Could not send delivery OTP');
     }
-    context.alertBox('success', sent?.message || 'OTP sent to customer email');
+    context.alertBox('success', sent?.message || 'OTP sent to customer mobile number');
     const otp = window.prompt('Enter the OTP received by customer to mark this order delivered');
     if (!otp) {
       finishOrderProcessing();
