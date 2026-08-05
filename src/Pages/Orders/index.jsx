@@ -1946,7 +1946,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             <MenuItem value="confirm">✅ Confirm</MenuItem>
                             <MenuItem value="processing">⚙️ Processing</MenuItem>
                             <MenuItem value="shipped">🚚 Shipped</MenuItem>
-                            <MenuItem value="delivered">📬 Delivered</MenuItem>
+                            {/* Hide "delivered" option for sellers - only admin and riders can mark as delivered */}
+                            {!isSellerView && <MenuItem value="delivered">📬 Delivered</MenuItem>}
                             <MenuItem value="cancelled">❌ Cancelled</MenuItem>
                             <MenuItem value="refunded">💸 Refunded</MenuItem>
                           </Select>
