@@ -1050,6 +1050,17 @@ const ReceiptModal = ({ order, onClose }) => {
                   const storeLatitude = sellerProfile?.latitude || sellerProfile?.storeLatitude;
                   const storeLongitude = sellerProfile?.longitude || sellerProfile?.storeLongitude;
                   
+                  // Debug: Log seller info visibility check
+                  console.log('🏪 Receipt Modal - Seller Info Debug:', {
+                    productTitle: item.productTitle,
+                    isDeliveryRider,
+                    userRole: context?.userData?.role,
+                    isAdmin: context?.userData?.role === "ADMIN",
+                    hasSellerData: !!seller,
+                    storeName,
+                    willShowSellerInfo: (isDeliveryRider || context?.userData?.role === "ADMIN") && seller && storeName && storeName !== 'N/A'
+                  });
+                  
                   // Current/live location (if available, different from store address)
                   const currentLatitude = seller?.currentLatitude || seller?.liveLatitude;
                   const currentLongitude = seller?.currentLongitude || seller?.liveLongitude;
@@ -1079,7 +1090,7 @@ const ReceiptModal = ({ order, onClose }) => {
                       </tr>
                       
                       {/* Seller info row - for delivery riders and admin */}
-                      {(isDeliveryRider || context?.userData?.role === "ADMIN") && seller && storeName && storeName !== 'N/A' && (
+                      {!isSellerView && seller && storeName && storeName !== 'N/A' && (
                         <tr>
                           <td colSpan="3" style={{ paddingLeft:14, paddingRight:14, paddingTop:4, paddingBottom:10, background:"#fffbeb", borderBottom:"1px solid #fef3c7" }}>
                             <div style={{ 
