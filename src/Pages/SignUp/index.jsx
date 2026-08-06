@@ -223,10 +223,14 @@ const SellerSignUp = () => {
       };
       const res = await postData("/api/user/register-seller", payload);
       if (res?.error !== true) {
-        context.alertBox("success", res?.message || "Registered! Please verify your email OTP.");
-        localStorage.setItem("userEmail", formFields.email);
-        localStorage.setItem("actionType", "seller-signup");
-        history("/verify-account");
+        context.alertBox("success", res?.message || "Registered successfully! Please login to continue.");
+        // Clear any previous data
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("actionType");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        // Redirect to login page
+        history("/login");
       } else {
         context.alertBox("error", res?.message);
       }
