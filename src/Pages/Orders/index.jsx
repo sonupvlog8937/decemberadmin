@@ -1390,6 +1390,7 @@ const Orders = () => {
   const [isRefreshing,    setIsRefreshing]      = useState(false);
   const [processingOrderId, setProcessingOrderId] = useState(null);
   const [processingAction, setProcessingAction] = useState(null);
+  const [mobileView, setMobileView] = useState(typeof window !== "undefined" ? window.innerWidth <= 860 : false);
 
   const context = useContext(MyContext);
 const isSellerView = isSellerRole(context?.userData?.role);
@@ -1417,6 +1418,14 @@ const isSellerView = isSellerRole(context?.userData?.role);
       : isSellerView
         ? "Track orders for your own products"
         : "Manage and track all customer orders";
+
+  /* track viewport for mobile card layout */
+  useEffect(() => {
+    const onResize = () => setMobileView(window.innerWidth <= 860);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   /* toggle expand */
   const toggleOrder = (id) => setOpenOrderId((prev) => (prev === id ? null : id));
 
@@ -1662,34 +1671,18 @@ const isSellerView = isSellerRole(context?.userData?.role);
            <h2 className="ao-topbar-title">{ordersTitle}</h2>
             <p className="ao-topbar-sub">{ordersSubtitle}</p>
             {isDeliveryRider && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+              <div className="ao-rider-tabs">
                 <button
                   type="button"
+                  className={`ao-rider-tab-btn${riderFilter === 'available' ? ' active' : ''}`}
                   onClick={() => handleRiderFilterChange('available')}
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: 10,
-                    border: riderFilter === 'available' ? '1px solid #2563eb' : '1px solid #d1d5db',
-                    background: riderFilter === 'available' ? '#eff6ff' : '#ffffff',
-                    color: riderFilter === 'available' ? '#1d4ed8' : '#374151',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
                 >
                   Available Orders
                 </button>
                 <button
                   type="button"
+                  className={`ao-rider-tab-btn${riderFilter === 'assigned' ? ' active' : ''}`}
                   onClick={() => handleRiderFilterChange('assigned')}
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: 10,
-                    border: riderFilter === 'assigned' ? '1px solid #2563eb' : '1px solid #d1d5db',
-                    background: riderFilter === 'assigned' ? '#eff6ff' : '#ffffff',
-                    color: riderFilter === 'assigned' ? '#1d4ed8' : '#374151',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
                 >
                   My Orders
                 </button>
@@ -1762,7 +1755,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                 </tr>
               </thead>
               <tbody>
-                {ordersData.map((order) => {
+                {ordersData.map((order, orderIdx) => {
                   const isOpen = openOrderId === order._id;
                   const addr   = order?.delivery_address || {};
                   const isCOD  = !order?.paymentId;
@@ -1787,10 +1780,13 @@ const isSellerView = isSellerRole(context?.userData?.role);
                   return (
                     <React.Fragment key={order._id}>
                       {/* ── Main row ── */}
-                      <tr className={`ao-main-row${isOpen ? " expanded" : ""}`}>
+                      <tr
+                        className={`ao-main-row${isOpen ? " expanded" : ""}`}
+                        style={{ animationDelay: `${Math.min(orderIdx, 12) * 0.03}s` }}
+                      >
 
                         {/* Expand */}
-                        <td>
+                        <td data-label="">
                           <button
                             className={`ao-xbtn${isOpen ? " open" : ""}`}
                             onClick={() => toggleOrder(order._id)}
@@ -1801,13 +1797,13 @@ const isSellerView = isSellerRole(context?.userData?.role);
                         </td>
 
                         {/* Order ID */}
-                        <td>
+                        <td data-label="Order ID">
                           <span className="ao-oid">#{order._id?.slice(-8).toUpperCase()}</span>
                           <span className="ao-oid-full" title={order._id}>{order._id}</span>
                         </td>
 
                         {/* Payment */}
-                        <td>
+                        <td data-label="Payment">
                           {isCOD ? (
                             <span className="ao-badge ao-badge-cod">💵 Cash on Delivery</span>
                           ) : (
@@ -1819,22 +1815,19 @@ const isSellerView = isSellerRole(context?.userData?.role);
                         </td>
 
                         {/* Customer */}
-                        <td>
+                        <td data-label="Customer">
                           <div className="ao-cust-name">{order?.userId?.name}</div>
                           <div className="ao-cust-phone">📞 {addr?.mobile}</div>
                           <div className="ao-cust-email">✉ {order?.userId?.email?.substr(0, 5)}***</div>
                         </td>
 
                         {/* Address */}
-                        <td>
+                        <td data-label="Address">
                           {addr?.addressType && <span className="ao-addr-type">{addr.addressType}</span>}
                           <div className="ao-addr-text">
                             {[addr.city, addr.state].filter(Boolean).join(", ")}
                           </div>
                           <div className="ao-addr-pin">PIN {addr.pincode}</div>
-                          
-                          {/* DEBUG: Log goMarketData */}
-                          {console.log('Order goMarketData:', order._id, order?.goMarketData)}
                           
                           {/* User's Current Location (Go Market) - Show if coordinates are valid */}
                           {order?.goMarketData?.userLocation?.coordinates && 
@@ -1847,27 +1840,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                 href={`https://www.google.com/maps?q=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                className="ao-tap-chip"
                                 style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  fontSize: '10px',
-                                  fontWeight: 600,
                                   color: '#059669',
-                                  textDecoration: 'none',
                                   background: '#d1fae5',
-                                  padding: '3px 7px',
-                                  borderRadius: '5px',
-                                  border: '1px solid #86efac',
-                                  transition: 'all 0.15s'
-                                }}
-                                onMouseOver={(e) => {
-                                  e.currentTarget.style.background = '#bbf7d0';
-                                  e.currentTarget.style.borderColor = '#6ee7b7';
-                                }}
-                                onMouseOut={(e) => {
-                                  e.currentTarget.style.background = '#d1fae5';
-                                  e.currentTarget.style.borderColor = '#86efac';
+                                  borderColor: '#86efac',
                                 }}
                                 title={`GPS Location: ${order.goMarketData.userLocation.coordinates[1].toFixed(6)}, ${order.goMarketData.userLocation.coordinates[0].toFixed(6)}`}
                               >
@@ -1890,28 +1867,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                 href={`https://www.google.com/maps?q=${addr.latitude},${addr.longitude}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  color: '#2563eb',
-                                  textDecoration: 'none',
-                                  padding: '3px 8px',
-                                  background: '#eff6ff',
-                                  border: '1px solid #bfdbfe',
-                                  borderRadius: '5px',
-                                  transition: 'all 0.15s'
-                                }}
-                                onMouseOver={(e) => {
-                                  e.currentTarget.style.background = '#dbeafe';
-                                  e.currentTarget.style.borderColor = '#93c5fd';
-                                }}
-                                onMouseOut={(e) => {
-                                  e.currentTarget.style.background = '#eff6ff';
-                                  e.currentTarget.style.borderColor = '#bfdbfe';
-                                }}
+                                className="ao-tap-chip"
+                                style={{ color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
                               >
                                 📍 View Location
                               </a>
@@ -1920,7 +1877,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                         </td>
 
                         {/* Distance - Display delivery distance */}
-                        <td>
+                        <td data-label="Distance">
                           {order?.goMarketData?.distanceDisplay ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                               <span style={{
@@ -1942,26 +1899,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                   href={`https://www.google.com/maps/dir/?api=1&destination=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    fontSize: '10px',
-                                    fontWeight: 600,
-                                    color: '#0891b2',
-                                    textDecoration: 'none',
-                                    padding: '2px 6px',
-                                    background: '#ecfeff',
-                                    border: '1px solid #a5f3fc',
-                                    borderRadius: '4px',
-                                    transition: 'all 0.15s'
-                                  }}
-                                  onMouseOver={(e) => {
-                                    e.currentTarget.style.background = '#cffafe';
-                                  }}
-                                  onMouseOut={(e) => {
-                                    e.currentTarget.style.background = '#ecfeff';
-                                  }}
+                                  className="ao-tap-chip"
+                                  style={{ color: '#0891b2', background: '#ecfeff', borderColor: '#a5f3fc' }}
                                 >
                                   🧭 Navigate
                                 </a>
@@ -1994,10 +1933,10 @@ const isSellerView = isSellerRole(context?.userData?.role);
                         </td>
 
                         {/* Amount */}
-                        <td><span className="ao-amt">{fmt(displayAmount)}</span></td>
+                        <td data-label="Amount"><span className="ao-amt">{fmt(displayAmount)}</span></td>
 
                         {/* Status select */}
-                        <td>
+                        <td data-label="Status">
                           <Select
                             value={order?.order_status || "pending"}
                             size="small"
@@ -2029,7 +1968,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                         </td>
 
                         {/* Date */}
-                        <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "#6b7280", fontWeight: 500 }}>
+                        <td data-label="Date" style={{ whiteSpace: "nowrap", fontSize: 12, color: "#6b7280", fontWeight: 500 }}>
                           📅 {fmtDate(order?.createdAt)}
                            {(order?.returnRequest?.requested || order?.refund?.status === "processed") && (
                             <div style={{ marginTop: 4, fontSize: 10 }}>
@@ -2039,7 +1978,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                         </td>
 
                         {/* Delete + Receipt */}
-                        <td>
+                        <td data-label="Action">
                           <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
                             <button
                               className="ao-receipt-btn"
@@ -2287,18 +2226,10 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                         <div style={{ fontSize:11, color:"#6366f1", fontWeight:600, marginTop:2 }}>
                                           Seller: {(() => {
                                             const sellerName = item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A';
-                                            console.log('🔍 Expanded Panel - Seller Debug:', {
-                                              productTitle: item.productTitle,
-                                              sellerId: item.sellerId,
-                                              sellerProfile: item.sellerId?.sellerProfile,
-                                              storeProfile: item.sellerId?.storeProfile,
-                                              sellerName: sellerName,
-                                            });
                                             return sellerName;
                                           })()}
                                         </div>
                                       )}
-                                      {!item.sellerId && console.log('⚠️ No sellerId for product:', item.productTitle)}
                                       <div className="ao-prod-tags">
                                         {/* Show selectedOptions if available, else show weight/size/color/ram */}
                                         {item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0 ? (
@@ -2355,6 +2286,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
               count={orders?.totalPages}
               page={pageOrder}
               onChange={(_, v) => setPageOrder(v)}
+              siblingCount={mobileView ? 0 : 1}
+              size={mobileView ? "small" : "medium"}
               sx={{
                 "& .MuiPaginationItem-root": {
                   fontFamily: "'DM Sans', sans-serif",
