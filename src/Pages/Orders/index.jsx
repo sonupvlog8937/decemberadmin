@@ -1754,6 +1754,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                   <th>Payment</th>
                   <th>Customer</th>
                   <th>Address</th>
+                  <th>Distance</th>
                   <th>Amount</th>
                   <th>Status</th>
                   <th>Date</th>
@@ -1918,6 +1919,80 @@ const isSellerView = isSellerRole(context?.userData?.role);
                           )}
                         </td>
 
+                        {/* Distance - Display delivery distance */}
+                        <td>
+                          {order?.goMarketData?.distanceDisplay ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                color: '#0891b2',
+                                background: '#cffafe',
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                border: '1px solid #67e8f9'
+                              }}>
+                                📏 {order.goMarketData.distanceDisplay}
+                              </span>
+                              {order?.goMarketData?.userLocation?.coordinates?.[0] !== 0 && (
+                                <a
+                                  href={`https://www.google.com/maps/dir/?api=1&destination=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    color: '#0891b2',
+                                    textDecoration: 'none',
+                                    padding: '2px 6px',
+                                    background: '#ecfeff',
+                                    border: '1px solid #a5f3fc',
+                                    borderRadius: '4px',
+                                    transition: 'all 0.15s'
+                                  }}
+                                  onMouseOver={(e) => {
+                                    e.currentTarget.style.background = '#cffafe';
+                                  }}
+                                  onMouseOut={(e) => {
+                                    e.currentTarget.style.background = '#ecfeff';
+                                  }}
+                                >
+                                  🧭 Navigate
+                                </a>
+                              )}
+                            </div>
+                          ) : order?.goMarketData?.distanceKm ? (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              color: '#0891b2',
+                              background: '#cffafe',
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              border: '1px solid #67e8f9'
+                            }}>
+                              📏 {order.goMarketData.distanceKm.toFixed(1)} km
+                            </span>
+                          ) : (
+                            <span style={{
+                              fontSize: '11px',
+                              color: '#94a3b8',
+                              fontWeight: 500
+                            }}>
+                              —
+                            </span>
+                          )}
+                        </td>
+
                         {/* Amount */}
                         <td><span className="ao-amt">{fmt(displayAmount)}</span></td>
 
@@ -2079,7 +2154,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                       {/* ── Expanded products panel ── */}
                       {isOpen && (
                         <tr className="ao-panel-row">
-                          <td colSpan={9}>
+                          <td colSpan={10}>
                             <div className="ao-panel">
                               {(() => {
                                 // Filter products for seller view - only show products that belong to this seller
@@ -2097,6 +2172,97 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                       <span className="ao-panel-title">📦 Products in this order</span>
                                       <span className="ao-panel-count">{productsToShow.length} items</span>
                                     </div>
+                                    
+                                    {/* Distance Information */}
+                                    {(order?.goMarketData?.distanceDisplay || order?.goMarketData?.distanceKm) && (
+                                      <div style={{
+                                        background: 'linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)',
+                                        border: '1px solid #67e8f9',
+                                        borderRadius: '10px',
+                                        padding: '12px 16px',
+                                        marginBottom: '16px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px'
+                                      }}>
+                                        <div style={{
+                                          width: '40px',
+                                          height: '40px',
+                                          background: '#0891b2',
+                                          borderRadius: '8px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          fontSize: '20px',
+                                          flexShrink: 0
+                                        }}>
+                                          📏
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                          <div style={{
+                                            fontSize: '11px',
+                                            fontWeight: 600,
+                                            color: '#0e7490',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            marginBottom: '4px'
+                                          }}>
+                                            Delivery Distance
+                                          </div>
+                                          <div style={{
+                                            fontSize: '18px',
+                                            fontWeight: 800,
+                                            color: '#0891b2',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                          }}>
+                                            {order.goMarketData.distanceDisplay || `${order.goMarketData.distanceKm.toFixed(1)} km`}
+                                            {order?.goMarketData?.userLocation?.coordinates?.[0] !== 0 && (
+                                              <a
+                                                href={`https://www.google.com/maps/dir/?api=1&destination=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '4px',
+                                                  fontSize: '11px',
+                                                  fontWeight: 600,
+                                                  color: '#0891b2',
+                                                  textDecoration: 'none',
+                                                  padding: '4px 10px',
+                                                  background: '#ffffff',
+                                                  border: '1px solid #67e8f9',
+                                                  borderRadius: '6px',
+                                                  transition: 'all 0.15s'
+                                                }}
+                                                onMouseOver={(e) => {
+                                                  e.currentTarget.style.background = '#f0fdff';
+                                                  e.currentTarget.style.borderColor = '#22d3ee';
+                                                }}
+                                                onMouseOut={(e) => {
+                                                  e.currentTarget.style.background = '#ffffff';
+                                                  e.currentTarget.style.borderColor = '#67e8f9';
+                                                }}
+                                              >
+                                                🧭 Get Directions
+                                              </a>
+                                            )}
+                                          </div>
+                                          {order?.goMarketData?.userLocation?.address && (
+                                            <div style={{
+                                              fontSize: '11px',
+                                              color: '#0e7490',
+                                              marginTop: '4px'
+                                            }}>
+                                              📍 {order.goMarketData.userLocation.address}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                    
                                     <p className="ao-panel-hint">
                                       Click any product card to see full details
                                     </p>
