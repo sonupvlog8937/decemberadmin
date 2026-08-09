@@ -13,8 +13,6 @@ import { AiOutlineEdit } from "react-icons/ai";
 import { GoTrash } from "react-icons/go";
 import { MyContext } from '../../App';
 import { deleteData, deleteMultipleData, fetchDataFromApi } from '../../utils/api';
-import DeleteOtpVerification from '../../Components/DeleteOtpVerification';
-import { useDeleteWithOtp } from '../../hooks/useDeleteWithOtp';
 
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
