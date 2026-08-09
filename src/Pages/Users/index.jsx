@@ -32,6 +32,7 @@ import { FaCheckDouble, FaUserShield, FaStore, FaUsers, FaUserPlus, FaTruckFast 
 import { MdDeleteOutline, MdPersonOff, MdWarning } from 'react-icons/md';
 import { HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 import SearchBox from '../../Components/SearchBox';
+import DeleteOtpVerification from '../../Components/DeleteOtpVerification';
 import { MyContext } from '../../App';
 import {
     deleteData,
@@ -164,7 +165,7 @@ export const Users = () => {
     const [sellerForm, setSellerForm] = useState(initialSellerForm);
     const [showPassword, setShowPassword] = useState(false);
     const [addSellerOpen, setAddSellerOpen] = useState(false);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [otpDialogOpen, setOtpDialogOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null); // { id, name, multiple }
     const [formErrors, setFormErrors] = useState({});
     const [markets, setMarkets] = useState([]);
@@ -232,10 +233,10 @@ export const Users = () => {
 
     const confirmDelete = (id, name, multiple = false) => {
         setDeleteTarget({ id, name, multiple });
-        setDeleteDialogOpen(true);
+        setOtpDialogOpen(true);
     };
 
-    const handleConfirmedDelete = () => {
+    const handleOtpVerified = () => {
         if (deleteTarget?.multiple) {
             deleteMultipleData(`/api/user/deleteMultiple`, { data: { ids: sortedIds } }).then(() => {
                 context.alertBox('success', `${sortedIds.length} users deleted`);
@@ -248,7 +249,6 @@ export const Users = () => {
                 getUsers(page, rowsPerPage);
             });
         }
-        setDeleteDialogOpen(false);
         setDeleteTarget(null);
     };
 
@@ -935,72 +935,17 @@ export const Users = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* ── Delete Confirmation Dialog ── */}
-            <Dialog
-                open={deleteDialogOpen}
-                onClose={() => setDeleteDialogOpen(false)}
-                maxWidth="xs"
-                fullWidth
-                PaperProps={{ style: { borderRadius: 14 } }}
-            >
-                <DialogTitle sx={{ pb: 1 }}>
-                    <span
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            fontSize: 16,
-                            fontWeight: 700,
-                            color: '#111827',
-                        }}
-                    >
-                        <span
-                            style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: '50%',
-                                background: '#fee2e2',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#dc2626',
-                            }}
-                        >
-                            <MdWarning size={17} />
-                        </span>
-                        Confirm Delete
-                    </span>
-                </DialogTitle>
-                <DialogContent>
-                    <p style={{ fontSize: 14, color: '#374151', margin: 0 }}>
-                        {deleteTarget?.multiple
-                            ? `Are you sure you want to delete ${sortedIds.length} selected users? This action cannot be undone.`
-                            : `Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
-                    </p>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-                    <Button
-                        variant="outlined"
-                        onClick={() => setDeleteDialogOpen(false)}
-                        sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 600 }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="error"
-                        onClick={handleConfirmedDelete}
-                        sx={{
-                            textTransform: 'none',
-                            borderRadius: 2,
-                            fontWeight: 600,
-                            boxShadow: 'none',
-                        }}
-                    >
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            {/* ── OTP Verification Dialog for Delete ── */}
+            <DeleteOtpVerification
+                open={otpDialogOpen}
+                onClose={() => {
+                    setOtpDialogOpen(false);
+                    setDeleteTarget(null);
+                }}
+                onVerified={handleOtpVerified}
+                itemName={deleteTarget?.name || "users"}
+                itemCount={deleteTarget?.multiple ? sortedIds.length : 1}
+            />
         </>
     );
 };
