@@ -2004,6 +2004,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             </div>
                           )}
                           
+                          {/* Show "View Location" for delivery address coordinates */}
                           {addr?.latitude && addr?.longitude && (
                             <div style={{ marginTop: '6px' }}>
                               <a
@@ -2014,6 +2015,53 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                 style={{ color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
                               >
                                 📍 View Location
+                              </a>
+                            </div>
+                          )}
+                          
+                          {/* Show "Current Location" button that fetches user's latest goMarketLocation */}
+                          {user?._id && (
+                            <div style={{ marginTop: '6px' }}>
+                              <a
+                                href="#"
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  try {
+                                    const response = await fetchDataFromApi(`/api/user/${user._id}`);
+                                    if (response?.user?.goMarketLocation?.coordinates &&
+                                        Array.isArray(response.user.goMarketLocation.coordinates) &&
+                                        response.user.goMarketLocation.coordinates.length === 2 &&
+                                        response.user.goMarketLocation.coordinates[0] !== 0 &&
+                                        response.user.goMarketLocation.coordinates[1] !== 0) {
+                                      const lat = response.user.goMarketLocation.coordinates[1];
+                                      const lng = response.user.goMarketLocation.coordinates[0];
+                                      window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                                    } else {
+                                      alert('No current location saved for this customer');
+                                    }
+                                  } catch (error) {
+                                    console.error('Error fetching user location:', error);
+                                    alert('Failed to fetch current location');
+                                  }
+                                }}
+                                className="ao-tap-chip"
+                                style={{ 
+                                  color: '#92400e', 
+                                  background: '#fef3c7', 
+                                  borderColor: '#fbbf24',
+                                  cursor: 'pointer'
+                                }}
+                                title="View customer's latest saved Go Market location"
+                              >
+                                <span style={{ 
+                                  width: 5, 
+                                  height: 5, 
+                                  background: '#f59e0b', 
+                                  borderRadius: '50%',
+                                  display: 'inline-block',
+                                  animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                                }} />
+                                📍 Current Location
                               </a>
                             </div>
                           )}
