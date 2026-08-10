@@ -685,6 +685,7 @@ const ProductModal = ({ item, onClose }) => {
 const ReceiptModal = ({ order, onClose }) => {
   const printRef = React.useRef();
   const [commerceSettings, setCommerceSettings] = useState({ shippingFee: 0, deliveryFee: 0, freeShippingAbove: 0 });
+  const [userCurrentLocation, setUserCurrentLocation] = useState(null);
   const context = useContext(MyContext);
 
   useEffect(() => {
@@ -705,6 +706,27 @@ const ReceiptModal = ({ order, onClose }) => {
         console.error("Failed to fetch commerce settings:", error);
       });
   }, []);
+
+  // Fetch user's current saved goMarketLocation
+  useEffect(() => {
+    const fetchUserCurrentLocation = async () => {
+      try {
+        const userId = order?.userId?._id || order?.userId;
+        if (userId) {
+          const response = await fetchDataFromApi(`/api/user/${userId}`);
+          if (response?.user?.goMarketLocation) {
+            setUserCurrentLocation(response.user.goMarketLocation);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user location:", error);
+      }
+    };
+
+    if (order) {
+      fetchUserCurrentLocation();
+    }
+  }, [order]);
 
   if (!order) return null;
 
@@ -892,7 +914,7 @@ const ReceiptModal = ({ order, onClose }) => {
             </div>
           </div>
 
-          {/* User's Current Location (Go Market) - Show if user clicked "Use Current Location" */}
+          {/* User's Current Location (Go Market) - Order Time Location */}
           {order?.goMarketData?.userLocation?.coordinates && order.goMarketData.userLocation.coordinates[0] !== 0 && order.goMarketData.userLocation.coordinates[1] !== 0 && (
             <div style={{ marginTop: '16px' }}>
               <div className="ao-rcpt-info-card" style={{ background: '#ecfdf5', border: '1.5px solid #86efac' }}>
@@ -901,7 +923,7 @@ const ReceiptModal = ({ order, onClose }) => {
                     <circle cx="12" cy="12" r="10"/>
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
-                  Customer's Current Location (Go Market)
+                  Order Time Location (Go Market)
                 </div>
                 <div style={{ 
                   display: 'inline-flex',
@@ -924,7 +946,7 @@ const ReceiptModal = ({ order, onClose }) => {
                     borderRadius: '50%',
                     display: 'inline-block'
                   }} />
-                  Live GPS Location
+                  Saved at Order Placement
                 </div>
                 <div className="ao-rcpt-info-line" style={{ fontWeight: 600, color: '#065f46', fontSize: '12px' }}>
                   📍 {order.goMarketData.userLocation.coordinates[1].toFixed(6)}, {order.goMarketData.userLocation.coordinates[0].toFixed(6)}
@@ -997,6 +1019,127 @@ const ReceiptModal = ({ order, onClose }) => {
                     }}
                   >
                     🧭 Get Directions
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* User's Latest Current Location - From User Profile */}
+          {userCurrentLocation?.coordinates && 
+           Array.isArray(userCurrentLocation.coordinates) && 
+           userCurrentLocation.coordinates.length === 2 &&
+           userCurrentLocation.coordinates[0] !== 0 && 
+           userCurrentLocation.coordinates[1] !== 0 && (
+            <div style={{ marginTop: '12px' }}>
+              <div className="ao-rcpt-info-card" style={{ background: '#fef3c7', border: '1.5px solid #fbbf24' }}>
+                <div className="ao-rcpt-info-title" style={{ color: '#92400e' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2.5"/>
+                  </svg>
+                  Customer's Latest Saved Location
+                </div>
+                <div style={{ 
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.07em',
+                  background: '#fde68a',
+                  color: '#78350f',
+                  padding: '3px 8px',
+                  borderRadius: 5,
+                  marginBottom: 8
+                }}>
+                  <span style={{ 
+                    width: 6, 
+                    height: 6, 
+                    background: '#f59e0b', 
+                    borderRadius: '50%',
+                    display: 'inline-block',
+                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                  }} />
+                  Current Go Market Location
+                </div>
+                <div className="ao-rcpt-info-line" style={{ fontWeight: 600, color: '#92400e', fontSize: '12px' }}>
+                  📍 {userCurrentLocation.coordinates[1].toFixed(6)}, {userCurrentLocation.coordinates[0].toFixed(6)}
+                </div>
+                {userCurrentLocation.address && (
+                  <div className="ao-rcpt-info-line" style={{ color: '#b45309', fontSize: '11px', marginTop: '4px' }}>
+                    {userCurrentLocation.address}
+                  </div>
+                )}
+                {userCurrentLocation.updatedAt && (
+                  <div className="ao-rcpt-info-muted" style={{ color: '#d97706', fontSize: '10px', marginTop: '4px' }}>
+                    Last updated: {new Date(userCurrentLocation.updatedAt).toLocaleString("en-IN", { 
+                      day: "numeric", 
+                      month: "short", 
+                      hour: "2-digit", 
+                      minute: "2-digit" 
+                    })}
+                  </div>
+                )}
+                <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <a
+                    href={`https://www.google.com/maps?q=${userCurrentLocation.coordinates[1]},${userCurrentLocation.coordinates[0]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#92400e',
+                      textDecoration: 'none',
+                      padding: '5px 12px',
+                      background: '#fde68a',
+                      border: '1px solid #fbbf24',
+                      borderRadius: '6px',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = '#fcd34d';
+                      e.currentTarget.style.borderColor = '#f59e0b';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = '#fde68a';
+                      e.currentTarget.style.borderColor = '#fbbf24';
+                    }}
+                  >
+                    🗺️ View Current Location
+                  </a>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${userCurrentLocation.coordinates[1]},${userCurrentLocation.coordinates[0]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#2563eb',
+                      textDecoration: 'none',
+                      padding: '5px 12px',
+                      background: '#dbeafe',
+                      border: '1px solid #93c5fd',
+                      borderRadius: '6px',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = '#bfdbfe';
+                      e.currentTarget.style.borderColor = '#60a5fa';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = '#dbeafe';
+                      e.currentTarget.style.borderColor = '#93c5fd';
+                    }}
+                  >
+                    🧭 Navigate Here
                   </a>
                 </div>
               </div>
