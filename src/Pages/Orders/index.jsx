@@ -2020,14 +2020,15 @@ const isSellerView = isSellerRole(context?.userData?.role);
                           )}
                           
                           {/* Show "Current Location" button that fetches user's latest goMarketLocation */}
-                          {user?._id && (
+                          {(order?.userId?._id || order?.userId) && (
                             <div style={{ marginTop: '6px' }}>
                               <a
                                 href="#"
                                 onClick={async (e) => {
                                   e.preventDefault();
                                   try {
-                                    const response = await fetchDataFromApi(`/api/user/${user._id}`);
+                                    const userId = order.userId?._id || order.userId;
+                                    const response = await fetchDataFromApi(`/api/user/${userId}`);
                                     if (response?.user?.goMarketLocation?.coordinates &&
                                         Array.isArray(response.user.goMarketLocation.coordinates) &&
                                         response.user.goMarketLocation.coordinates.length === 2 &&
