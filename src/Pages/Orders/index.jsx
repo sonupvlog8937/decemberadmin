@@ -856,13 +856,10 @@ const ReceiptModal = ({ order, onClose }) => {
                 {addr.pincode && ` – ${addr.pincode}`}
               </div>
               {addr?.country && <div className="ao-rcpt-info-muted">{addr.country}</div>}
-              {/* Use goMarketLocation instead of address coordinates */}
-              {order?.goMarketData?.userLocation?.coordinates && 
-               order.goMarketData.userLocation.coordinates[0] !== 0 && 
-               order.goMarketData.userLocation.coordinates[1] !== 0 && (
+              {addr?.latitude && addr?.longitude && (
                 <div style={{ marginTop: '8px' }}>
                   <a
-                    href={`https://www.google.com/maps?q=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
+                    href={`https://www.google.com/maps?q=${addr.latitude},${addr.longitude}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -888,7 +885,7 @@ const ReceiptModal = ({ order, onClose }) => {
                       e.currentTarget.style.borderColor = '#bfdbfe';
                     }}
                   >
-                    📍 View Live Location
+                    📍 View on Google Maps
                   </a>
                 </div>
               )}
@@ -1864,19 +1861,16 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             </div>
                           )}
                           
-                          {/* Show goMarketLocation link only if coordinates exist */}
-                          {order?.goMarketData?.userLocation?.coordinates && 
-                           order.goMarketData.userLocation.coordinates[0] !== 0 && 
-                           order.goMarketData.userLocation.coordinates[1] !== 0 && (
+                          {addr?.latitude && addr?.longitude && (
                             <div style={{ marginTop: '6px' }}>
                               <a
-                                href={`https://www.google.com/maps?q=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
+                                href={`https://www.google.com/maps?q=${addr.latitude},${addr.longitude}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="ao-tap-chip"
                                 style={{ color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
                               >
-                                📍 View Live Location
+                                📍 View Location
                               </a>
                             </div>
                           )}
