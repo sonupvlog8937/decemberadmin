@@ -722,19 +722,6 @@ const UserCurrentLocationDisplay = ({ order }) => {
         }} />
         📍 Current Location
       </a>
-      {/* Show coordinates below button */}
-      <div style={{ 
-        fontSize: 9, 
-        color: '#78350f', 
-        marginTop: 3, 
-        fontFamily: 'monospace',
-        background: '#fffbeb',
-        padding: '2px 6px',
-        borderRadius: 4,
-        display: 'inline-block'
-      }}>
-        {lat.toFixed(5)}, {lng.toFixed(5)}
-      </div>
     </div>
   );
 };
@@ -946,6 +933,54 @@ const ReceiptModal = ({ order, onClose }) => {
                     }}
                   >
                     📍 View on Google Maps
+                  </a>
+                </div>
+              )}
+              
+              {/* Current Location - User's Latest Saved goMarketLocation */}
+              {user?.goMarketLocation?.coordinates && 
+               Array.isArray(user.goMarketLocation.coordinates) && 
+               user.goMarketLocation.coordinates.length === 2 &&
+               user.goMarketLocation.coordinates[0] !== 0 && 
+               user.goMarketLocation.coordinates[1] !== 0 && (
+                <div style={{ marginTop: '6px' }}>
+                  <a
+                    href={`https://www.google.com/maps?q=${user.goMarketLocation.coordinates[1]},${user.goMarketLocation.coordinates[0]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#92400e',
+                      textDecoration: 'none',
+                      padding: '4px 10px',
+                      background: '#fef3c7',
+                      border: '1px solid #fbbf24',
+                      borderRadius: '6px',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = '#fde68a';
+                      e.currentTarget.style.borderColor = '#f59e0b';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = '#fef3c7';
+                      e.currentTarget.style.borderColor = '#fbbf24';
+                    }}
+                    title={`Current Location: ${user.goMarketLocation.coordinates[1].toFixed(6)}, ${user.goMarketLocation.coordinates[0].toFixed(6)}`}
+                  >
+                    <span style={{ 
+                      width: 5, 
+                      height: 5, 
+                      background: '#f59e0b', 
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                    }} />
+                    📍 Current Location
                   </a>
                 </div>
               )}
