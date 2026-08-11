@@ -680,6 +680,82 @@ const ProductModal = ({ item, onClose }) => {
 
 
 /* ═══════════════════════════════════════════════════════
+   USER CURRENT LOCATION BUTTON COMPONENT
+═══════════════════════════════════════════════════════ */
+const UserCurrentLocationButton = ({ userId }) => {
+  const [location, setLocation] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [fetched, setFetched] = useState(false);
+
+  const fetchLocation = async () => {
+    if (!userId || fetched) return;
+    setLoading(true);
+    try {
+      const response = await fetchDataFromApi(`/api/user/${userId}`);
+      if (response?.user?.goMarketLocation?.coordinates &&
+          Array.isArray(response.user.goMarketLocation.coordinates) &&
+          response.user.goMarketLocation.coordinates.length === 2 &&
+          response.user.goMarketLocation.coordinates[0] !== 0 &&
+          response.user.goMarketLocation.coordinates[1] !== 0) {
+        setLocation(response.user.goMarketLocation);
+      }
+      setFetched(true);
+    } catch (error) {
+      console.error('Error fetching user location:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userId) {
+      fetchLocation();
+    }
+  }, [userId]);
+
+  if (!userId) return null;
+  if (loading) return (
+    <div style={{ marginTop: '6px', fontSize: 10, color: '#9ca3af' }}>
+      Loading location...
+    </div>
+  );
+  if (!location) return null;
+
+  const lat = location.coordinates[1];
+  const lng = location.coordinates[0];
+
+  return (
+    <div style={{ marginTop: '6px' }}>
+      <a
+        href={`https://www.google.com/maps?q=${lat},${lng}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ao-tap-chip"
+        style={{ 
+          color: '#92400e', 
+          background: '#fef3c7', 
+          borderColor: '#fbbf24',
+        }}
+        title={`Current Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`}
+      >
+        <span style={{ 
+          width: 5, 
+          height: 5, 
+          background: '#f59e0b', 
+          borderRadius: '50%',
+          display: 'inline-block',
+          animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+        }} />
+        📍 Current Location
+      </a>
+      <div style={{ fontSize: 9, color: '#78350f', marginTop: 2, fontFamily: 'monospace' }}>
+        {lat.toFixed(5)}, {lng.toFixed(5)}
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
    RECEIPT MODAL
 ═══════════════════════════════════════════════════════ */
 const ReceiptModal = ({ order, onClose }) => {
@@ -1874,6 +1950,9 @@ const isSellerView = isSellerRole(context?.userData?.role);
                               </a>
                             </div>
                           )}
+                          
+                          {/* Current Location from User's goMarketLocation */}
+                          <UserCurrentLocationButton userId={order?.userId?._id || order?.userId} />
                         </td>
 
                         {/* Distance - Display delivery distance */}
