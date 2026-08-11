@@ -688,20 +688,30 @@ const UserCurrentLocationButton = ({ userId }) => {
   const [fetched, setFetched] = useState(false);
 
   const fetchLocation = async () => {
-    if (!userId || fetched) return;
+    if (!userId || fetched) {
+      console.log('🔍 UserCurrentLocation: Skipping fetch', { userId, fetched });
+      return;
+    }
+    
+    console.log('🔍 UserCurrentLocation: Fetching for userId:', userId);
     setLoading(true);
     try {
       const response = await fetchDataFromApi(`/api/user/${userId}`);
+      console.log('🔍 UserCurrentLocation: API Response:', response);
+      
       if (response?.user?.goMarketLocation?.coordinates &&
           Array.isArray(response.user.goMarketLocation.coordinates) &&
           response.user.goMarketLocation.coordinates.length === 2 &&
           response.user.goMarketLocation.coordinates[0] !== 0 &&
           response.user.goMarketLocation.coordinates[1] !== 0) {
+        console.log('✅ UserCurrentLocation: Valid location found:', response.user.goMarketLocation);
         setLocation(response.user.goMarketLocation);
+      } else {
+        console.log('❌ UserCurrentLocation: No valid location found');
       }
       setFetched(true);
     } catch (error) {
-      console.error('Error fetching user location:', error);
+      console.error('❌ UserCurrentLocation: Error fetching user location:', error);
     } finally {
       setLoading(false);
     }
@@ -713,16 +723,26 @@ const UserCurrentLocationButton = ({ userId }) => {
     }
   }, [userId]);
 
-  if (!userId) return null;
+  if (!userId) {
+    console.log('⚠️ UserCurrentLocation: No userId provided');
+    return null;
+  }
+  
   if (loading) return (
     <div style={{ marginTop: '6px', fontSize: 10, color: '#9ca3af' }}>
-      Loading location...
+      ⏳ Loading location...
     </div>
   );
-  if (!location) return null;
+  
+  if (!location) {
+    console.log('⚠️ UserCurrentLocation: No location to display');
+    return null;
+  }
 
   const lat = location.coordinates[1];
   const lng = location.coordinates[0];
+
+  console.log('✅ UserCurrentLocation: Rendering with coords:', lat, lng);
 
   return (
     <div style={{ marginTop: '6px' }}>
@@ -748,7 +768,17 @@ const UserCurrentLocationButton = ({ userId }) => {
         }} />
         📍 Current Location
       </a>
-      <div style={{ fontSize: 9, color: '#78350f', marginTop: 2, fontFamily: 'monospace' }}>
+      {/* Show coordinates below button */}
+      <div style={{ 
+        fontSize: 9, 
+        color: '#78350f', 
+        marginTop: 3, 
+        fontFamily: 'monospace',
+        background: '#fffbeb',
+        padding: '2px 6px',
+        borderRadius: 4,
+        display: 'inline-block'
+      }}>
         {lat.toFixed(5)}, {lng.toFixed(5)}
       </div>
     </div>
