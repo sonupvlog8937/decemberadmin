@@ -680,69 +680,23 @@ const ProductModal = ({ item, onClose }) => {
 
 
 /* ═══════════════════════════════════════════════════════
-   USER CURRENT LOCATION BUTTON COMPONENT
+   USER CURRENT LOCATION DISPLAY COMPONENT
 ═══════════════════════════════════════════════════════ */
-const UserCurrentLocationButton = ({ userId }) => {
-  const [location, setLocation] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [fetched, setFetched] = useState(false);
-
-  const fetchLocation = async () => {
-    if (!userId || fetched) {
-      console.log('🔍 UserCurrentLocation: Skipping fetch', { userId, fetched });
-      return;
-    }
-    
-    console.log('🔍 UserCurrentLocation: Fetching for userId:', userId);
-    setLoading(true);
-    try {
-      const response = await fetchDataFromApi(`/api/user/${userId}`);
-      console.log('🔍 UserCurrentLocation: API Response:', response);
-      
-      if (response?.user?.goMarketLocation?.coordinates &&
-          Array.isArray(response.user.goMarketLocation.coordinates) &&
-          response.user.goMarketLocation.coordinates.length === 2 &&
-          response.user.goMarketLocation.coordinates[0] !== 0 &&
-          response.user.goMarketLocation.coordinates[1] !== 0) {
-        console.log('✅ UserCurrentLocation: Valid location found:', response.user.goMarketLocation);
-        setLocation(response.user.goMarketLocation);
-      } else {
-        console.log('❌ UserCurrentLocation: No valid location found');
-      }
-      setFetched(true);
-    } catch (error) {
-      console.error('❌ UserCurrentLocation: Error fetching user location:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (userId) {
-      fetchLocation();
-    }
-  }, [userId]);
-
-  if (!userId) {
-    console.log('⚠️ UserCurrentLocation: No userId provided');
-    return null;
-  }
+const UserCurrentLocationDisplay = ({ order }) => {
+  // Get goMarketLocation directly from populated userId
+  const location = order?.userId?.goMarketLocation;
   
-  if (loading) return (
-    <div style={{ marginTop: '6px', fontSize: 10, color: '#9ca3af' }}>
-      ⏳ Loading location...
-    </div>
-  );
-  
-  if (!location) {
-    console.log('⚠️ UserCurrentLocation: No location to display');
+  // Check if valid location exists
+  if (!location?.coordinates ||
+      !Array.isArray(location.coordinates) ||
+      location.coordinates.length !== 2 ||
+      location.coordinates[0] === 0 ||
+      location.coordinates[1] === 0) {
     return null;
   }
 
   const lat = location.coordinates[1];
   const lng = location.coordinates[0];
-
-  console.log('✅ UserCurrentLocation: Rendering with coords:', lat, lng);
 
   return (
     <div style={{ marginTop: '6px' }}>
@@ -1982,7 +1936,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                           )}
                           
                           {/* Current Location from User's goMarketLocation */}
-                          <UserCurrentLocationButton userId={order?.userId?._id || order?.userId} />
+                          <UserCurrentLocationDisplay order={order} />
                         </td>
 
                         {/* Distance - Display delivery distance */}
