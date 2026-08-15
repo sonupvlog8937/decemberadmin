@@ -2319,30 +2319,38 @@ const isSellerView = isSellerRole(context?.userData?.role);
 
                                     {/* Info */}
                                     <div className="ao-prod-info">
-                                      <div className="ao-prod-name">{item.productTitle}</div>
+                                      <div className="ao-prod-name">{String(item.productTitle || 'N/A')}</div>
                                       {item.sellerId && (
                                         <div style={{ fontSize:11, color:"#6366f1", fontWeight:600, marginTop:2 }}>
                                           Seller: {(() => {
                                             const sellerName = item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A';
-                                            return sellerName;
+                                            return String(sellerName);
                                           })()}
                                         </div>
                                       )}
                                       <div className="ao-prod-tags">
                                         {/* Show selectedOptions if available, else show weight/size/color/ram */}
                                         {item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0 ? (
-                                          Object.entries(item.selectedOptions).map(([key, value]) => 
-                                            value ? <span key={key} className="ao-prod-tag">✓ {key.charAt(0).toUpperCase() + key.slice(1)}: {value}</span> : null
-                                          )
+                                          Object.entries(item.selectedOptions).map(([key, value]) => {
+                                            // Convert value to string, handle objects safely
+                                            const displayValue = typeof value === 'object' && value !== null 
+                                              ? JSON.stringify(value) 
+                                              : String(value || '');
+                                            return displayValue ? (
+                                              <span key={key} className="ao-prod-tag">
+                                                ✓ {key.charAt(0).toUpperCase() + key.slice(1)}: {displayValue}
+                                              </span>
+                                            ) : null;
+                                          })
                                         ) : (
                                           <>
-                                            {item.weight && <span className="ao-prod-tag">📦 {item.weight}</span>}
-                                            {item.color  && <span className="ao-prod-tag">🎨 {item.color}</span>}
-                                            {item.size   && <span className="ao-prod-tag">📐 {item.size}</span>}
-                                            {item.ram    && <span className="ao-prod-tag">💾 {item.ram}</span>}
+                                            {item.weight && <span className="ao-prod-tag">📦 {String(item.weight)}</span>}
+                                            {item.color  && <span className="ao-prod-tag">🎨 {String(item.color)}</span>}
+                                            {item.size   && <span className="ao-prod-tag">📐 {String(item.size)}</span>}
+                                            {item.ram    && <span className="ao-prod-tag">💾 {String(item.ram)}</span>}
                                           </>
                                         )}
-                                        <span className="ao-prod-tag">Qty {item.quantity}</span>
+                                        <span className="ao-prod-tag">Qty {item.quantity || 0}</span>
                                       </div>
                                     </div>
 
