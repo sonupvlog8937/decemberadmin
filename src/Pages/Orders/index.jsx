@@ -86,22 +86,6 @@ const STYLES = `
   50% { opacity: 0.5; transform: scale(1.2); }
 }
 
-/* Location tap chips */
-.ao-tap-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border-width: 1px;
-  border-style: solid;
-  text-decoration: none;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-
 /* ── Stats strip ── */
 .ao-stats {
   display: flex; gap: 1px;
@@ -699,81 +683,47 @@ const ProductModal = ({ item, onClose }) => {
    USER CURRENT LOCATION DISPLAY COMPONENT
 ═══════════════════════════════════════════════════════ */
 const UserCurrentLocationDisplay = ({ order }) => {
-  // Comprehensive safety checks to prevent errors
-  try {
-    // Safety check for order
-    if (!order || typeof order !== 'object') {
-      return null;
-    }
-
-    // Get goMarketLocation directly from populated userId
-    const userId = order.userId;
-    
-    // Check if userId is populated as an object (not just an ID string)
-    if (!userId || typeof userId !== 'object' || typeof userId === 'string') {
-      return null;
-    }
-
-    const location = userId.goMarketLocation;
-    
-    // Check if valid location exists
-    if (!location || typeof location !== 'object') {
-      return null;
-    }
-
-    const coordinates = location.coordinates;
-    
-    // Validate coordinates array
-    if (!coordinates || 
-        !Array.isArray(coordinates) ||
-        coordinates.length < 2) {
-      return null;
-    }
-
-    const lng = coordinates[0];
-    const lat = coordinates[1];
-    
-    // Validate coordinate values
-    if (typeof lat !== 'number' || 
-        typeof lng !== 'number' ||
-        isNaN(lat) || 
-        isNaN(lng) ||
-        lat === 0 || 
-        lng === 0) {
-      return null;
-    }
-
-    return (
-      <div style={{ marginTop: '6px' }}>
-        <a
-          href={`https://www.google.com/maps?q=${lat},${lng}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ao-tap-chip"
-          style={{ 
-            color: '#92400e', 
-            background: '#fef3c7', 
-            borderColor: '#fbbf24',
-          }}
-          title={`Current Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`}
-        >
-          <span style={{ 
-            width: 5, 
-            height: 5, 
-            background: '#f59e0b', 
-            borderRadius: '50%',
-            display: 'inline-block',
-            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
-          }} />
-          📍 Current Location
-        </a>
-      </div>
-    );
-  } catch (error) {
-    // Silently catch any errors and return null
-    console.error('UserCurrentLocationDisplay error:', error);
+  // Get goMarketLocation directly from populated userId
+  const location = order?.userId?.goMarketLocation;
+  
+  // Check if valid location exists
+  if (!location?.coordinates ||
+      !Array.isArray(location.coordinates) ||
+      location.coordinates.length !== 2 ||
+      location.coordinates[0] === 0 ||
+      location.coordinates[1] === 0) {
     return null;
   }
+
+  const lat = location.coordinates[1];
+  const lng = location.coordinates[0];
+
+  return (
+    <div style={{ marginTop: '6px' }}>
+      <a
+        href={`https://www.google.com/maps?q=${lat},${lng}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ao-tap-chip"
+        style={{ 
+          color: '#92400e', 
+          background: '#fef3c7', 
+          borderColor: '#fbbf24',
+        }}
+        title={`Current Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`}
+      >
+        <span style={{ 
+          width: 5, 
+          height: 5, 
+          background: '#f59e0b', 
+          borderRadius: '50%',
+          display: 'inline-block',
+          animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+        }} />
+        📍 Current Location
+      </a>
+    </div>
+  );
 };
 
 /* ═══════════════════════════════════════════════════════

@@ -267,7 +267,7 @@ const ProductViewer = () => {
             <div style={{ marginBottom: 20 }}>
               <h3 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8 }}>Description</h3>
               <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, margin: 0 }}>
-                {product.description}
+                {String(product.description)}
               </p>
             </div>
           )}
@@ -276,9 +276,13 @@ const ProductViewer = () => {
           <div style={{ marginBottom: 20 }}>
             <h3 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8 }}>Category</h3>
             <div style={{ fontSize: 14, color: '#111827' }}>
-              {product.categoryId?.name || product.goMarketCategoryId?.name || 'N/A'}
-              {(product.subCategoryId?.name || product.goMarketSubCategoryId?.name) && (
-                <> → {product.subCategoryId?.name || product.goMarketSubCategoryId?.name}</>
+              {(typeof product.categoryId === 'object' ? product.categoryId?.name : null) || 
+               (typeof product.goMarketCategoryId === 'object' ? product.goMarketCategoryId?.name : null) || 
+               'N/A'}
+              {((typeof product.subCategoryId === 'object' ? product.subCategoryId?.name : null) || 
+                (typeof product.goMarketSubCategoryId === 'object' ? product.goMarketSubCategoryId?.name : null)) && (
+                <> → {(typeof product.subCategoryId === 'object' ? product.subCategoryId?.name : null) || 
+                       (typeof product.goMarketSubCategoryId === 'object' ? product.goMarketSubCategoryId?.name : null)}</>
               )}
             </div>
           </div>
@@ -286,12 +290,11 @@ const ProductViewer = () => {
       </div>
 
       {/* Specifications */}
-      {specs.length > 0 && specs.some(s => s.key && s.value) && (
+      {specs.length > 0 && specs.some(s => s && s.key && s.value) && (
         <div style={{ marginBottom: 40 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 16 }}>📋 Specifications</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 12 }}>
-            {specs.map((spec, idx) => (
-              spec.key && spec.value && (
+            {specs.filter(spec => spec && spec.key && spec.value).map((spec, idx) => (
                 <div 
                   key={idx} 
                   style={{
@@ -304,25 +307,23 @@ const ProductViewer = () => {
                   }}
                 >
                   <span style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', minWidth: 100 }}>
-                    {spec.key}:
+                    {String(spec.key)}:
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>
-                    {spec.value}
+                    {typeof spec.value === 'object' ? JSON.stringify(spec.value) : String(spec.value)}
                   </span>
                 </div>
-              )
             ))}
           </div>
         </div>
       )}
 
       {/* Product Options */}
-      {options.length > 0 && options.some(o => o.name) && (
+      {options.length > 0 && options.some(o => o && o.name) && (
         <div style={{ marginBottom: 40 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 16 }}>⚙️ Product Options</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
-            {options.map((option, idx) => (
-              option.name && (
+            {options.filter(option => option && option.name).map((option, idx) => (
                 <div key={idx} style={{
                   background: '#f9fafb',
                   border: '1px solid #e5e7eb',
@@ -330,10 +331,10 @@ const ProductViewer = () => {
                   padding: 12
                 }}>
                   <h4 style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 10, margin: 0 }}>
-                    {option.label || option.name}
+                    {String(option.label || option.name)}
                   </h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {(option.values || []).map((val, vidx) => (
+                    {(Array.isArray(option.values) ? option.values : []).map((val, vidx) => (
                       <span
                         key={vidx}
                         style={{
@@ -346,12 +347,11 @@ const ProductViewer = () => {
                           color: '#374151'
                         }}
                       >
-                        {val}
+                        {typeof val === 'object' ? JSON.stringify(val) : String(val)}
                       </span>
                     ))}
                   </div>
                 </div>
-              )
             ))}
           </div>
         </div>
