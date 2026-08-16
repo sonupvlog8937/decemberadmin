@@ -263,6 +263,8 @@ const Sidebar = () => {
 
           {isViceAdmin && (
             <>
+              <GroupLabel label="View Only" />
+              <NavItem to="/users" icon={FiUsers} label="Users Info" />
               <GroupLabel label="Account" />
               <NavItem to="/profile" icon={FiUsers} label="My Profile" />
             </>

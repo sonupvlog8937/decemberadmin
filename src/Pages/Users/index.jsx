@@ -308,7 +308,10 @@ export const Users = () => {
     const sellerCount = allUsers.filter((u) => isSellerRole(u.role)).length;
     const activeCount = allUsers.filter((u) => u.status === 'Active').length;
 
-    if (context?.userData?.role !== 'ADMIN') {
+    const isViceAdmin = context?.userData?.role === 'VICE_ADMIN';
+    const isReadOnly = isViceAdmin;
+
+    if (context?.userData?.role !== 'ADMIN' && !isViceAdmin) {
         return (
             <div
                 style={{
@@ -344,7 +347,7 @@ export const Users = () => {
                     Access Restricted
                 </h2>
                 <p style={{ fontSize: 14, color: '#6b7280', marginTop: 8, maxWidth: 320 }}>
-                    Only administrators can access the Users & Sellers management panel.
+                    Only administrators and vice administrators can access the Users panel.
                 </p>
             </div>
         );
@@ -357,11 +360,32 @@ export const Users = () => {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                     <div>
                         <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', margin: 0 }}>
-                            Users & Sellers
+                            {isReadOnly ? 'Users Information (View Only)' : 'Users & Sellers'}
                         </h1>
                         <p style={{ fontSize: 13, color: '#6b7280', margin: '4px 0 0' }}>
-                            Manage user accounts, roles, and access permissions
+                            {isReadOnly 
+                                ? 'View user information including name, email, phone, and status'
+                                : 'Manage user accounts, roles, and access permissions'
+                            }
                         </p>
+                        {isReadOnly && (
+                            <div style={{ 
+                                display: 'inline-flex', 
+                                alignItems: 'center', 
+                                gap: 6, 
+                                marginTop: 8,
+                                padding: '4px 10px',
+                                background: '#fef3c7',
+                                border: '1px solid #fde68a',
+                                borderRadius: 6,
+                                fontSize: 11,
+                                color: '#92400e',
+                                fontWeight: 600
+                            }}>
+                                <HiOutlineEyeOff size={14} />
+                                Read-Only Access - You cannot edit or delete users
+                            </div>
+                        )}
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
                         <Tooltip title="Refresh list">
@@ -379,22 +403,24 @@ export const Users = () => {
                                 <MdRefresh size={18} />
                             </IconButton>
                         </Tooltip>
-                        <Button
-                            variant="contained"
-                            startIcon={<FaUserPlus size={14} />}
-                            onClick={() => setAddSellerOpen(true)}
-                            style={{
-                                background: '#111827',
-                                borderRadius: 8,
-                                textTransform: 'none',
-                                fontWeight: 600,
-                                fontSize: 13,
-                                padding: '8px 16px',
-                                boxShadow: 'none',
-                            }}
-                        >
-                            Add Seller
-                        </Button>
+                        {!isReadOnly && (
+                            <Button
+                                variant="contained"
+                                startIcon={<FaUserPlus size={14} />}
+                                onClick={() => setAddSellerOpen(true)}
+                                style={{
+                                    background: '#111827',
+                                    borderRadius: 8,
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    fontSize: 13,
+                                    padding: '8px 16px',
+                                    boxShadow: 'none',
+                                }}
+                            >
+                                Add Seller
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -438,7 +464,7 @@ export const Users = () => {
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        {sortedIds.length > 0 && (
+                        {!isReadOnly && sortedIds.length > 0 && (
                             <Fade in>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                     <Chip
@@ -484,20 +510,22 @@ export const Users = () => {
                                     padding="checkbox"
                                     sx={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb', pl: 2 }}
                                 >
-                                    <Checkbox
-                                        {...label}
-                                        size="small"
-                                        onChange={handleSelectAll}
-                                        checked={
-                                            userData?.users?.length > 0
-                                                ? userData?.users?.every((item) => item.checked)
-                                                : false
-                                        }
-                                        indeterminate={
-                                            sortedIds.length > 0 &&
-                                            sortedIds.length < (userData?.users?.length || 0)
-                                        }
-                                    />
+                                    {!isReadOnly && (
+                                        <Checkbox
+                                            {...label}
+                                            size="small"
+                                            onChange={handleSelectAll}
+                                            checked={
+                                                userData?.users?.length > 0
+                                                    ? userData?.users?.every((item) => item.checked)
+                                                    : false
+                                            }
+                                            indeterminate={
+                                                sortedIds.length > 0 &&
+                                                sortedIds.length < (userData?.users?.length || 0)
+                                            }
+                                        />
+                                    )}
                                 </TableCell>
                                 {columns.map((column) => (
                                     <TableCell
@@ -563,12 +591,14 @@ export const Users = () => {
                                         }}
                                     >
                                         <TableCell padding="checkbox" sx={{ pl: 2 }}>
-                                            <Checkbox
-                                                {...label}
-                                                size="small"
-                                                checked={!!user.checked}
-                                                onChange={() => handleCheckboxChange(user._id)}
-                                            />
+                                            {!isReadOnly && (
+                                                <Checkbox
+                                                    {...label}
+                                                    size="small"
+                                                    checked={!!user.checked}
+                                                    onChange={() => handleCheckboxChange(user._id)}
+                                                />
+                                            )}
                                         </TableCell>
 
                                         {/* User */}
@@ -611,75 +641,121 @@ export const Users = () => {
 
                                         {/* Role */}
                                         <TableCell>
-                                            <Select
-                                                size="small"
-                                                value={user?.role || 'USER'}
-                                                onChange={(e) =>
-                                                    updateUserAccess(user._id, { role: e.target.value })
-                                                }
-                                                sx={{
-                                                    fontSize: 12,
-                                                    fontWeight: 600,
-                                                    minWidth: 100,
-                                                    background: roleConfig[user?.role]?.bg || '#f3f4f6',
-                                                    color: roleConfig[user?.role]?.color || '#374151',
-                                                    borderRadius: '20px',
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        border: 'none',
-                                                    },
-                                                    '& .MuiSelect-icon': {
+                                            {isReadOnly ? (
+                                                <div
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: 6,
+                                                        padding: '6px 14px',
+                                                        borderRadius: 20,
+                                                        fontSize: 12,
+                                                        fontWeight: 600,
+                                                        background: roleConfig[user?.role]?.bg || '#f3f4f6',
                                                         color: roleConfig[user?.role]?.color || '#374151',
-                                                    },
-                                                }}
-                                            >
-                                                 {ROLE_OPTIONS.map((role) => (
-                                                    <MenuItem key={role.value} value={role.value}>{role.label}</MenuItem>
-                                                ))}
-                                            </Select>
+                                                    }}
+                                                >
+                                                    {roleConfig[user?.role]?.icon}
+                                                    <span>{ROLE_OPTIONS.find(r => r.value === user?.role)?.label || user?.role}</span>
+                                                </div>
+                                            ) : (
+                                                <Select
+                                                    size="small"
+                                                    value={user?.role || 'USER'}
+                                                    onChange={(e) =>
+                                                        updateUserAccess(user._id, { role: e.target.value })
+                                                    }
+                                                    sx={{
+                                                        fontSize: 12,
+                                                        fontWeight: 600,
+                                                        minWidth: 100,
+                                                        background: roleConfig[user?.role]?.bg || '#f3f4f6',
+                                                        color: roleConfig[user?.role]?.color || '#374151',
+                                                        borderRadius: '20px',
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            border: 'none',
+                                                        },
+                                                        '& .MuiSelect-icon': {
+                                                            color: roleConfig[user?.role]?.color || '#374151',
+                                                        },
+                                                    }}
+                                                >
+                                                     {ROLE_OPTIONS.map((role) => (
+                                                        <MenuItem key={role.value} value={role.value}>{role.label}</MenuItem>
+                                                    ))}
+                                                </Select>
+                                            )}
                                         </TableCell>
 
                                         {/* Status */}
                                         <TableCell>
-                                            <Select
-                                                size="small"
-                                                value={user?.status || 'Active'}
-                                                onChange={(e) =>
-                                                    updateUserAccess(user._id, { status: e.target.value })
-                                                }
-                                                sx={{
-                                                    fontSize: 12,
-                                                    fontWeight: 600,
-                                                    minWidth: 110,
-                                                    background: statusConfig[user?.status]?.bg || '#dcfce7',
-                                                    color: statusConfig[user?.status]?.color || '#15803d',
-                                                    borderRadius: '20px',
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        border: 'none',
-                                                    },
-                                                    '& .MuiSelect-icon': {
+                                            {isReadOnly ? (
+                                                <div
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: 6,
+                                                        padding: '6px 14px',
+                                                        borderRadius: 20,
+                                                        fontSize: 12,
+                                                        fontWeight: 600,
+                                                        background: statusConfig[user?.status]?.bg || '#dcfce7',
                                                         color: statusConfig[user?.status]?.color || '#15803d',
-                                                    },
-                                                }}
-                                                renderValue={(val) => (
-                                                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                        <span
-                                                            style={{
-                                                                width: 7,
-                                                                height: 7,
-                                                                borderRadius: '50%',
-                                                                background: statusConfig[val]?.dot || '#22c55e',
-                                                                flexShrink: 0,
-                                                                display: 'inline-block',
-                                                            }}
-                                                        />
-                                                        {val}
-                                                    </span>
-                                                )}
-                                            >
-                                                <MenuItem value="Active">Active</MenuItem>
-                                                <MenuItem value="Inactive">Inactive</MenuItem>
-                                                <MenuItem value="Suspended">Suspended</MenuItem>
-                                            </Select>
+                                                    }}
+                                                >
+                                                    <span
+                                                        style={{
+                                                            width: 7,
+                                                            height: 7,
+                                                            borderRadius: '50%',
+                                                            background: statusConfig[user?.status]?.dot || '#22c55e',
+                                                            flexShrink: 0,
+                                                        }}
+                                                    />
+                                                    <span>{user?.status || 'Active'}</span>
+                                                </div>
+                                            ) : (
+                                                <Select
+                                                    size="small"
+                                                    value={user?.status || 'Active'}
+                                                    onChange={(e) =>
+                                                        updateUserAccess(user._id, { status: e.target.value })
+                                                    }
+                                                    sx={{
+                                                        fontSize: 12,
+                                                        fontWeight: 600,
+                                                        minWidth: 110,
+                                                        background: statusConfig[user?.status]?.bg || '#dcfce7',
+                                                        color: statusConfig[user?.status]?.color || '#15803d',
+                                                        borderRadius: '20px',
+                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                            border: 'none',
+                                                        },
+                                                        '& .MuiSelect-icon': {
+                                                            color: statusConfig[user?.status]?.color || '#15803d',
+                                                        },
+                                                    }}
+                                                    renderValue={(val) => (
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                            <span
+                                                                style={{
+                                                                    width: 7,
+                                                                    height: 7,
+                                                                    borderRadius: '50%',
+                                                                    background: statusConfig[val]?.dot || '#22c55e',
+                                                                    flexShrink: 0,
+                                                                    display: 'inline-block',
+                                                                }}
+                                                            />
+                                                            {val}
+                                                        </span>
+                                                    )}
+                                                >
+                                                    <MenuItem value="Active">Active</MenuItem>
+                                                    <MenuItem value="Inactive">Inactive</MenuItem>
+                                                    <MenuItem value="Suspended">Suspended</MenuItem>
+                                                </Select>
+                                            )}
                                         </TableCell>
 
                                         {/* Phone */}
@@ -753,22 +829,29 @@ export const Users = () => {
 
                                         {/* Action */}
                                         <TableCell>
-                                            <Tooltip title="Delete user" arrow>
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => confirmDelete(user?._id, user?.name)}
-                                                    sx={{
-                                                        color: '#ef4444',
-                                                        background: '#fee2e2',
-                                                        borderRadius: 1.5,
-                                                        width: 30,
-                                                        height: 30,
-                                                        '&:hover': { background: '#fecaca' },
-                                                    }}
-                                                >
-                                                    <MdDeleteOutline size={16} />
-                                                </IconButton>
-                                            </Tooltip>
+                                            {!isReadOnly && (
+                                                <Tooltip title="Delete user" arrow>
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => confirmDelete(user?._id, user?.name)}
+                                                        sx={{
+                                                            color: '#ef4444',
+                                                            background: '#fee2e2',
+                                                            borderRadius: 1.5,
+                                                            width: 30,
+                                                            height: 30,
+                                                            '&:hover': { background: '#fecaca' },
+                                                        }}
+                                                    >
+                                                        <MdDeleteOutline size={16} />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
+                                            {isReadOnly && (
+                                                <span style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>
+                                                    View Only
+                                                </span>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))
