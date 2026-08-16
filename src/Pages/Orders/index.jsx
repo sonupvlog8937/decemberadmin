@@ -86,6 +86,50 @@ const STYLES = `
   50% { opacity: 0.5; transform: scale(1.2); }
 }
 
+/* ─────────────────────────────────────────
+   RIDER FILTER TABS (Available / My Orders)
+───────────────────────────────────────── */
+.ao-rider-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #f0f0f7;
+  border: 1px solid #e6e6f0;
+  border-radius: 13px;
+  padding: 4px;
+  margin-top: 12px;
+}
+.ao-rider-tab-btn {
+  position: relative;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #6b7280;
+  padding: 9px 18px;
+  border-radius: 10px;
+  transition: color 0.25s ease, background 0.25s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+.ao-rider-tab-btn:hover:not(.active) {
+  color: #111827;
+  background: rgba(255,255,255,0.6);
+}
+.ao-rider-tab-btn:active { transform: scale(0.97); }
+.ao-rider-tab-btn.active {
+  color: #fff;
+  background: linear-gradient(135deg, #111827 0%, #312e81 130%);
+  box-shadow: 0 4px 14px rgba(17,24,39,0.28);
+  animation: tabPop 0.28s cubic-bezier(0.34,1.4,0.64,1);
+}
+@keyframes tabPop {
+  from { transform: scale(0.92); opacity: 0.6; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
 /* ── Stats strip ── */
 .ao-stats {
   display: flex; gap: 1px;
@@ -100,7 +144,8 @@ const STYLES = `
 .ao-stat-l { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; }
 
 /* ── Table ── */
-.ao-scroll { overflow-x: auto; }
+.ao-scroll { overflow-x: auto; transition: opacity 0.25s ease; }
+.ao-scroll.ao-loading { opacity: 0.45; pointer-events: none; }
 .ao-tbl { width: 100%; border-collapse: collapse; }
 .ao-tbl thead tr { background: #f7f7fb; }
 .ao-tbl th {
@@ -115,9 +160,16 @@ const STYLES = `
   vertical-align: middle;
   font-size: 13px;
 }
-.ao-tbl tbody tr.ao-main-row { transition: background 0.12s; }
+.ao-tbl tbody tr.ao-main-row {
+  transition: background 0.12s;
+  animation: rowFadeIn 0.36s cubic-bezier(0.22,1,0.36,1) both;
+}
 .ao-tbl tbody tr.ao-main-row:hover > td { background: #fafafd; }
 .ao-tbl tbody tr.ao-main-row.expanded > td { background: #f7f7fb; }
+@keyframes rowFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 /* Expand btn */
 .ao-xbtn {
@@ -127,8 +179,8 @@ const STYLES = `
   background: #f0f0f7; color: #6b7280;
   transition: all 0.15s; flex-shrink: 0;
 }
-.ao-xbtn:hover { background: #e4e4ef; }
-.ao-xbtn.open { background: #111; color: #fff; }
+.ao-xbtn:hover { background: #e4e4ef; transform: translateY(-1px); }
+.ao-xbtn.open { background: #111; color: #fff; transform: rotate(0deg); }
 
 /* ID */
 .ao-oid { font-size: 11px; font-weight: 700; color: #6366f1; font-family: 'Sora', sans-serif; display: block; }
@@ -154,6 +206,15 @@ const STYLES = `
 .ao-addr-text { font-size: 12px; color: #374151; max-width: 160px; line-height: 1.4; }
 .ao-addr-pin  { font-size: 11px; color: #9ca3af; margin-top: 1px; }
 
+/* Tap chip (map / gps links) */
+.ao-tap-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; text-decoration: none;
+  padding: 4px 10px; border-radius: 6px; border: 1px solid;
+  transition: all 0.15s ease;
+}
+.ao-tap-chip:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.08); filter: brightness(0.97); }
+
 /* Amount */
 .ao-amt { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 800; color: #0c0c14; }
 
@@ -165,7 +226,7 @@ const STYLES = `
   cursor: pointer; font-family: 'DM Sans', sans-serif;
   transition: all 0.15s; white-space: nowrap;
 }
-.ao-del:hover { background: #fee2e2; border-color: #fca5a5; }
+.ao-del:hover { background: #fee2e2; border-color: #fca5a5; transform: translateY(-1px); }
 
 /* ── Expanded products panel ── */
 .ao-panel-row > td {
@@ -348,6 +409,7 @@ const STYLES = `
 .ao-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 56px 24px; gap: 8px; text-align: center;
+  animation: rowFadeIn 0.4s ease both;
 }
 .ao-empty-icon { font-size: 44px; margin-bottom: 4px; }
 .ao-empty h3 { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; color: #374151; margin: 0; }
@@ -365,7 +427,35 @@ const STYLES = `
   cursor: pointer; font-family: 'DM Sans', sans-serif;
   transition: all 0.15s; white-space: nowrap;
 }
-.ao-receipt-btn:hover { background: #dbeafe; border-color: #93c5fd; }
+.ao-receipt-btn:hover { background: #dbeafe; border-color: #93c5fd; transform: translateY(-1px); }
+.ao-receipt-btn:active { transform: translateY(0) scale(0.98); }
+.ao-receipt-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ─────────────────────────────────────────
+   RIDER ACTION GROUP (per-order button cluster)
+───────────────────────────────────────── */
+.ao-rider-actions {
+  display: flex; flex-direction: column; gap: 6px;
+  background: #fafbff;
+  border: 1px solid #eef0fb;
+  border-radius: 12px;
+  padding: 8px;
+  animation: rowFadeIn 0.3s ease both;
+}
+.ao-rider-actions .ao-receipt-btn {
+  justify-content: center;
+  width: 100%;
+}
+.ao-rider-status-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.02em;
+  padding: 5px 10px; border-radius: 20px;
+  background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff;
+}
+.ao-rider-status-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #6366f1;
+  animation: pulse 1.8s ease-in-out infinite;
+}
 
 /* ═══════════════════════════════════
    RECEIPT MODAL
@@ -1833,7 +1923,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
 
         {/* ── Table ── */}
         {ordersData?.length > 0 && (
-          <div className="ao-scroll">
+          <div className={`ao-scroll${isRefreshing ? ' ao-loading' : ''}`}>
             <table className="ao-tbl">
               <thead>
                 <tr>
@@ -2104,9 +2194,14 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                 )}
                               </>
                             )}
-                            {order?.deliveryAssignment?.status && <span className="ao-badge ao-badge-online">Rider: {order.deliveryAssignment.status}</span>}
+                            {order?.deliveryAssignment?.status && (
+                              <span className="ao-rider-status-badge">
+                                <span className="ao-rider-status-dot" />
+                                Rider: {order.deliveryAssignment.status}
+                              </span>
+                            )}
                             {isDeliveryRider && (
-                              <>
+                              <div className="ao-rider-actions">
                                 {order?.deliveryAssignment?.status === "broadcast" && (
                                   <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)} disabled={isProcessingAction(order._id, 'confirm')}>
                                     {isProcessingAction(order._id, 'confirm') ? (
@@ -2171,7 +2266,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                     </button>
                                   </>
                                 )}
-                              </>
+                              </div>
                             )}
                             {order?.returnRequest?.requested && order?.refund?.status !== "processed" && (
                               <>
