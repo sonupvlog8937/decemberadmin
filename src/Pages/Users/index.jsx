@@ -255,9 +255,19 @@ export const Users = () => {
     };
 
     const updateUserAccess = (targetUserId, payload) => {
+        console.log('🔄 Updating user access:', { targetUserId, payload }); // Debug log
         editData('/api/user/admin/user-access', { userId: targetUserId, ...payload }).then((res) => {
-            context.alertBox('success', res?.message || 'Updated successfully');
-            getUsers(page, rowsPerPage);
+            console.log('✅ Update response:', res); // Debug log
+            if (res?.success) {
+                context.alertBox('success', res?.message || 'Updated successfully');
+                getUsers(page, rowsPerPage);
+            } else {
+                context.alertBox('error', res?.message || 'Failed to update');
+                console.error('❌ Update failed:', res);
+            }
+        }).catch((err) => {
+            console.error('❌ Update error:', err);
+            context.alertBox('error', 'Failed to update user access');
         });
     };
 
