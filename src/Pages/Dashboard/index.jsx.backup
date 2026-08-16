@@ -908,6 +908,1947 @@ const ViceAdminDashboard = ({ context }) => {
   );
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// VICE ADMIN DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════════
+const ViceAdminDashboard = ({ context }) => {
+  const [stats, setStats] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [greeting, setGreeting] = useState("Hello");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const h = new Date().getHours();
+    setGreeting(h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening");
+  }, []);
+
+  const fetchDashboardData = (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
+
+    Promise.all([
+      fetchDataFromApi('/api/order/order-list?page=1&limit=1000'),
+      fetchDataFromApi('/api/order/order-list?page=1&limit=10'),
+    ]).then(([allOrdersRes, recentRes]) => {
+      const allOrders = allOrdersRes?.data || [];
+      
+      // Calculate stats
+      const totalOrders = allOrders.length;
+      const pendingOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'pending').length;
+      const confirmedOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'confirmed').length;
+      const shippedOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'shipped').length;
+      const deliveredOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'delivered').length;
+      const cancelledOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'cancelled').length;
+      const totalRevenue = allOrders.filter(o => o.order_status?.toLowerCase() === 'delivered')
+        .reduce((sum, o) => sum + (Number(o.totalAmt) || 0), 0);
+
+      setStats({ 
+        totalOrders, pendingOrders, confirmedOrders, shippedOrders, 
+        deliveredOrders, cancelledOrders, totalRevenue 
+      });
+      setRecentOrders(recentRes?.data || []);
+    }).catch(err => {
+      console.error('Vice Admin dashboard fetch error:', err);
+      setStats({ totalOrders: 0, pendingOrders: 0, confirmedOrders: 0, shippedOrders: 0, 
+        deliveredOrders: 0, cancelledOrders: 0, totalRevenue: 0 });
+      setRecentOrders([]);
+    }).finally(() => {
+      setLoading(false);
+      setRefreshing(false);
+    });
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(() => fetchDashboardData(true), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fmt = (n) => Number(n || 0).toLocaleString("en-IN");
+  const fmtCurrency = (n) => {
+    const v = Number(n || 0);
+    if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
+    if (v >= 1000) return `₹${(v / 1000).toFixed(1)}K`;
+    return `₹${fmt(v)}`;
+  };
+
+  const getStatusColor = (status) => {
+    const s = status?.toLowerCase() || '';
+    if (s === 'pending') return { bg: '#fef3c7', color: '#92400e', icon: '⏳' };
+    if (s === 'confirmed') return { bg: '#dbeafe', color: '#1e40af', icon: '✓' };
+    if (s === 'shipped') return { bg: '#e0e7ff', color: '#4338ca', icon: '🚚' };
+    if (s === 'delivered') return { bg: '#d1fae5', color: '#065f46', icon: '✅' };
+    if (s === 'cancelled') return { bg: '#fee2e2', color: '#991b1b', icon: '✕' };
+    return { bg: '#f3f4f6', color: '#374151', icon: '●' };
+  };
+
+  const filteredOrders = recentOrders.filter(order => {
+    const matchesStatus = filterStatus === 'all' || order.order_status?.toLowerCase() === filterStatus;
+    const matchesSearch = !searchQuery || 
+      order._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.userId?.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
+  const StatCard = ({ icon, label, value, color, gradient, delay = 0, onClick }) => (
+    <div 
+      onClick={onClick}
+      className="va-stat-card" 
+      style={{ 
+        '--gradient': gradient, 
+        '--delay': `${delay}ms`,
+        cursor: onClick ? 'pointer' : 'default'
+      }}>
+      <div className="va-stat-icon" style={{ background: color + '15', color }}>
+        {icon}
+      </div>
+      <div className="va-stat-content">
+        {loading ? (
+          <div className="va-skel va-skel-lg" />
+        ) : (
+          <div className="va-stat-value">{value}</div>
+        )}
+        <div className="va-stat-label">{label}</div>
+      </div>
+      <div className="va-stat-glow" style={{ background: gradient }} />
+    </div>
+  );
+
+  return (
+    <>
+      <style>{`
+        @keyframes vaFadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes vaSlideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes vaPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes vaRotate { to { transform: rotate(360deg); } }
+        @keyframes vaShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+        .va-container { animation: vaFadeUp 0.6s ease-out; }
+        
+        /* Hero Section */
+        .va-hero { 
+          position: relative; overflow: hidden;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 20px; padding: 32px 28px; margin-bottom: 24px;
+          box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        }
+        .va-hero::before {
+          content: ''; position: absolute; inset: 0;
+          background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                      radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+          pointer-events: none;
+        }
+        .va-hero-content { position: relative; z-index: 1; }
+        .va-hero-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+          padding: 6px 14px; border-radius: 20px; font-size: 11px;
+          font-weight: 700; color: #fff; margin-bottom: 12px;
+          backdrop-filter: blur(10px);
+        }
+        .va-hero-title {
+          font-size: clamp(24px, 4vw, 32px); font-weight: 900; color: #fff;
+          margin-bottom: 8px; letter-spacing: -0.5px;
+        }
+        .va-hero-subtitle {
+          font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.6;
+        }
+        .va-hero-actions {
+          display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;
+        }
+        .va-hero-btn {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 10px 20px; border-radius: 12px; font-size: 13px;
+          font-weight: 700; border: none; cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          text-decoration: none;
+        }
+        .va-hero-btn-primary {
+          background: #fff; color: #667eea;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .va-hero-btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        .va-hero-btn-secondary {
+          background: rgba(255,255,255,0.15); color: #fff;
+          border: 1px solid rgba(255,255,255,0.3);
+          backdrop-filter: blur(10px);
+        }
+        .va-hero-btn-secondary:hover {
+          background: rgba(255,255,255,0.25);
+        }
+        .va-live-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3);
+          padding: 4px 12px; border-radius: 20px; font-size: 11px;
+          font-weight: 700; color: #6ee7b7; margin-left: 10px;
+        }
+        .va-live-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #10b981; box-shadow: 0 0 8px #10b981;
+          animation: vaPulse 2s ease-in-out infinite;
+        }
+
+        /* Stats Grid */
+        .va-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 16px; margin-bottom: 24px;
+        }
+        .va-stat-card {
+          position: relative; background: #fff;
+          border: 1px solid #e5e7eb; border-radius: 16px;
+          padding: 20px; overflow: hidden;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: vaFadeUp 0.5s ease-out both;
+          animation-delay: var(--delay, 0ms);
+        }
+        .va-stat-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+          border-color: transparent;
+        }
+        .va-stat-card:hover .va-stat-glow { opacity: 1; }
+        .va-stat-glow {
+          position: absolute; top: -50%; right: -50%;
+          width: 100%; height: 100%; opacity: 0;
+          filter: blur(40px); pointer-events: none;
+          transition: opacity 0.3s ease;
+        }
+        .va-stat-icon {
+          width: 48px; height: 48px; border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 22px; margin-bottom: 12px;
+        }
+        .va-stat-content { position: relative; z-index: 1; }
+        .va-stat-value {
+          font-size: 28px; font-weight: 900; color: #111827;
+          line-height: 1; margin-bottom: 6px; letter-spacing: -0.5px;
+        }
+        .va-stat-label {
+          font-size: 12px; font-weight: 600; color: #6b7280;
+        }
+
+        /* Toolbar */
+        .va-toolbar {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 16px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .va-toolbar-title {
+          font-size: 18px; font-weight: 800; color: #111827;
+        }
+        .va-toolbar-actions {
+          display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .va-search {
+          position: relative;
+        }
+        .va-search-input {
+          padding: 8px 12px 8px 36px; border: 1px solid #e5e7eb;
+          border-radius: 10px; font-size: 13px; width: 240px;
+          transition: all 0.2s ease;
+        }
+        .va-search-input:focus {
+          outline: none; border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .va-search-icon {
+          position: absolute; left: 12px; top: 50%;
+          transform: translateY(-50%); color: #9ca3af;
+        }
+        .va-filter-btn {
+          padding: 8px 16px; border: 1px solid #e5e7eb;
+          border-radius: 10px; background: #fff; font-size: 13px;
+          font-weight: 600; cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .va-filter-btn.active {
+          background: #667eea; color: #fff; border-color: #667eea;
+        }
+        .va-filter-btn:hover:not(.active) {
+          background: #f9fafb; border-color: #d1d5db;
+        }
+        .va-refresh-btn {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 8px 16px; border: 1px solid #e5e7eb;
+          border-radius: 10px; background: #fff; font-size: 13px;
+          font-weight: 600; color: #374151; cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .va-refresh-btn:hover {
+          background: #f9fafb; border-color: #d1d5db;
+        }
+        .va-refresh-btn:disabled {
+          opacity: 0.5; cursor: not-allowed;
+        }
+        .va-refresh-icon {
+          transition: transform 0.3s ease;
+        }
+        .va-refresh-btn:disabled .va-refresh-icon {
+          animation: vaRotate 1s linear infinite;
+        }
+
+        /* Orders Table */
+        .va-table-container {
+          background: #fff; border: 1px solid #e5e7eb;
+          border-radius: 16px; overflow: hidden;
+          animation: vaFadeUp 0.6s ease-out 0.3s both;
+        }
+        .va-table-wrapper {
+          overflow-x: auto;
+        }
+        .va-table {
+          width: 100%; border-collapse: collapse;
+        }
+        .va-table thead {
+          background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
+        }
+        .va-table th {
+          padding: 14px 16px; text-align: left;
+          font-size: 11px; font-weight: 700; color: #6b7280;
+          text-transform: uppercase; letter-spacing: 0.5px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .va-table td {
+          padding: 16px; border-bottom: 1px solid #f3f4f6;
+          font-size: 13px; color: #374151;
+        }
+        .va-table tbody tr {
+          transition: background 0.2s ease;
+        }
+        .va-table tbody tr:hover {
+          background: #f9fafb;
+        }
+        .va-table tbody tr:last-child td {
+          border-bottom: none;
+        }
+        .va-order-id {
+          font-family: 'Courier New', monospace;
+          font-size: 12px; font-weight: 700; color: #667eea;
+          background: #eff6ff; padding: 4px 8px; border-radius: 6px;
+          display: inline-block;
+        }
+        .va-customer-info {
+          display: flex; align-items: center; gap: 10px;
+        }
+        .va-customer-avatar {
+          width: 36px; height: 36px; border-radius: 50%;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          display: flex; align-items: center; justify-content: center;
+          color: #fff; font-weight: 700; font-size: 14px;
+          flex-shrink: 0;
+        }
+        .va-customer-details {
+          flex: 1; min-width: 0;
+        }
+        .va-customer-name {
+          font-weight: 600; color: #111827;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .va-customer-email {
+          font-size: 11px; color: #9ca3af;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .va-status-badge {
+          display: inline-flex; align-items: center; gap: 4px;
+          padding: 4px 10px; border-radius: 20px;
+          font-size: 11px; font-weight: 700;
+        }
+        .va-amount {
+          font-size: 15px; font-weight: 800; color: #111827;
+        }
+        .va-date {
+          font-size: 12px; color: #6b7280;
+        }
+        .va-action-btn {
+          padding: 6px 14px; border-radius: 8px;
+          font-size: 12px; font-weight: 600;
+          border: 1px solid #e5e7eb; background: #fff;
+          color: #374151; cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: none; display: inline-block;
+        }
+        .va-action-btn:hover {
+          background: #f9fafb; border-color: #667eea; color: #667eea;
+        }
+
+        /* Empty State */
+        .va-empty {
+          text-align: center; padding: 60px 20px;
+        }
+        .va-empty-icon {
+          font-size: 64px; margin-bottom: 16px; opacity: 0.5;
+        }
+        .va-empty-title {
+          font-size: 18px; font-weight: 700; color: #374151;
+          margin-bottom: 8px;
+        }
+        .va-empty-text {
+          font-size: 14px; color: #9ca3af;
+        }
+
+        /* Skeleton */
+        .va-skel {
+          background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+          background-size: 200% 100%;
+          animation: vaShimmer 1.5s infinite;
+          border-radius: 6px;
+        }
+        .va-skel-lg {
+          width: 80px; height: 28px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .va-hero { padding: 24px 20px; }
+          .va-hero-title { font-size: 24px; }
+          .va-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
+          .va-stat-card { padding: 16px; }
+          .va-stat-value { font-size: 24px; }
+          .va-stat-icon {
+            width: 40px; height: 40px; font-size: 18px;
+          }
+          .va-toolbar {
+            flex-direction: column; align-items: stretch;
+          }
+          .va-toolbar-actions {
+            flex-direction: column;
+          }
+          .va-search-input {
+            width: 100%;
+          }
+          .va-table-container {
+            border-radius: 12px;
+          }
+          .va-table th,
+          .va-table td {
+            padding: 12px 10px;
+          }
+          .va-customer-info {
+            flex-direction: column; align-items: flex-start; gap: 6px;
+          }
+        }
+      `}</style>
+
+      <div className="va-container">
+        {/* Hero Section */}
+        <div className="va-hero">
+          <div className="va-hero-content">
+            <div className="va-hero-badge">
+              👔 Vice Admin Control Panel
+            </div>
+            <h1 className="va-hero-title">
+              {greeting}, {context?.userData?.name?.split(" ")[0]} 👋
+            </h1>
+            <p className="va-hero-subtitle">
+              Manage and monitor all orders across the platform. You have full visibility into order operations.
+              <span className="va-live-badge">
+                <span className="va-live-dot" />
+                Live Updates
+              </span>
+            </p>
+            <div className="va-hero-actions">
+              <Link to="/orders" className="va-hero-btn va-hero-btn-primary">
+                <span>🛍️</span>
+                View All Orders
+              </Link>
+              <button 
+                className="va-hero-btn va-hero-btn-secondary"
+                onClick={() => fetchDashboardData(true)}>
+                <span>🔄</span>
+                Refresh Data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="va-stats-grid">
+          <StatCard
+            icon="📦"
+            label="Total Orders"
+            value={fmt(stats?.totalOrders || 0)}
+            color="#3b82f6"
+            gradient="linear-gradient(135deg, #3b82f6, #2563eb)"
+            delay={0}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="⏳"
+            label="Pending"
+            value={fmt(stats?.pendingOrders || 0)}
+            color="#f59e0b"
+            gradient="linear-gradient(135deg, #f59e0b, #d97706)"
+            delay={100}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="✓"
+            label="Confirmed"
+            value={fmt(stats?.confirmedOrders || 0)}
+            color="#06b6d4"
+            gradient="linear-gradient(135deg, #06b6d4, #0891b2)"
+            delay={200}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="🚚"
+            label="Shipped"
+            value={fmt(stats?.shippedOrders || 0)}
+            color="#8b5cf6"
+            gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
+            delay={300}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="✅"
+            label="Delivered"
+            value={fmt(stats?.deliveredOrders || 0)}
+            color="#10b981"
+            gradient="linear-gradient(135deg, #10b981, #059669)"
+            delay={400}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="💰"
+            label="Total Revenue"
+            value={fmtCurrency(stats?.totalRevenue || 0)}
+            color="#ec4899"
+            gradient="linear-gradient(135deg, #ec4899, #db2777)"
+            delay={500}
+          />
+        </div>
+
+        {/* Recent Orders Section */}
+        <div className="va-toolbar">
+          <h2 className="va-toolbar-title">Recent Orders</h2>
+          <div className="va-toolbar-actions">
+            <div className="va-search">
+              <span className="va-search-icon">🔍</span>
+              <input
+                type="text"
+                className="va-search-input"
+                placeholder="Search by order ID, customer..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <select 
+              className="va-filter-btn"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}>
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button 
+              className="va-refresh-btn"
+              onClick={() => fetchDashboardData(true)}
+              disabled={refreshing}>
+              <span className="va-refresh-icon">🔄</span>
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+        </div>
+
+        {/* Orders Table */}
+        <div className="va-table-container">
+          <div className="va-table-wrapper">
+            {loading ? (
+              <div className="va-empty">
+                <div className="va-empty-icon">⏳</div>
+                <div className="va-empty-title">Loading orders...</div>
+              </div>
+            ) : filteredOrders.length === 0 ? (
+              <div className="va-empty">
+                <div className="va-empty-icon">📭</div>
+                <div className="va-empty-title">No orders found</div>
+                <div className="va-empty-text">
+                  {searchQuery || filterStatus !== 'all' 
+                    ? 'Try adjusting your filters or search query'
+                    : 'Orders will appear here once customers start placing them'}
+                </div>
+              </div>
+            ) : (
+              <table className="va-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((order) => {
+                    const statusStyle = getStatusColor(order.order_status);
+                    return (
+                      <tr key={order._id}>
+                        <td>
+                          <span className="va-order-id">
+                            #{order._id?.slice(-8) || 'N/A'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="va-customer-info">
+                            <div className="va-customer-avatar">
+                              {order.userId?.name?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <div className="va-customer-details">
+                              <div className="va-customer-name">
+                                {order.userId?.name || 'Guest'}
+                              </div>
+                              <div className="va-customer-email">
+                                {order.userId?.email || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span 
+                            className="va-status-badge"
+                            style={{ background: statusStyle.bg, color: statusStyle.color }}>
+                            <span>{statusStyle.icon}</span>
+                            {order.order_status || 'Pending'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="va-amount">
+                            ₹{fmt(order.totalAmt || 0)}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="va-date">
+                            {order.createdAt 
+                              ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })
+                              : 'N/A'}
+                          </div>
+                        </td>
+                        <td>
+                          <Link 
+                            to={`/orders`}
+                            className="va-action-btn">
+                            View Details
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VICE ADMIN DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════════
+const ViceAdminDashboard = ({ context }) => {
+  const [stats, setStats] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [greeting, setGreeting] = useState("Hello");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const h = new Date().getHours();
+    setGreeting(h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening");
+  }, []);
+
+  const fetchDashboardData = (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
+
+    Promise.all([
+      fetchDataFromApi('/api/order/order-list?page=1&limit=1000'),
+      fetchDataFromApi('/api/order/order-list?page=1&limit=10'),
+    ]).then(([allOrdersRes, recentRes]) => {
+      const allOrders = allOrdersRes?.data || [];
+      
+      // Calculate stats
+      const totalOrders = allOrders.length;
+      const pendingOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'pending').length;
+      const confirmedOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'confirmed').length;
+      const shippedOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'shipped').length;
+      const deliveredOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'delivered').length;
+      const cancelledOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'cancelled').length;
+      const totalRevenue = allOrders.filter(o => o.order_status?.toLowerCase() === 'delivered')
+        .reduce((sum, o) => sum + (Number(o.totalAmt) || 0), 0);
+
+      setStats({ 
+        totalOrders, pendingOrders, confirmedOrders, shippedOrders, 
+        deliveredOrders, cancelledOrders, totalRevenue 
+      });
+      setRecentOrders(recentRes?.data || []);
+    }).catch(err => {
+      console.error('Vice Admin dashboard fetch error:', err);
+      setStats({ totalOrders: 0, pendingOrders: 0, confirmedOrders: 0, shippedOrders: 0, 
+        deliveredOrders: 0, cancelledOrders: 0, totalRevenue: 0 });
+      setRecentOrders([]);
+    }).finally(() => {
+      setLoading(false);
+      setRefreshing(false);
+    });
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(() => fetchDashboardData(true), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fmt = (n) => Number(n || 0).toLocaleString("en-IN");
+  const fmtCurrency = (n) => {
+    const v = Number(n || 0);
+    if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
+    if (v >= 1000) return `₹${(v / 1000).toFixed(1)}K`;
+    return `₹${fmt(v)}`;
+  };
+
+  const getStatusColor = (status) => {
+    const s = status?.toLowerCase() || '';
+    if (s === 'pending') return { bg: '#fef3c7', color: '#92400e', icon: '⏳' };
+    if (s === 'confirmed') return { bg: '#dbeafe', color: '#1e40af', icon: '✓' };
+    if (s === 'shipped') return { bg: '#e0e7ff', color: '#4338ca', icon: '🚚' };
+    if (s === 'delivered') return { bg: '#d1fae5', color: '#065f46', icon: '✅' };
+    if (s === 'cancelled') return { bg: '#fee2e2', color: '#991b1b', icon: '✕' };
+    return { bg: '#f3f4f6', color: '#374151', icon: '●' };
+  };
+
+  const filteredOrders = recentOrders.filter(order => {
+    const matchesStatus = filterStatus === 'all' || order.order_status?.toLowerCase() === filterStatus;
+    const matchesSearch = !searchQuery || 
+      order._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.userId?.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
+  const StatCard = ({ icon, label, value, color, gradient, delay = 0, onClick }) => (
+    <div 
+      onClick={onClick}
+      className="va-stat-card" 
+      style={{ 
+        '--gradient': gradient, 
+        '--delay': `${delay}ms`,
+        cursor: onClick ? 'pointer' : 'default'
+      }}>
+      <div className="va-stat-icon" style={{ background: color + '15', color }}>
+        {icon}
+      </div>
+      <div className="va-stat-content">
+        {loading ? (
+          <div className="va-skel va-skel-lg" />
+        ) : (
+          <div className="va-stat-value">{value}</div>
+        )}
+        <div className="va-stat-label">{label}</div>
+      </div>
+      <div className="va-stat-glow" style={{ background: gradient }} />
+    </div>
+  );
+
+  return (
+    <>
+      <style>{`
+        @keyframes vaFadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes vaSlideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes vaPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes vaRotate { to { transform: rotate(360deg); } }
+        @keyframes vaShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+        .va-container { animation: vaFadeUp 0.6s ease-out; }
+        
+        .va-hero { 
+          position: relative; overflow: hidden;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 20px; padding: 32px 28px; margin-bottom: 24px;
+          box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        }
+        .va-hero::before {
+          content: ''; position: absolute; inset: 0;
+          background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                      radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+          pointer-events: none;
+        }
+        .va-hero-content { position: relative; z-index: 1; }
+        .va-hero-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+          padding: 6px 14px; border-radius: 20px; font-size: 11px;
+          font-weight: 700; color: #fff; margin-bottom: 12px;
+          backdrop-filter: blur(10px);
+        }
+        .va-hero-title {
+          font-size: clamp(24px, 4vw, 32px); font-weight: 900; color: #fff;
+          margin-bottom: 8px; letter-spacing: -0.5px;
+        }
+        .va-hero-subtitle {
+          font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.6;
+        }
+        .va-hero-actions {
+          display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;
+        }
+        .va-hero-btn {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 10px 20px; border-radius: 12px; font-size: 13px;
+          font-weight: 700; border: none; cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          text-decoration: none;
+        }
+        .va-hero-btn-primary {
+          background: #fff; color: #667eea;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .va-hero-btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        .va-hero-btn-secondary {
+          background: rgba(255,255,255,0.15); color: #fff;
+          border: 1px solid rgba(255,255,255,0.3);
+          backdrop-filter: blur(10px);
+        }
+        .va-hero-btn-secondary:hover {
+          background: rgba(255,255,255,0.25);
+        }
+        .va-live-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3);
+          padding: 4px 12px; border-radius: 20px; font-size: 11px;
+          font-weight: 700; color: #6ee7b7; margin-left: 10px;
+        }
+        .va-live-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #10b981; box-shadow: 0 0 8px #10b981;
+          animation: vaPulse 2s ease-in-out infinite;
+        }
+
+        .va-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 16px; margin-bottom: 24px;
+        }
+        .va-stat-card {
+          position: relative; background: #fff;
+          border: 1px solid #e5e7eb; border-radius: 16px;
+          padding: 20px; overflow: hidden;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: vaFadeUp 0.5s ease-out both;
+          animation-delay: var(--delay, 0ms);
+        }
+        .va-stat-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+          border-color: transparent;
+        }
+        .va-stat-card:hover .va-stat-glow { opacity: 1; }
+        .va-stat-glow {
+          position: absolute; top: -50%; right: -50%;
+          width: 100%; height: 100%; opacity: 0;
+          filter: blur(40px); pointer-events: none;
+          transition: opacity 0.3s ease;
+        }
+        .va-stat-icon {
+          width: 48px; height: 48px; border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 22px; margin-bottom: 12px;
+        }
+        .va-stat-content { position: relative; z-index: 1; }
+        .va-stat-value {
+          font-size: 28px; font-weight: 900; color: #111827;
+          line-height: 1; margin-bottom: 6px; letter-spacing: -0.5px;
+        }
+        .va-stat-label {
+          font-size: 12px; font-weight: 600; color: #6b7280;
+        }
+
+        .va-toolbar {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 16px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .va-toolbar-title {
+          font-size: 18px; font-weight: 800; color: #111827;
+        }
+        .va-toolbar-actions {
+          display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .va-search {
+          position: relative;
+        }
+        .va-search-input {
+          padding: 8px 12px 8px 36px; border: 1px solid #e5e7eb;
+          border-radius: 10px; font-size: 13px; width: 240px;
+          transition: all 0.2s ease;
+        }
+        .va-search-input:focus {
+          outline: none; border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .va-search-icon {
+          position: absolute; left: 12px; top: 50%;
+          transform: translateY(-50%); color: #9ca3af;
+        }
+        .va-filter-btn {
+          padding: 8px 16px; border: 1px solid #e5e7eb;
+          border-radius: 10px; background: #fff; font-size: 13px;
+          font-weight: 600; cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .va-filter-btn.active {
+          background: #667eea; color: #fff; border-color: #667eea;
+        }
+        .va-filter-btn:hover:not(.active) {
+          background: #f9fafb; border-color: #d1d5db;
+        }
+        .va-refresh-btn {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 8px 16px; border: 1px solid #e5e7eb;
+          border-radius: 10px; background: #fff; font-size: 13px;
+          font-weight: 600; color: #374151; cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .va-refresh-btn:hover {
+          background: #f9fafb; border-color: #d1d5db;
+        }
+        .va-refresh-btn:disabled {
+          opacity: 0.5; cursor: not-allowed;
+        }
+        .va-refresh-icon {
+          transition: transform 0.3s ease;
+        }
+        .va-refresh-btn:disabled .va-refresh-icon {
+          animation: vaRotate 1s linear infinite;
+        }
+
+        .va-table-container {
+          background: #fff; border: 1px solid #e5e7eb;
+          border-radius: 16px; overflow: hidden;
+          animation: vaFadeUp 0.6s ease-out 0.3s both;
+        }
+        .va-table-wrapper {
+          overflow-x: auto;
+        }
+        .va-table {
+          width: 100%; border-collapse: collapse;
+        }
+        .va-table thead {
+          background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
+        }
+        .va-table th {
+          padding: 14px 16px; text-align: left;
+          font-size: 11px; font-weight: 700; color: #6b7280;
+          text-transform: uppercase; letter-spacing: 0.5px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .va-table td {
+          padding: 16px; border-bottom: 1px solid #f3f4f6;
+          font-size: 13px; color: #374151;
+        }
+        .va-table tbody tr {
+          transition: background 0.2s ease;
+        }
+        .va-table tbody tr:hover {
+          background: #f9fafb;
+        }
+        .va-table tbody tr:last-child td {
+          border-bottom: none;
+        }
+        .va-order-id {
+          font-family: 'Courier New', monospace;
+          font-size: 12px; font-weight: 700; color: #667eea;
+          background: #eff6ff; padding: 4px 8px; border-radius: 6px;
+          display: inline-block;
+        }
+        .va-customer-info {
+          display: flex; align-items: center; gap: 10px;
+        }
+        .va-customer-avatar {
+          width: 36px; height: 36px; border-radius: 50%;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          display: flex; align-items: center; justify-content: center;
+          color: #fff; font-weight: 700; font-size: 14px;
+          flex-shrink: 0;
+        }
+        .va-customer-details {
+          flex: 1; min-width: 0;
+        }
+        .va-customer-name {
+          font-weight: 600; color: #111827;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .va-customer-email {
+          font-size: 11px; color: #9ca3af;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .va-status-badge {
+          display: inline-flex; align-items: center; gap: 4px;
+          padding: 4px 10px; border-radius: 20px;
+          font-size: 11px; font-weight: 700;
+        }
+        .va-amount {
+          font-size: 15px; font-weight: 800; color: #111827;
+        }
+        .va-date {
+          font-size: 12px; color: #6b7280;
+        }
+        .va-action-btn {
+          padding: 6px 14px; border-radius: 8px;
+          font-size: 12px; font-weight: 600;
+          border: 1px solid #e5e7eb; background: #fff;
+          color: #374151; cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: none; display: inline-block;
+        }
+        .va-action-btn:hover {
+          background: #f9fafb; border-color: #667eea; color: #667eea;
+        }
+
+        .va-empty {
+          text-align: center; padding: 60px 20px;
+        }
+        .va-empty-icon {
+          font-size: 64px; margin-bottom: 16px; opacity: 0.5;
+        }
+        .va-empty-title {
+          font-size: 18px; font-weight: 700; color: #374151;
+          margin-bottom: 8px;
+        }
+        .va-empty-text {
+          font-size: 14px; color: #9ca3af;
+        }
+
+        .va-skel {
+          background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+          background-size: 200% 100%;
+          animation: vaShimmer 1.5s infinite;
+          border-radius: 6px;
+        }
+        .va-skel-lg {
+          width: 80px; height: 28px;
+        }
+
+        @media (max-width: 768px) {
+          .va-hero { padding: 24px 20px; }
+          .va-hero-title { font-size: 24px; }
+          .va-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
+          .va-stat-card { padding: 16px; }
+          .va-stat-value { font-size: 24px; }
+          .va-stat-icon {
+            width: 40px; height: 40px; font-size: 18px;
+          }
+          .va-toolbar {
+            flex-direction: column; align-items: stretch;
+          }
+          .va-toolbar-actions {
+            flex-direction: column;
+          }
+          .va-search-input {
+            width: 100%;
+          }
+          .va-table-container {
+            border-radius: 12px;
+          }
+          .va-table th,
+          .va-table td {
+            padding: 12px 10px;
+          }
+          .va-customer-info {
+            flex-direction: column; align-items: flex-start; gap: 6px;
+          }
+        }
+      `}</style>
+
+      <div className="va-container">
+        <div className="va-hero">
+          <div className="va-hero-content">
+            <div className="va-hero-badge">
+              👔 Vice Admin Control Panel
+            </div>
+            <h1 className="va-hero-title">
+              {greeting}, {context?.userData?.name?.split(" ")[0]} 👋
+            </h1>
+            <p className="va-hero-subtitle">
+              Manage and monitor all orders across the platform. You have full visibility into order operations.
+              <span className="va-live-badge">
+                <span className="va-live-dot" />
+                Live Updates
+              </span>
+            </p>
+            <div className="va-hero-actions">
+              <Link to="/orders" className="va-hero-btn va-hero-btn-primary">
+                <span>🛍️</span>
+                View All Orders
+              </Link>
+              <button 
+                className="va-hero-btn va-hero-btn-secondary"
+                onClick={() => fetchDashboardData(true)}>
+                <span>🔄</span>
+                Refresh Data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="va-stats-grid">
+          <StatCard
+            icon="📦"
+            label="Total Orders"
+            value={fmt(stats?.totalOrders || 0)}
+            color="#3b82f6"
+            gradient="linear-gradient(135deg, #3b82f6, #2563eb)"
+            delay={0}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="⏳"
+            label="Pending"
+            value={fmt(stats?.pendingOrders || 0)}
+            color="#f59e0b"
+            gradient="linear-gradient(135deg, #f59e0b, #d97706)"
+            delay={100}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="✓"
+            label="Confirmed"
+            value={fmt(stats?.confirmedOrders || 0)}
+            color="#06b6d4"
+            gradient="linear-gradient(135deg, #06b6d4, #0891b2)"
+            delay={200}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="🚚"
+            label="Shipped"
+            value={fmt(stats?.shippedOrders || 0)}
+            color="#8b5cf6"
+            gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
+            delay={300}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="✅"
+            label="Delivered"
+            value={fmt(stats?.deliveredOrders || 0)}
+            color="#10b981"
+            gradient="linear-gradient(135deg, #10b981, #059669)"
+            delay={400}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="💰"
+            label="Total Revenue"
+            value={fmtCurrency(stats?.totalRevenue || 0)}
+            color="#ec4899"
+            gradient="linear-gradient(135deg, #ec4899, #db2777)"
+            delay={500}
+          />
+        </div>
+
+        <div className="va-toolbar">
+          <h2 className="va-toolbar-title">Recent Orders</h2>
+          <div className="va-toolbar-actions">
+            <div className="va-search">
+              <span className="va-search-icon">🔍</span>
+              <input
+                type="text"
+                className="va-search-input"
+                placeholder="Search by order ID, customer..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <select 
+              className="va-filter-btn"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}>
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button 
+              className="va-refresh-btn"
+              onClick={() => fetchDashboardData(true)}
+              disabled={refreshing}>
+              <span className="va-refresh-icon">🔄</span>
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+        </div>
+
+        <div className="va-table-container">
+          <div className="va-table-wrapper">
+            {loading ? (
+              <div className="va-empty">
+                <div className="va-empty-icon">⏳</div>
+                <div className="va-empty-title">Loading orders...</div>
+              </div>
+            ) : filteredOrders.length === 0 ? (
+              <div className="va-empty">
+                <div className="va-empty-icon">📭</div>
+                <div className="va-empty-title">No orders found</div>
+                <div className="va-empty-text">
+                  {searchQuery || filterStatus !== 'all' 
+                    ? 'Try adjusting your filters or search query'
+                    : 'Orders will appear here once customers start placing them'}
+                </div>
+              </div>
+            ) : (
+              <table className="va-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((order) => {
+                    const statusStyle = getStatusColor(order.order_status);
+                    return (
+                      <tr key={order._id}>
+                        <td>
+                          <span className="va-order-id">
+                            #{order._id?.slice(-8) || 'N/A'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="va-customer-info">
+                            <div className="va-customer-avatar">
+                              {order.userId?.name?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <div className="va-customer-details">
+                              <div className="va-customer-name">
+                                {order.userId?.name || 'Guest'}
+                              </div>
+                              <div className="va-customer-email">
+                                {order.userId?.email || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span 
+                            className="va-status-badge"
+                            style={{ background: statusStyle.bg, color: statusStyle.color }}>
+                            <span>{statusStyle.icon}</span>
+                            {order.order_status || 'Pending'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="va-amount">
+                            ₹{fmt(order.totalAmt || 0)}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="va-date">
+                            {order.createdAt 
+                              ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })
+                              : 'N/A'}
+                          </div>
+                        </td>
+                        <td>
+                          <Link 
+                            to={`/orders`}
+                            className="va-action-btn">
+                            View Details
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VICE ADMIN DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════════
+const ViceAdminDashboard = ({ context }) => {
+  const [stats, setStats] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [greeting, setGreeting] = useState("Hello");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const h = new Date().getHours();
+    setGreeting(h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening");
+  }, []);
+
+  const fetchDashboardData = (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
+
+    Promise.all([
+      fetchDataFromApi('/api/order/order-list?page=1&limit=1000'),
+      fetchDataFromApi('/api/order/order-list?page=1&limit=10'),
+    ]).then(([allOrdersRes, recentRes]) => {
+      const allOrders = allOrdersRes?.data || [];
+      
+      const totalOrders = allOrders.length;
+      const pendingOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'pending').length;
+      const confirmedOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'confirmed').length;
+      const shippedOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'shipped').length;
+      const deliveredOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'delivered').length;
+      const cancelledOrders = allOrders.filter(o => o.order_status?.toLowerCase() === 'cancelled').length;
+      const totalRevenue = allOrders.filter(o => o.order_status?.toLowerCase() === 'delivered')
+        .reduce((sum, o) => sum + (Number(o.totalAmt) || 0), 0);
+
+      setStats({ totalOrders, pendingOrders, confirmedOrders, shippedOrders, deliveredOrders, cancelledOrders, totalRevenue });
+      setRecentOrders(recentRes?.data || []);
+    }).catch(err => {
+      console.error('Vice Admin dashboard fetch error:', err);
+      setStats({ totalOrders: 0, pendingOrders: 0, confirmedOrders: 0, shippedOrders: 0, deliveredOrders: 0, cancelledOrders: 0, totalRevenue: 0 });
+      setRecentOrders([]);
+    }).finally(() => {
+      setLoading(false);
+      setRefreshing(false);
+    });
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(() => fetchDashboardData(true), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fmt = (n) => Number(n || 0).toLocaleString("en-IN");
+  const fmtCurrency = (n) => {
+    const v = Number(n || 0);
+    if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`;
+    if (v >= 1000) return `₹${(v / 1000).toFixed(1)}K`;
+    return `₹${fmt(v)}`;
+  };
+
+  const getStatusColor = (status) => {
+    const s = status?.toLowerCase() || '';
+    if (s === 'pending') return { bg: '#fef3c7', color: '#92400e', icon: '⏳' };
+    if (s === 'confirmed') return { bg: '#dbeafe', color: '#1e40af', icon: '✓' };
+    if (s === 'shipped') return { bg: '#e0e7ff', color: '#4338ca', icon: '🚚' };
+    if (s === 'delivered') return { bg: '#d1fae5', color: '#065f46', icon: '✅' };
+    if (s === 'cancelled') return { bg: '#fee2e2', color: '#991b1b', icon: '✕' };
+    return { bg: '#f3f4f6', color: '#374151', icon: '●' };
+  };
+
+  const filteredOrders = recentOrders.filter(order => {
+    const matchesStatus = filterStatus === 'all' || order.order_status?.toLowerCase() === filterStatus;
+    const matchesSearch = !searchQuery || 
+      order._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.userId?.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
+  const StatCard = ({ icon, label, value, color, gradient, delay = 0, onClick }) => (
+    <div 
+      onClick={onClick}
+      className="va-stat-card" 
+      style={{ 
+        '--gradient': gradient, 
+        '--delay': `${delay}ms`,
+        cursor: onClick ? 'pointer' : 'default'
+      }}>
+      <div className="va-stat-icon" style={{ background: color + '15', color }}>
+        {icon}
+      </div>
+      <div className="va-stat-content">
+        {loading ? (
+          <div className="va-skel va-skel-lg" />
+        ) : (
+          <div className="va-stat-value">{value}</div>
+        )}
+        <div className="va-stat-label">{label}</div>
+      </div>
+      <div className="va-stat-glow" style={{ background: gradient }} />
+    </div>
+  );
+
+  return (
+    <>
+      <style>{`
+        @keyframes vaFadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes vaSlideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes vaPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes vaRotate { to { transform: rotate(360deg); } }
+        @keyframes vaShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+        .va-container { animation: vaFadeUp 0.6s ease-out; }
+        
+        .va-hero { 
+          position: relative; overflow: hidden;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 20px; padding: 32px 28px; margin-bottom: 24px;
+          box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        }
+        .va-hero::before {
+          content: ''; position: absolute; inset: 0;
+          background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                      radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+          pointer-events: none;
+        }
+        .va-hero-content { position: relative; z-index: 1; }
+        .va-hero-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+          padding: 6px 14px; border-radius: 20px; font-size: 11px;
+          font-weight: 700; color: #fff; margin-bottom: 12px;
+          backdrop-filter: blur(10px);
+        }
+        .va-hero-title {
+          font-size: clamp(24px, 4vw, 32px); font-weight: 900; color: #fff;
+          margin-bottom: 8px; letter-spacing: -0.5px;
+        }
+        .va-hero-subtitle {
+          font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.6;
+        }
+        .va-hero-actions {
+          display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;
+        }
+        .va-hero-btn {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 10px 20px; border-radius: 12px; font-size: 13px;
+          font-weight: 700; border: none; cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          text-decoration: none;
+        }
+        .va-hero-btn-primary {
+          background: #fff; color: #667eea;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .va-hero-btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        .va-hero-btn-secondary {
+          background: rgba(255,255,255,0.15); color: #fff;
+          border: 1px solid rgba(255,255,255,0.3);
+          backdrop-filter: blur(10px);
+        }
+        .va-hero-btn-secondary:hover {
+          background: rgba(255,255,255,0.25);
+        }
+        .va-live-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3);
+          padding: 4px 12px; border-radius: 20px; font-size: 11px;
+          font-weight: 700; color: #6ee7b7; margin-left: 10px;
+        }
+        .va-live-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #10b981; box-shadow: 0 0 8px #10b981;
+          animation: vaPulse 2s ease-in-out infinite;
+        }
+
+        .va-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 16px; margin-bottom: 24px;
+        }
+        .va-stat-card {
+          position: relative; background: #fff;
+          border: 1px solid #e5e7eb; border-radius: 16px;
+          padding: 20px; overflow: hidden;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: vaFadeUp 0.5s ease-out both;
+          animation-delay: var(--delay, 0ms);
+        }
+        .va-stat-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+          border-color: transparent;
+        }
+        .va-stat-card:hover .va-stat-glow { opacity: 1; }
+        .va-stat-glow {
+          position: absolute; top: -50%; right: -50%;
+          width: 100%; height: 100%; opacity: 0;
+          filter: blur(40px); pointer-events: none;
+          transition: opacity 0.3s ease;
+        }
+        .va-stat-icon {
+          width: 48px; height: 48px; border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 22px; margin-bottom: 12px;
+        }
+        .va-stat-content { position: relative; z-index: 1; }
+        .va-stat-value {
+          font-size: 28px; font-weight: 900; color: #111827;
+          line-height: 1; margin-bottom: 6px; letter-spacing: -0.5px;
+        }
+        .va-stat-label {
+          font-size: 12px; font-weight: 600; color: #6b7280;
+        }
+
+        .va-toolbar {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 16px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .va-toolbar-title {
+          font-size: 18px; font-weight: 800; color: #111827;
+        }
+        .va-toolbar-actions {
+          display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .va-search {
+          position: relative;
+        }
+        .va-search-input {
+          padding: 8px 12px 8px 36px; border: 1px solid #e5e7eb;
+          border-radius: 10px; font-size: 13px; width: 240px;
+          transition: all 0.2s ease;
+        }
+        .va-search-input:focus {
+          outline: none; border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .va-search-icon {
+          position: absolute; left: 12px; top: 50%;
+          transform: translateY(-50%); color: #9ca3af;
+        }
+        .va-filter-btn {
+          padding: 8px 16px; border: 1px solid #e5e7eb;
+          border-radius: 10px; background: #fff; font-size: 13px;
+          font-weight: 600; cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .va-filter-btn.active {
+          background: #667eea; color: #fff; border-color: #667eea;
+        }
+        .va-filter-btn:hover:not(.active) {
+          background: #f9fafb; border-color: #d1d5db;
+        }
+        .va-refresh-btn {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 8px 16px; border: 1px solid #e5e7eb;
+          border-radius: 10px; background: #fff; font-size: 13px;
+          font-weight: 600; color: #374151; cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .va-refresh-btn:hover {
+          background: #f9fafb; border-color: #d1d5db;
+        }
+        .va-refresh-btn:disabled {
+          opacity: 0.5; cursor: not-allowed;
+        }
+        .va-refresh-icon {
+          transition: transform 0.3s ease;
+        }
+        .va-refresh-btn:disabled .va-refresh-icon {
+          animation: vaRotate 1s linear infinite;
+        }
+
+        .va-table-container {
+          background: #fff; border: 1px solid #e5e7eb;
+          border-radius: 16px; overflow: hidden;
+          animation: vaFadeUp 0.6s ease-out 0.3s both;
+        }
+        .va-table-wrapper {
+          overflow-x: auto;
+        }
+        .va-table {
+          width: 100%; border-collapse: collapse;
+        }
+        .va-table thead {
+          background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
+        }
+        .va-table th {
+          padding: 14px 16px; text-align: left;
+          font-size: 11px; font-weight: 700; color: #6b7280;
+          text-transform: uppercase; letter-spacing: 0.5px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .va-table td {
+          padding: 16px; border-bottom: 1px solid #f3f4f6;
+          font-size: 13px; color: #374151;
+        }
+        .va-table tbody tr {
+          transition: background 0.2s ease;
+        }
+        .va-table tbody tr:hover {
+          background: #f9fafb;
+        }
+        .va-table tbody tr:last-child td {
+          border-bottom: none;
+        }
+        .va-order-id {
+          font-family: 'Courier New', monospace;
+          font-size: 12px; font-weight: 700; color: #667eea;
+          background: #eff6ff; padding: 4px 8px; border-radius: 6px;
+          display: inline-block;
+        }
+        .va-customer-info {
+          display: flex; align-items: center; gap: 10px;
+        }
+        .va-customer-avatar {
+          width: 36px; height: 36px; border-radius: 50%;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          display: flex; align-items: center; justify-content: center;
+          color: #fff; font-weight: 700; font-size: 14px;
+          flex-shrink: 0;
+        }
+        .va-customer-details {
+          flex: 1; min-width: 0;
+        }
+        .va-customer-name {
+          font-weight: 600; color: #111827;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .va-customer-email {
+          font-size: 11px; color: #9ca3af;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .va-status-badge {
+          display: inline-flex; align-items: center; gap: 4px;
+          padding: 4px 10px; border-radius: 20px;
+          font-size: 11px; font-weight: 700;
+        }
+        .va-amount {
+          font-size: 15px; font-weight: 800; color: #111827;
+        }
+        .va-date {
+          font-size: 12px; color: #6b7280;
+        }
+        .va-action-btn {
+          padding: 6px 14px; border-radius: 8px;
+          font-size: 12px; font-weight: 600;
+          border: 1px solid #e5e7eb; background: #fff;
+          color: #374151; cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: none; display: inline-block;
+        }
+        .va-action-btn:hover {
+          background: #f9fafb; border-color: #667eea; color: #667eea;
+        }
+
+        .va-empty {
+          text-align: center; padding: 60px 20px;
+        }
+        .va-empty-icon {
+          font-size: 64px; margin-bottom: 16px; opacity: 0.5;
+        }
+        .va-empty-title {
+          font-size: 18px; font-weight: 700; color: #374151;
+          margin-bottom: 8px;
+        }
+        .va-empty-text {
+          font-size: 14px; color: #9ca3af;
+        }
+
+        .va-skel {
+          background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+          background-size: 200% 100%;
+          animation: vaShimmer 1.5s infinite;
+          border-radius: 6px;
+        }
+        .va-skel-lg {
+          width: 80px; height: 28px;
+        }
+
+        @media (max-width: 768px) {
+          .va-hero { padding: 24px 20px; }
+          .va-hero-title { font-size: 24px; }
+          .va-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
+          .va-stat-card { padding: 16px; }
+          .va-stat-value { font-size: 24px; }
+          .va-stat-icon {
+            width: 40px; height: 40px; font-size: 18px;
+          }
+          .va-toolbar {
+            flex-direction: column; align-items: stretch;
+          }
+          .va-toolbar-actions {
+            flex-direction: column;
+          }
+          .va-search-input {
+            width: 100%;
+          }
+          .va-table-container {
+            border-radius: 12px;
+          }
+          .va-table th,
+          .va-table td {
+            padding: 12px 10px;
+          }
+          .va-customer-info {
+            flex-direction: column; align-items: flex-start; gap: 6px;
+          }
+        }
+      `}</style>
+
+      <div className="va-container">
+        <div className="va-hero">
+          <div className="va-hero-content">
+            <div className="va-hero-badge">
+              👔 Vice Admin Control Panel
+            </div>
+            <h1 className="va-hero-title">
+              {greeting}, {context?.userData?.name?.split(" ")[0]} 👋
+            </h1>
+            <p className="va-hero-subtitle">
+              Manage and monitor all orders across the platform. You have full visibility into order operations.
+              <span className="va-live-badge">
+                <span className="va-live-dot" />
+                Live Updates
+              </span>
+            </p>
+            <div className="va-hero-actions">
+              <Link to="/orders" className="va-hero-btn va-hero-btn-primary">
+                <span>🛍️</span>
+                View All Orders
+              </Link>
+              <button 
+                className="va-hero-btn va-hero-btn-secondary"
+                onClick={() => fetchDashboardData(true)}>
+                <span>🔄</span>
+                Refresh Data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="va-stats-grid">
+          <StatCard
+            icon="📦"
+            label="Total Orders"
+            value={fmt(stats?.totalOrders || 0)}
+            color="#3b82f6"
+            gradient="linear-gradient(135deg, #3b82f6, #2563eb)"
+            delay={0}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="⏳"
+            label="Pending"
+            value={fmt(stats?.pendingOrders || 0)}
+            color="#f59e0b"
+            gradient="linear-gradient(135deg, #f59e0b, #d97706)"
+            delay={100}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="✓"
+            label="Confirmed"
+            value={fmt(stats?.confirmedOrders || 0)}
+            color="#06b6d4"
+            gradient="linear-gradient(135deg, #06b6d4, #0891b2)"
+            delay={200}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="🚚"
+            label="Shipped"
+            value={fmt(stats?.shippedOrders || 0)}
+            color="#8b5cf6"
+            gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
+            delay={300}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="✅"
+            label="Delivered"
+            value={fmt(stats?.deliveredOrders || 0)}
+            color="#10b981"
+            gradient="linear-gradient(135deg, #10b981, #059669)"
+            delay={400}
+            onClick={() => navigate('/orders')}
+          />
+          <StatCard
+            icon="💰"
+            label="Total Revenue"
+            value={fmtCurrency(stats?.totalRevenue || 0)}
+            color="#ec4899"
+            gradient="linear-gradient(135deg, #ec4899, #db2777)"
+            delay={500}
+          />
+        </div>
+
+        <div className="va-toolbar">
+          <h2 className="va-toolbar-title">Recent Orders</h2>
+          <div className="va-toolbar-actions">
+            <div className="va-search">
+              <span className="va-search-icon">🔍</span>
+              <input
+                type="text"
+                className="va-search-input"
+                placeholder="Search by order ID, customer..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <select 
+              className="va-filter-btn"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}>
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button 
+              className="va-refresh-btn"
+              onClick={() => fetchDashboardData(true)}
+              disabled={refreshing}>
+              <span className="va-refresh-icon">🔄</span>
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+        </div>
+
+        <div className="va-table-container">
+          <div className="va-table-wrapper">
+            {loading ? (
+              <div className="va-empty">
+                <div className="va-empty-icon">⏳</div>
+                <div className="va-empty-title">Loading orders...</div>
+              </div>
+            ) : filteredOrders.length === 0 ? (
+              <div className="va-empty">
+                <div className="va-empty-icon">📭</div>
+                <div className="va-empty-title">No orders found</div>
+                <div className="va-empty-text">
+                  {searchQuery || filterStatus !== 'all' 
+                    ? 'Try adjusting your filters or search query'
+                    : 'Orders will appear here once customers start placing them'}
+                </div>
+              </div>
+            ) : (
+              <table className="va-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((order) => {
+                    const statusStyle = getStatusColor(order.order_status);
+                    return (
+                      <tr key={order._id}>
+                        <td>
+                          <span className="va-order-id">
+                            #{order._id?.slice(-8) || 'N/A'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="va-customer-info">
+                            <div className="va-customer-avatar">
+                              {order.userId?.name?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <div className="va-customer-details">
+                              <div className="va-customer-name">
+                                {order.userId?.name || 'Guest'}
+                              </div>
+                              <div className="va-customer-email">
+                                {order.userId?.email || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span 
+                            className="va-status-badge"
+                            style={{ background: statusStyle.bg, color: statusStyle.color }}>
+                            <span>{statusStyle.icon}</span>
+                            {order.order_status || 'Pending'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="va-amount">
+                            ₹{fmt(order.totalAmt || 0)}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="va-date">
+                            {order.createdAt 
+                              ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })
+                              : 'N/A'}
+                          </div>
+                        </td>
+                        <td>
+                          <Link 
+                            to={`/orders`}
+                            className="va-action-btn">
+                            View Details
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DELIVERY RIDER DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════════
 const DeliveryRiderDashboard = ({ context }) => {
   const [greeting, setGreeting] = useState("Hello");
   const [stats, setStats] = useState(null);

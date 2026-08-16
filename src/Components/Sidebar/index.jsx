@@ -26,6 +26,7 @@ const SELLER_ROLES = ['SELLER', 'GROCERY_SELLER', 'RESTAURANT_SELLER', 'FASHION_
 const isSellerRole = (role) => SELLER_ROLES.includes(role);
 const roleLabels = {
   ADMIN: '🛡️ Admin Panel',
+  VICE_ADMIN: '👔 Vice Admin Panel',
   SELLER: '🏪 Seller Panel',
   GROCERY_SELLER: '🛒 Grocery Seller Panel',
   RESTAURANT_SELLER: '🍽️ Restaurant Seller Panel',
@@ -49,6 +50,7 @@ const Sidebar = () => {
 
   const userRole = context?.userData?.role || "USER";
   const isAdmin = userRole === "ADMIN";
+  const isViceAdmin = userRole === "VICE_ADMIN";
   const isSeller = isSellerRole(userRole);
   const isGrocerySeller = userRole === "GROCERY_SELLER";
   const isRestaurantSeller = userRole === "RESTAURANT_SELLER";
@@ -177,7 +179,7 @@ const Sidebar = () => {
               label={isGrocerySeller ? "My Grocery Products" : isRestaurantSeller ? "My Menu Items" : isSeller ? "My Products" : "Products"}
             />
           )}
-          {(isAdmin || isSeller) && <NavItem to="/orders" icon={IoBagCheckOutline} label={isSeller ? "My Orders" : "All Orders"} />}
+          {(isAdmin || isViceAdmin || isSeller) && <NavItem to="/orders" icon={IoBagCheckOutline} label={isSeller ? "My Orders" : "All Orders"} />}
           {isAdmin && <NavItem to="/reviews" icon={MdOutlineRateReview} label="All Reviews" />}
           {isSeller && <NavItem to="/reviews" icon={MdOutlineRateReview} label="My Reviews" />}
 
@@ -255,6 +257,13 @@ const Sidebar = () => {
               <GroupLabel label="Delivery" />
               <NavItem to="/orders" icon={IoBagCheckOutline} label="Available Orders" />
               <NavItem to="/wallet/transactions" icon={IoWalletOutline} label="Earnings & Wallet" />
+              <NavItem to="/profile" icon={FiUsers} label="My Profile" />
+            </>
+          )}
+
+          {isViceAdmin && (
+            <>
+              <GroupLabel label="Account" />
               <NavItem to="/profile" icon={FiUsers} label="My Profile" />
             </>
           )}
