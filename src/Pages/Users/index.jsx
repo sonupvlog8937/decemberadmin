@@ -80,6 +80,7 @@ const ROLE_OPTIONS = [
     { value: 'AUTOMOBILE_SELLER', label: 'AUTOMOBILE SELLER' },
     { value: 'DELIVERY_RIDER', label: 'DELIVERY RIDER' },
     { value: 'ADMIN', label: 'ADMIN' },
+    { value: 'VICE_ADMIN', label: 'VICE ADMIN' },
 ];
 const SELLER_ROLES = ['SELLER', 'GROCERY_SELLER', 'RESTAURANT_SELLER', 'FASHION_SELLER', 'ELECTRONICS_SELLER', 'MEDICAL_SELLER', 'BEAUTY_SELLER', 'HOME_KITCHEN_SELLER', 'GIFTS_TOYS_SELLER', 'BOOKS_STATIONERY_SELLER', 'JEWELLERY_SELLER', 'HARDWARE_SELLER', 'AUTOMOBILE_SELLER'];
 const isSellerRole = (role) => SELLER_ROLES.includes(role);
@@ -89,6 +90,7 @@ const GO_MARKET_SELLER_ROLES = SELLER_ROLES.filter((r) => r !== 'SELLER');
 
 const roleConfig = {
     ADMIN: { color: '#7c3aed', bg: '#ede9fe', icon: <FaUserShield size={11} /> },
+    VICE_ADMIN: { color: '#667eea', bg: '#e0e7ff', icon: <FaUserShield size={11} /> },
     SELLER: { color: '#0369a1', bg: '#e0f2fe', icon: <FaStore size={11} /> },
     GROCERY_SELLER: { color: '#047857', bg: '#d1fae5', icon: <FaStore size={11} /> },
     RESTAURANT_SELLER: { color: '#c2410c', bg: '#ffedd5', icon: <FaStore size={11} /> },
