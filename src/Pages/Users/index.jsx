@@ -257,13 +257,16 @@ export const Users = () => {
     const updateUserAccess = (targetUserId, payload) => {
         console.log('🔄 Updating user access:', { targetUserId, payload }); // Debug log
         editData('/api/user/admin/user-access', { userId: targetUserId, ...payload }).then((res) => {
-            console.log('✅ Update response:', res); // Debug log
-            if (res?.success) {
+            console.log('✅ Full Update response:', res); // Debug log
+            
+            // Check if response has data property with actual user data
+            if (res?.data || res?.success) {
                 context.alertBox('success', res?.message || 'Updated successfully');
                 getUsers(page, rowsPerPage);
             } else {
+                // If status is 200 but no success flag, still might be successful
                 context.alertBox('error', res?.message || 'Failed to update');
-                console.error('❌ Update failed:', res);
+                console.error('❌ Update failed - Response:', JSON.stringify(res, null, 2));
             }
         }).catch((err) => {
             console.error('❌ Update error:', err);

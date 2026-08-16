@@ -867,7 +867,7 @@ const ReceiptModal = ({ order, onClose }) => {
   console.log('ReceiptModal Debug:', {
     isSellerView,
     isDeliveryRider,
-    isAdmin: context?.userData?.role === "ADMIN",
+    isAdmin: context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN",
     currentSellerId,
     allProductsCount: allProducts.length,
     filteredProductsCount: products.length,
@@ -1240,10 +1240,10 @@ const ReceiptModal = ({ order, onClose }) => {
                     productTitle: item.productTitle,
                     isDeliveryRider,
                     userRole: context?.userData?.role,
-                    isAdmin: context?.userData?.role === "ADMIN",
+                    isAdmin: context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN",
                     hasSellerData: !!seller,
                     storeName,
-                    willShowSellerInfo: (isDeliveryRider || context?.userData?.role === "ADMIN") && seller && storeName && storeName !== 'N/A'
+                    willShowSellerInfo: (isDeliveryRider || context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") && seller && storeName && storeName !== 'N/A'
                   });
                   
                   // Current/live location (if available, different from store address)
@@ -1624,7 +1624,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
   };
 
   useEffect(() => {
-    if (isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") {
+    if (isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") {
       fetchDataFromApi('/api/order/delivery-riders').then((res) => setRiders(res?.riders || res?.data || []));
     }
   }, [isGoMarketShopSeller, isRestaurantSeller, context?.userData?.role]);
@@ -2174,9 +2174,9 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             >
                               🧾 Receipt
                             </button>
-                             {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && order?.order_status !== "delivered" && (
+                             {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") && order?.order_status !== "delivered" && (
                               <>
-                                {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN") && (
+                                {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") && (
                                   <button className="ao-receipt-btn" onClick={() => broadcastOrder(order._id)} disabled={assigningOrderId === order._id || order?.deliveryAssignment?.status === 'broadcast'}>
                                     {assigningOrderId === order._id ? (
                                       <>
@@ -2186,7 +2186,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                     ) : order?.deliveryAssignment?.status === 'broadcast' ? 'Broadcasted to riders' : 'Broadcast to market riders'}
                                   </button>
                                 )}
-                                {context?.userData?.role === "ADMIN" && (
+                                {(context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") && (
                                   <Select size="small" displayEmpty value={order?.deliveryAssignment?.riderId?._id || order?.deliveryAssignment?.riderId || ""} onChange={(e) => assignRider(order._id, e.target.value)} disabled={assigningOrderId === order._id} sx={{ minWidth: 150, fontSize: 11, background: '#eef2ff', borderRadius: '8px' }}>
                                     <MenuItem value="" disabled>{order?.deliveryAssignment?.riderId ? 'Assigned rider' : 'Assign rider'}</MenuItem>
                                     {riders.map((r) => <MenuItem key={r._id} value={r._id}>{r.name}</MenuItem>)}
