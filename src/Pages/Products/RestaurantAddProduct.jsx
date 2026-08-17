@@ -287,7 +287,7 @@ const RestaurantAddProduct = () => {
   }, [form.name, form.description, categoryId, form.price, previews.length]);
 
   const selectSx = (hasError) => ({
-    width: '100%',
+    width: '97%',
     fontSize: 13,
     background: '#fff',
     borderRadius: '10px',
@@ -300,7 +300,7 @@ const RestaurantAddProduct = () => {
   });
 
   const inputStyle = (hasError) => ({
-    width: '100%',
+    width: '97%',
     height: 44,
     border: `1px solid ${hasError ? '#ef4444' : '#fed7aa'}`,
     borderRadius: 10,
@@ -545,6 +545,19 @@ const RestaurantAddProduct = () => {
           .restaurant-card { padding: 14px !important; }
           .price-grid { grid-template-columns: 1fr !important; }
           .category-grid { grid-template-columns: 1fr !important; }
+          .restaurant-add-product input,
+          .restaurant-add-product textarea,
+          .restaurant-add-product .MuiOutlinedInput-root {
+            width: 92% !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .restaurant-add-product input,
+          .restaurant-add-product textarea,
+          .restaurant-add-product .MuiOutlinedInput-root {
+            width: 94% !important;
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {

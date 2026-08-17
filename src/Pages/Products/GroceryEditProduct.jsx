@@ -439,6 +439,8 @@ const GroceryEditProduct = () => {
           --ink: #111827;
           --muted: #6b7280;
           min-height: 100vh;
+          max-width: 100vw;
+          overflow-x: hidden;
           background: linear-gradient(160deg, #ecfdf5 0%, #f0fdf4 40%, #f8fafc 100%);
           font-family: 'DM Sans', sans-serif;
           padding: 20px 24px 100px;
@@ -544,6 +546,7 @@ const GroceryEditProduct = () => {
 
         .ga-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         .ga-grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+        .ga-grid-2 > div, .ga-grid-auto > div { min-width: 0; }
 
         .ga-empty-cats { padding: 16px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; font-size: 13px; color: #92400e; }
 
@@ -658,6 +661,8 @@ const GroceryEditProduct = () => {
           .ga-title { font-size: 21px; }
           .ga-card { padding: 18px; border-radius: 14px; }
           .ga-grid-2 { grid-template-columns: 1fr; }
+          .ga-grid-auto { grid-template-columns: 1fr; gap: 12px; }
+          .ga-input, .ga-textarea { padding-left: 12px; padding-right: 12px; }
           .ga-submit-desktop { display: none; }
           .ga-sticky-bar { display: block; }
           .ga-photo-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
