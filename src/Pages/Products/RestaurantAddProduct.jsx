@@ -329,13 +329,29 @@ const RestaurantAddProduct = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
+        .restaurant-add-product,
+        .restaurant-add-product *,
+        .restaurant-add-product *::before,
+        .restaurant-add-product *::after {
+          box-sizing: border-box;
+        }
         .restaurant-add-product {
           min-height: 100vh;
+          width: 100%;
+          max-width: 100vw;
+          overflow-x: hidden;
           background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 40%, #f8fafc 100%);
           font-family: 'DM Sans', sans-serif;
           padding: 24px;
           padding-bottom: 24px;
         }
+        .restaurant-add-product input,
+        .restaurant-add-product textarea,
+        .restaurant-add-product select,
+        .restaurant-add-product .MuiInputBase-root {
+          max-width: 100%;
+        }
+        .restaurant-card { max-width: 100%; }
 
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(14px); }
@@ -511,9 +527,10 @@ const RestaurantAddProduct = () => {
 
         @media (max-width: 640px) {
           .restaurant-add-product { padding: 14px; padding-bottom: 96px; }
-          .restaurant-card { border-radius: 14px !important; }
+          .restaurant-card { border-radius: 14px !important; padding: 18px !important; }
           .restaurant-hero-title { font-size: 21px !important; }
           .desktop-submit-btn { display: none !important; }
+          .price-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
           .mobile-sticky-bar {
             display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
             background: #fff; border-top: 1px solid #fed7aa; padding: 10px 14px;
@@ -521,6 +538,13 @@ const RestaurantAddProduct = () => {
             align-items: center; gap: 12px; box-shadow: 0 -6px 20px rgba(0,0,0,0.08);
             animation: fadeInUp 0.3s ease both;
           }
+        }
+
+        @media (max-width: 420px) {
+          .restaurant-add-product { padding: 12px; }
+          .restaurant-card { padding: 14px !important; }
+          .price-grid { grid-template-columns: 1fr !important; }
+          .category-grid { grid-template-columns: 1fr !important; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -806,7 +830,7 @@ const RestaurantAddProduct = () => {
                   No categories yet. Ask <strong>admin</strong> to add restaurant categories first.
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="category-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <div>
                     <label style={labelStyle}>Category *</label>
                     <Select size="small" sx={selectSx(errors.category)} value={categoryId} displayEmpty
@@ -853,7 +877,7 @@ const RestaurantAddProduct = () => {
                   <span className="discount-badge"><FaTag size={10} /> Save {discountPercent}% off</span>
                 )}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(140px, 220px))', gap: 14 }}>
+              <div className="price-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(140px, 220px))', gap: 14 }}>
                 <div>
                   <label style={labelStyle}>MRP / Base price (₹) *</label>
                   <input style={inputStyle(errors.price)} type="number" name="price" value={form.price} onChange={onChange} placeholder="199" min="0" />
