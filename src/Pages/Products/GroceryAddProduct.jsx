@@ -325,7 +325,7 @@ const GroceryAddProduct = () => {
   };
 
   const selectSx = (hasError) => ({
-    width: '100%',
+    width: '97%',
     fontSize: 13,
     background: '#fff',
     borderRadius: '10px',
@@ -446,7 +446,7 @@ const GroceryAddProduct = () => {
         .ga-char-count.warn { color: #d97706; }
 
         .ga-input, .ga-textarea {
-          width: 100%; border: 1px solid var(--accent-border); border-radius: 10px; padding: 0 14px; font-size: 14px;
+          width: 97%; border: 1px solid var(--accent-border); border-radius: 10px; padding: 0 14px; font-size: 14px;
           color: #064e3b; outline: none; background: #fff; box-sizing: border-box; font-family: inherit;
           transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
@@ -570,6 +570,12 @@ const GroceryAddProduct = () => {
           .ga-preview-card { position: static; order: -1; margin-bottom: 4px; }
         }
 
+        @media (max-width: 420px) {
+          .ga-input, .ga-textarea { width: 92% !important; }
+          .ga-page .MuiOutlinedInput-root { width: 92% !important; }
+          .ga-card { padding: 14px !important; }
+        }
+
         @media (max-width: 640px) {
           .ga-page { padding: 14px 14px 96px; }
           .ga-progress-shell { margin: -14px -14px 16px; padding: 10px 14px; }
@@ -577,7 +583,8 @@ const GroceryAddProduct = () => {
           .ga-card { padding: 18px; border-radius: 14px; }
           .ga-grid-2 { grid-template-columns: 1fr; }
           .ga-grid-auto { grid-template-columns: 1fr; gap: 12px; }
-          .ga-input, .ga-textarea { padding-left: 12px; padding-right: 12px; }
+          .ga-input, .ga-textarea { padding-left: 12px; padding-right: 12px; width: 94% !important; }
+          .ga-page .MuiOutlinedInput-root { width: 94% !important; }
           .ga-submit-desktop { display: none; }
           .ga-sticky-bar { display: block; }
           .ga-photo-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
