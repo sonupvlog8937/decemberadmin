@@ -49,6 +49,8 @@ const IconRefresh  = ({ spin }) => (
   </svg>
 );
 const IconArrowRight = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>;
+const IconWallet = () => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 12V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-5"/><path d="M21 12h-6a2 2 0 000 4h6v-4z"/></svg>;
+const IconSettings = () => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>;
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 const StatCard = ({ icon, label, value, accent, trend, trendLabel, delay = 0, loading }) => (
@@ -70,6 +72,35 @@ const StatCard = ({ icon, label, value, accent, trend, trendLabel, delay = 0, lo
     <div className="stat-card__bar"><div className="stat-card__bar-fill" style={{ background: accent }} /></div>
   </div>
 );
+
+// ─── Quick Access ─────────────────────────────────────────────────────────────
+const QuickAccess = ({ onAddProduct, onScrollToAnalytics }) => {
+  const items = [
+    { label: "Products",    icon: <IconBox />,        to: "/product",   color: "#6366f1" },
+    { label: "Orders",      icon: <IconOrders />,     to: "/orders",    color: "#0ea5e9" },
+    { label: "Wallet",      icon: <IconWallet />,     to: "/wallet",    color: "#10b981" },
+    { label: "Users",       icon: <IconUsers />,      to: "/users",     color: "#8b5cf6" },
+    { label: "Categories",  icon: <IconCategory />,   to: "/category",  color: "#f97316" },
+    { label: "Reviews",     icon: <IconStar fill />,  to: "/reviews",   color: "#ec4899" },
+    { label: "Add Product", icon: <FaPlus size={17} />, onClick: onAddProduct, color: "#14b8a6" },
+    { label: "Analytics",   icon: <IconRevenue />,    onClick: onScrollToAnalytics, color: "#f59e0b" },
+  ];
+  return (
+    <div className="qa-grid">
+      {items.map((it, i) => it.onClick ? (
+        <button key={it.label} type="button" onClick={it.onClick} className="qa-card" style={{ "--qc": it.color, "--d": `${i * 45}ms` }}>
+          <span className="qa-card__icon" style={{ background: `${it.color}18`, color: it.color }}>{it.icon}</span>
+          <span className="qa-card__label">{it.label}</span>
+        </button>
+      ) : (
+        <Link key={it.label} to={it.to} className="qa-card" style={{ "--qc": it.color, "--d": `${i * 45}ms` }}>
+          <span className="qa-card__icon" style={{ background: `${it.color}18`, color: it.color }}>{it.icon}</span>
+          <span className="qa-card__label">{it.label}</span>
+        </Link>
+      ))}
+    </div>
+  );
+};
 
 // ─── Status Pill ──────────────────────────────────────────────────────────────
 const StatusPill = ({ status }) => {
@@ -1327,6 +1358,7 @@ const Dashboard = () => {
   const [orders,             setOrders]              = useState([]);
   const [pageOrder,          setPageOrder]           = useState(1);
   const [orderSearchQuery,   setOrderSearchQuery]    = useState("");
+  const [orderStatusFilter,  setOrderStatusFilter]   = useState("all");
   const [totalOrdersData,    setTotalOrdersData]     = useState([]);
   const [users,              setUsers]               = useState([]);
   const [allReviews,         setAllReviews]          = useState([]);
@@ -1462,12 +1494,34 @@ const Dashboard = () => {
 
   const isShowOrderdProduct = (index) => setIsOpenOrderdProduct(isOpenOrderdProduct === index ? null : index);
 
+  const handleExportCSV = () => {
+    const rows = ordersData || [];
+    if (!rows.length) return;
+    const header = ["Order ID", "Customer", "Phone", "Amount", "Status", "Date"];
+    const csvRows = rows.map((o) => [
+      o?._id || "", o?.userId?.name || "", o?.delivery_address?.mobile || "",
+      o?.totalAmt || 0, o?.order_status || "", o?.createdAt?.split("T")[0] || "",
+    ]);
+    const csvContent = [header, ...csvRows]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `orders_${Date.now()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const allOrders      = totalOrdersData?.data || [];
   const totalRevenue   = allOrders.reduce((s, o) => s + (Number(o?.totalAmt) || 0), 0);
   const pendingCount   = orderStats.pending   || allOrders.filter(o => o?.order_status?.toLowerCase() === "pending").length;
   const confirmedCount = orderStats.confirmed || allOrders.filter(o => o?.order_status?.toLowerCase() === "confirmed").length;
   const deliveredCount = orderStats.delivered || allOrders.filter(o => o?.order_status?.toLowerCase() === "delivered").length;
   const totalProducts  = productData?.products?.length || productData?.totalProducts || 0;
+
+  const visibleOrders = (ordersData || []).filter(
+    (o) => orderStatusFilter === "all" || o?.order_status?.toLowerCase() === orderStatusFilter
+  );
 
   if (isDeliveryRider) return <DeliveryRiderDashboard context={context} />;
   if (isQuickCommerceSeller) return <QuickCommerceDashboard />;
@@ -1479,10 +1533,12 @@ const Dashboard = () => {
   }
 
   return (
-    <>
+    <div className="dash-page">
       <style>{`
         @keyframes spin360{to{transform:rotate(360deg)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+        .dash-page{animation:fadeUp .5s ease-out both;}
 
         /* ── Stat card ── */
         .stat-card{position:relative;background:#fff;border:1px solid #e8ecf0;border-radius:16px;overflow:hidden;padding:18px 16px 15px;transition:transform .22s,box-shadow .22s,border-color .22s;animation:fadeUp .4s ease both;animation-delay:var(--delay,0ms);cursor:default;}
@@ -1501,6 +1557,15 @@ const Dashboard = () => {
 
         /* ── Stats grid ── */
         .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:13px;margin-bottom:22px;}
+
+        /* ── Quick Access ── */
+        .qa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px;margin-bottom:24px;}
+        .qa-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #e8ecf0;border-radius:14px;padding:16px 10px;text-decoration:none;cursor:pointer;font-family:inherit;transition:transform .2s cubic-bezier(.4,0,.2,1),box-shadow .2s,border-color .2s;animation:fadeUp .4s ease both;animation-delay:var(--d,0ms);}
+        .qa-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 12px 24px -8px rgba(0,0,0,.12);border-color:var(--qc,#e2e8f0);}
+        .qa-card:active{transform:translateY(-1px) scale(.96);}
+        .qa-card__icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;transition:transform .25s ease;}
+        .qa-card:hover .qa-card__icon{transform:scale(1.1) rotate(-4deg);}
+        .qa-card__label{font-size:11.5px;font-weight:700;color:#334155;text-align:center;}
 
         /* ── Hero ── */
         .dash-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#1e3a8a 0%,#2874f0 60%,#1d4ed8 100%);border-radius:18px;padding:30px 32px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
@@ -1539,6 +1604,15 @@ const Dashboard = () => {
         .dash-card__title{font-size:15px;font-weight:700;color:#0f172a;}
         .dash-card__sub{font-size:12px;color:#94a3b8;margin-top:2px;}
         .dash-card__search{min-width:220px;}
+        .dash-card__actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+        .dash-export-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#0f172a;background:#f8fafc;border:1px solid #e2e8f0;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+        .dash-export-btn:hover{background:#f1f5f9;border-color:#cbd5e1;}
+
+        /* ── Status filter chips ── */
+        .dash-status-chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 14px;}
+        .dash-chip{font-size:11px;font-weight:600;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;padding:5px 12px;border-radius:100px;cursor:pointer;transition:all .15s;font-family:inherit;}
+        .dash-chip:hover{background:#f1f5f9;border-color:#cbd5e1;}
+        .dash-chip.active{background:#2874f0;color:#fff;border-color:#2874f0;}
 
         /* ── Table ── */
         .dash-table{width:100%;border-collapse:collapse;font-size:12.5px;}
@@ -1557,7 +1631,7 @@ const Dashboard = () => {
         .dash-expand-btn{width:26px;height:26px;border-radius:7px;background:#f1f5f9;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;transition:background .15s;}
         .dash-expand-btn:hover{background:#e2e8f0;}
         .dash-table__expand td{background:#f8fafc !important;padding:0 !important;}
-        .dash-expand-wrap{padding:14px 18px 18px;}
+        .dash-expand-wrap{padding:14px 18px 18px;animation:fadeUp .3s ease both;}
         .dash-expand-title{font-size:12px;font-weight:700;color:#0f172a;margin-bottom:10px;}
         .dash-inner-table{width:100%;border-collapse:collapse;font-size:12px;}
         .dash-inner-table th{padding:8px 10px;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.8px;text-transform:uppercase;background:#fff;border-bottom:1px solid #e2e8f0;}
@@ -1621,6 +1695,26 @@ const Dashboard = () => {
           .dash-hero__img{display:none;}
           .dash-hero__stats{align-items:flex-start;flex-direction:row;flex-wrap:wrap;}
           .stats-grid{grid-template-columns:repeat(2,1fr);}
+          .dash-card__header{flex-direction:column;align-items:stretch;}
+          .dash-card__search{min-width:0;width:100%;}
+          .dash-card__actions{width:100%;justify-content:space-between;}
+        }
+
+        @media(max-width:640px){
+          .qa-grid{grid-template-columns:repeat(4,1fr);gap:8px;}
+          .qa-card{padding:12px 6px;border-radius:12px;}
+          .qa-card__icon{width:38px;height:38px;}
+          .qa-card__label{font-size:9.5px;}
+
+          .dash-table thead{display:none;}
+          .dash-table, .dash-table tbody{display:block;width:100%;}
+          .dash-table__row{position:relative;display:block;background:#fff;border:1px solid #f1f5f9;border-radius:14px;margin-bottom:10px;padding:14px 44px 10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.03);}
+          .dash-table__row td{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:none;padding:5px 0;font-size:12.5px;}
+          .dash-table__row td[data-label]::before{content:attr(data-label);font-size:9.5px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;}
+          .dash-table__row td:first-child{position:absolute;top:12px;right:10px;padding:0;width:auto;display:block;}
+          .dash-table__address{max-width:62%;text-align:right;align-items:flex-end;}
+          .dash-table__expand{display:block;}
+          .dash-table__expand td{display:block !important;padding:0 !important;}
         }
       `}</style>
 
@@ -1655,6 +1749,13 @@ const Dashboard = () => {
         </div>
         <img src="/shop-illustration.webp" className="dash-hero__img" alt="" />
       </div>
+
+      {/* ── Quick Access ── */}
+      <p className="dash-section-lbl" style={{ marginTop: 0 }}>Quick Access</p>
+      <QuickAccess
+        onAddProduct={() => context?.setIsOpenFullScreenPanel?.({ open: true, model: "Add Product" })}
+        onScrollToAnalytics={() => document.getElementById("analytics-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+      />
 
       {/* ── Sync bar ── */}
       <div className="dash-syncbar">
@@ -1701,11 +1802,29 @@ const Dashboard = () => {
         <div className="dash-card__header">
           <div>
             <h2 className="dash-card__title">Recent Orders</h2>
-            <p className="dash-card__sub">Latest {ordersData?.length || 0} orders from your store</p>
+            <p className="dash-card__sub">Latest {visibleOrders?.length || 0} orders from your store</p>
           </div>
-          <div className="dash-card__search">
-            <SearchBox searchQuery={orderSearchQuery} setSearchQuery={setOrderSearchQuery} setPageOrder={setPageOrder} />
+          <div className="dash-card__actions">
+            <div className="dash-card__search">
+              <SearchBox searchQuery={orderSearchQuery} setSearchQuery={setOrderSearchQuery} setPageOrder={setPageOrder} />
+            </div>
+            <button className="dash-export-btn" onClick={handleExportCSV} title="Export visible orders as CSV">
+              ⬇ Export CSV
+            </button>
           </div>
+        </div>
+
+        <div className="dash-status-chips">
+          {["all", "pending", "confirmed", "shipped", "delivered", "cancelled"].map((st) => (
+            <button
+              key={st}
+              type="button"
+              className={`dash-chip${orderStatusFilter === st ? " active" : ""}`}
+              onClick={() => setOrderStatusFilter(st)}
+            >
+              {st === "all" ? "All" : st.charAt(0).toUpperCase() + st.slice(1)}
+            </button>
+          ))}
         </div>
 
         <div className="relative overflow-x-auto">
@@ -1718,7 +1837,7 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {ordersData?.length > 0 && ordersData.map((order, index) => (
+              {visibleOrders?.length > 0 && visibleOrders.map((order, index) => (
                 <React.Fragment key={order._id}>
                   <tr className="dash-table__row">
                     <td>
@@ -1726,15 +1845,15 @@ const Dashboard = () => {
                         {isOpenOrderdProduct === index ? <FaAngleUp className="text-[13px]" /> : <FaAngleDown className="text-[13px]" />}
                       </button>
                     </td>
-                    <td><span className="dash-table__id">#{order?._id?.slice(-8)}</span></td>
-                    <td>
+                    <td data-label="Order ID"><span className="dash-table__id">#{order?._id?.slice(-8)}</span></td>
+                    <td data-label="Payment">
                       <span className="dash-table__payment">
                         {order?.paymentId ? order?.paymentId?.slice(0, 14) + "…" : <span className="dash-table__cod">COD</span>}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap font-[600] text-[#0f172a]">{order?.userId?.name}</td>
-                    <td className="whitespace-nowrap">{order?.delivery_address?.mobile}</td>
-                    <td>
+                    <td data-label="Customer" className="whitespace-nowrap font-[600] text-[#0f172a]">{order?.userId?.name}</td>
+                    <td data-label="Phone" className="whitespace-nowrap">{order?.delivery_address?.mobile}</td>
+                    <td data-label="Address">
                       <div className="dash-table__address">
                         <span className="dash-table__addr-type">{order?.delivery_address?.addressType}</span>
                         <span className="dash-table__addr-text">
@@ -1742,12 +1861,12 @@ const Dashboard = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap">{order?.delivery_address?.pincode}</td>
-                    <td><span className="dash-table__amt">₹{Number(order?.totalAmt || 0).toLocaleString("en-IN")}</span></td>
-                    <td className="text-[12px] text-[#64748b]">{order?.userId?.email}</td>
-                    <td><span className="dash-table__uid">{order?.userId?._id?.slice(-8)}</span></td>
-                    <td><StatusPill status={order?.order_status} /></td>
-                    <td className="whitespace-nowrap text-[12px] text-[#64748b]">{order?.createdAt?.split("T")[0]}</td>
+                    <td data-label="Pincode" className="whitespace-nowrap">{order?.delivery_address?.pincode}</td>
+                    <td data-label="Amount"><span className="dash-table__amt">₹{Number(order?.totalAmt || 0).toLocaleString("en-IN")}</span></td>
+                    <td data-label="Email" className="text-[12px] text-[#64748b]">{order?.userId?.email}</td>
+                    <td data-label="User ID"><span className="dash-table__uid">{order?.userId?._id?.slice(-8)}</span></td>
+                    <td data-label="Status"><StatusPill status={order?.order_status} /></td>
+                    <td data-label="Date" className="whitespace-nowrap text-[12px] text-[#64748b]">{order?.createdAt?.split("T")[0]}</td>
                   </tr>
 
                   {isOpenOrderdProduct === index && (
@@ -1784,7 +1903,7 @@ const Dashboard = () => {
               ))}
             </tbody>
           </table>
-          {(!ordersData || ordersData.length === 0) && <div className="dash-empty">No orders found</div>}
+          {(!visibleOrders || visibleOrders.length === 0) && <div className="dash-empty">No orders found</div>}
         </div>
 
         {orders?.totalPages > 1 && (
@@ -1797,7 +1916,7 @@ const Dashboard = () => {
 
       {/* ── Chart ── */}
       <p className="dash-section-lbl">Analytics</p>
-      <div className="dash-card" style={{ marginBottom: 24 }}>
+      <div className="dash-card" id="analytics-section" style={{ marginBottom: 24 }}>
         <div className="dash-card__header" style={{ paddingBottom: 4 }}>
           <div>
             <h2 className="dash-card__title">Monthly Analytics</h2>
@@ -1835,7 +1954,7 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

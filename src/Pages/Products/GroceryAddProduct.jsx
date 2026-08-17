@@ -446,7 +446,7 @@ const GroceryAddProduct = () => {
         .ga-char-count.warn { color: #d97706; }
 
         .ga-input, .ga-textarea {
-          width: 100%; border: 1px solid var(--accent-border); border-radius: 10px; padding: 0 14px; font-size: 14px;
+          width: 92%; border: 1px solid var(--accent-border); border-radius: 10px; padding: 0 14px; font-size: 14px;
           color: #064e3b; outline: none; background: #fff; box-sizing: border-box; font-family: inherit;
           transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
