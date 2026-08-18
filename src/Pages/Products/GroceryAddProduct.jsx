@@ -370,20 +370,24 @@ const GroceryAddProduct = () => {
           .ga-page *, .ga-page *::before, .ga-page *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
         }
 
-        .ga-progress-shell {
-          position: sticky; top: 0; z-index: 20; margin: -20px -24px 20px; padding: 10px 24px;
-          background: rgba(248,250,252,0.85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--accent-border);
-        }
-        .ga-progress-row { display: flex; align-items: center; gap: 12px; max-width: 1240px; margin: 0 auto; }
-        .ga-progress-track { flex: 1; height: 6px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
+        .ga-progress-track { height: 6px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
         .ga-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-dark)); transition: width 0.5s cubic-bezier(.4,0,.2,1); }
-        .ga-progress-label { font-size: 12px; font-weight: 700; color: var(--accent-darker); white-space: nowrap; }
-        .ga-autosave { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); opacity: 0; transition: opacity 0.3s; white-space: nowrap; }
+        .ga-autosave { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); margin-top: 6px; opacity: 0; transition: opacity 0.3s; white-space: nowrap; }
         .ga-autosave.show { opacity: 1; }
 
         .ga-shell-inner { max-width: 1240px; margin: 0 auto; }
 
         .ga-header { margin-bottom: 22px; animation: gaFadeUp 0.5s ease both; }
+        .ga-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .ga-progress-panel { min-width: 180px; }
+        .ga-progress-panel-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+        .ga-progress-panel-label { font-size: 11px; font-weight: 700; color: var(--accent-darker); text-transform: uppercase; letter-spacing: 0.05em; }
+        .ga-completion-chip {
+          display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700;
+          padding: 4px 11px; border-radius: 999px; background: var(--accent-tint); color: var(--accent-darker);
+          transition: background 0.3s ease, color 0.3s ease; white-space: nowrap;
+        }
+        .ga-completion-chip.done { background: #dcfce7; color: #166534; }
         .ga-badge-role {
           display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
           background: var(--accent-border); color: var(--accent-darker); border-radius: 999px; font-size: 11px; font-weight: 700;
@@ -446,7 +450,7 @@ const GroceryAddProduct = () => {
         .ga-char-count.warn { color: #d97706; }
 
         .ga-input, .ga-textarea {
-          width: 92%; border: 1px solid var(--accent-border); border-radius: 10px; padding: 0 14px; font-size: 14px;
+          width: 88%; border: 1px solid var(--accent-border); border-radius: 10px; padding: 0 14px; font-size: 14px;
           color: #064e3b; outline: none; background: #fff; box-sizing: border-box; font-family: inherit;
           transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
@@ -567,7 +571,7 @@ const GroceryAddProduct = () => {
 
         @media (max-width: 960px) {
           .ga-layout { grid-template-columns: 1fr !important; }
-          .ga-preview-card { position: static; order: -1; margin-bottom: 4px; }
+          .ga-preview-card { position: static; }
         }
 
         @media (max-width: 420px) {
@@ -576,7 +580,6 @@ const GroceryAddProduct = () => {
 
         @media (max-width: 640px) {
           .ga-page { padding: 14px 14px 96px; }
-          .ga-progress-shell { margin: -14px -14px 16px; padding: 10px 14px; }
           .ga-title { font-size: 21px; }
           .ga-card { padding: 18px; border-radius: 14px; }
           .ga-grid-2 { grid-template-columns: 1fr; }
@@ -589,25 +592,30 @@ const GroceryAddProduct = () => {
         }
       `}</style>
 
-      {/* Sticky progress header */}
-      <div className="ga-progress-shell">
-        <div className="ga-progress-row">
-          <span className="ga-progress-label">{completion.done}/{completion.total} complete</span>
-          <div className="ga-progress-track">
-            <div className="ga-progress-fill" style={{ width: `${completion.percent}%` }} />
-          </div>
-          <span className={`ga-autosave${savedTick ? ' show' : ''}`}><FaClock size={10} /> Draft saved</span>
-        </div>
-      </div>
-
       <div className="ga-shell-inner">
         {/* Header */}
-        <div className="ga-header">
-          <span className="ga-badge-role"><FaLeaf size={10} /> GROCERY SELLER</span>
-          <h1 className="ga-title">Add Grocery Product</h1>
-          <p className="ga-subtitle">
-            Product will be listed in your Go Market grocery shop — visible to customers browsing your store.
-          </p>
+        <div className="ga-header ga-header-row">
+          <div>
+            <span className="ga-badge-role"><FaLeaf size={10} /> GROCERY SELLER</span>
+            <h1 className="ga-title">Add Grocery Product</h1>
+            <p className="ga-subtitle">
+              Product will be listed in your Go Market grocery shop — visible to customers browsing your store.
+            </p>
+          </div>
+          {!loadingMeta && shop && (
+            <div className="ga-progress-panel">
+              <div className="ga-progress-panel-top">
+                <span className="ga-progress-panel-label">Progress</span>
+                <span className={`ga-completion-chip${completion.percent === 100 ? ' done' : ''}`}>
+                  {completion.percent === 100 && <FaCheckCircle size={11} />} {completion.done}/{completion.total} · {completion.percent}%
+                </span>
+              </div>
+              <div className="ga-progress-track">
+                <div className="ga-progress-fill" style={{ width: `${completion.percent}%` }} />
+              </div>
+              <span className={`ga-autosave${savedTick ? ' show' : ''}`}><FaClock size={10} /> Draft saved</span>
+            </div>
+          )}
         </div>
 
         {draftBanner && (
