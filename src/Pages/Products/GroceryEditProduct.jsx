@@ -574,17 +574,17 @@ const GroceryEditProduct = () => {
         .ga-seo-body { margin-top: 18px; animation: gaFadeUp 0.35s ease both; }
 
         .ga-photo-count { font-size: 12px; color: var(--muted); font-weight: 600; }
-        .ga-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+        .ga-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
         .ga-photo-tile { position: relative; animation: gaPop 0.35s ease both; cursor: grab; }
         .ga-photo-tile:active { cursor: grabbing; }
         .ga-photo-frame {
-          border-radius: 12px; overflow: hidden; height: 110px; border: 2px solid var(--accent-border);
+          border-radius: 12px; overflow: hidden; height: 96px; border: 2px solid var(--accent-border);
           transition: transform 0.2s ease, border-color 0.2s ease; position: relative;
         }
         .ga-photo-tile:hover .ga-photo-frame { transform: scale(1.03); border-color: var(--accent); }
         .ga-photo-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .ga-photo-remove {
-          position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%;
+          position: absolute; top: -5px; right: -5px; width: 19px; height: 19px; border-radius: 50%;
           background: #dc2626; border: 2px solid #fff; color: #fff; cursor: pointer; z-index: 2;
           display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease, background 0.15s ease;
         }
@@ -676,8 +676,9 @@ const GroceryEditProduct = () => {
           .ga-page .MuiOutlinedInput-root { width: 80% !important; }
           .ga-submit-desktop { display: none; }
           .ga-sticky-bar { display: block; }
-          .ga-photo-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
-          .ga-photo-frame { height: 92px; }
+          .ga-photo-grid { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
+          .ga-photo-frame { height: 78px; }
+          .ga-photo-remove { width: 17px; height: 17px; top: -4px; right: -4px; }
           .ga-header { flex-direction: column; }
         }
       `}</style>
