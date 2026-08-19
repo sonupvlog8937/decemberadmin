@@ -16,8 +16,8 @@ const ProductSpecsEditor = ({ value = [], onChange, accent = "#059669" }) => {
   };
 
   return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+    <div style={{ marginBottom: 16, maxWidth: "100%", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
         <label style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>Specifications</label>
         <button
           type="button"
@@ -27,10 +27,12 @@ const ProductSpecsEditor = ({ value = [], onChange, accent = "#059669" }) => {
             color: accent,
             background: "#fff",
             borderRadius: 8,
-            padding: "4px 10px",
+            padding: "4px 8px",
             fontSize: 12,
             fontWeight: 700,
             cursor: "pointer",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
           }}
         >
           + Add row
@@ -40,18 +42,18 @@ const ProductSpecsEditor = ({ value = [], onChange, accent = "#059669" }) => {
         Add details like weight, brand, ingredients, spice level, etc. Shown on the product page.
       </p>
       {rows.map((row, index) => (
-        <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, marginBottom: 8 }}>
+        <div key={index} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) 34px", gap: 6, marginBottom: 8 }}>
           <input
             placeholder="Label (e.g. Weight)"
             value={row.key}
             onChange={(e) => updateRow(index, "key", e.target.value)}
-            style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 12px", fontSize: 13 }}
+            style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 10px", fontSize: 13, minWidth: 0, boxSizing: "border-box", width: "100%" }}
           />
           <input
             placeholder="Value (e.g. 500 g)"
             value={row.value}
             onChange={(e) => updateRow(index, "value", e.target.value)}
-            style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 12px", fontSize: 13 }}
+            style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 10px", fontSize: 13, minWidth: 0, boxSizing: "border-box", width: "100%" }}
           />
           <button
             type="button"
@@ -61,7 +63,9 @@ const ProductSpecsEditor = ({ value = [], onChange, accent = "#059669" }) => {
               background: "#fff",
               color: "#dc2626",
               borderRadius: 10,
-              width: 40,
+              width: 34,
+              minWidth: 34,
+              padding: 0,
               cursor: "pointer",
               fontWeight: 700,
             }}
