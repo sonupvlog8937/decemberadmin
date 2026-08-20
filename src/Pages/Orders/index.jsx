@@ -4,6 +4,12 @@ import { deleteData, editData, fetchDataFromApi, postData } from '../../utils/ap
 import Pagination from "@mui/material/Pagination";
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 import { MyContext } from "../../App.jsx";
 
 /* ─────────────────────────────────────────────────────────
@@ -1576,6 +1582,8 @@ const Orders = () => {
   const [processingOrderId, setProcessingOrderId] = useState(null);
   const [processingAction, setProcessingAction] = useState(null);
   const [mobileView, setMobileView] = useState(typeof window !== "undefined" ? window.innerWidth <= 860 : false);
+  // OTP Dialog state
+  const [otpDialog, setOtpDialog] = useState({ open: false, orderId: null, otp: '' });
 
   const context = useContext(MyContext);
 const isSellerView = isSellerRole(context?.userData?.role);
@@ -1728,17 +1736,28 @@ const isSellerView = isSellerRole(context?.userData?.role);
       return context.alertBox('error', sent?.message || 'Could not send delivery OTP');
     }
     context.alertBox('success', sent?.message || 'OTP sent to customer mobile number');
-    const otp = window.prompt('Enter the OTP received by customer to mark this order delivered');
-    if (!otp) {
-      finishOrderProcessing();
-      return;
+    // Open modern OTP dialog instead of window.prompt
+    setOtpDialog({ open: true, orderId, otp: '' });
+    finishOrderProcessing();
+  };
+
+  const handleOtpSubmit = async () => {
+    const { orderId, otp } = otpDialog;
+    if (!otp || otp.length < 4) {
+      return context.alertBox('error', 'Please enter a valid OTP');
     }
+    startOrderProcessing(orderId, 'deliver');
+    setOtpDialog({ ...otpDialog, open: false });
+    
     editData(`/api/order/rider/orders/${orderId}/deliver`, { otp }).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         context.alertBox('success', res?.data?.message || 'Order delivered and ₹20 earning credited');
         refreshOrders();
       } else context.alertBox('error', res?.data?.message || 'Delivery OTP verification failed');
-    }).finally(() => finishOrderProcessing());
+    }).finally(() => {
+      finishOrderProcessing();
+      setOtpDialog({ open: false, orderId: null, otp: '' });
+    });
   };
 
   const callCustomer = (order) => {
@@ -2505,6 +2524,191 @@ const isSellerView = isSellerRole(context?.userData?.role);
         )}
 
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          OTP VERIFICATION DIALOG - Modern Enhanced UI
+       ═══════════════════════════════════════════════════════════════ */}
+      <Dialog
+        open={otpDialog.open}
+        onClose={() => setOtpDialog({ open: false, orderId: null, otp: '' })}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          style: {
+            borderRadius: 20,
+            padding: '8px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          }
+        }}
+      >
+        <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden' }}>
+          <DialogTitle sx={{ 
+            textAlign: 'center', 
+            pb: 1, 
+            pt: 3,
+            px: 3,
+          }}>
+            <div style={{
+              width: 72,
+              height: 72,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
+              animation: 'pulse 2s infinite',
+            }}>
+              <span style={{ fontSize: 36 }}>🔐</span>
+            </div>
+            <div style={{
+              fontFamily: "'Sora', sans-serif",
+              fontSize: 22,
+              fontWeight: 800,
+              color: '#1a1a1a',
+              marginBottom: 8,
+              letterSpacing: '-0.5px',
+            }}>
+              Verify Delivery OTP
+            </div>
+            <div style={{
+              fontSize: 14,
+              color: '#6b7280',
+              fontWeight: 500,
+              lineHeight: 1.5,
+            }}>
+              Enter the 6-digit OTP received by the customer
+            </div>
+          </DialogTitle>
+
+          <DialogContent sx={{ px: 3, pt: 2, pb: 1 }}>
+            <TextField
+              autoFocus
+              fullWidth
+              label="Enter OTP"
+              type="text"
+              inputProps={{ 
+                maxLength: 6,
+                style: { 
+                  textAlign: 'center', 
+                  fontSize: 24, 
+                  fontWeight: 700,
+                  letterSpacing: '8px',
+                  fontFamily: "'DM Mono', monospace",
+                }
+              }}
+              value={otpDialog.otp}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, ''); // Only numbers
+                setOtpDialog({ ...otpDialog, otp: value });
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && otpDialog.otp.length >= 4) {
+                  handleOtpSubmit();
+                }
+              }}
+              placeholder="000000"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3,
+                  background: '#f9fafb',
+                  '&:hover fieldset': {
+                    borderColor: '#667eea',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                  },
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#667eea',
+                },
+              }}
+            />
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 16,
+              padding: '12px 16px',
+              background: '#fef3c7',
+              borderRadius: 12,
+              border: '1px solid #fde68a',
+            }}>
+              <span style={{ fontSize: 18 }}>💡</span>
+              <span style={{ 
+                fontSize: 12, 
+                color: '#92400e', 
+                fontWeight: 600,
+                lineHeight: 1.4,
+              }}>
+                Ask the customer for the OTP they received via SMS
+              </span>
+            </div>
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 2 }}>
+            <Button
+              onClick={() => setOtpDialog({ open: false, orderId: null, otp: '' })}
+              variant="outlined"
+              fullWidth
+              sx={{
+                textTransform: 'none',
+                borderRadius: 3,
+                fontWeight: 700,
+                fontSize: 15,
+                py: 1.5,
+                borderColor: '#e5e7eb',
+                color: '#6b7280',
+                '&:hover': {
+                  borderColor: '#d1d5db',
+                  background: '#f9fafb',
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleOtpSubmit}
+              variant="contained"
+              fullWidth
+              disabled={otpDialog.otp.length < 4}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 3,
+                fontWeight: 700,
+                fontSize: 15,
+                py: 1.5,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+                  boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
+                },
+                '&:disabled': {
+                  background: '#e5e7eb',
+                  color: '#9ca3af',
+                  boxShadow: 'none',
+                },
+              }}
+            >
+              ✓ Verify & Complete Delivery
+            </Button>
+          </DialogActions>
+        </div>
+      </Dialog>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+        }
+      `}</style>
     </div>
   );
 };
