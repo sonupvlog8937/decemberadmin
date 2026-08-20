@@ -2526,7 +2526,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          OTP VERIFICATION DIALOG - Modern Enhanced UI
+          OTP VERIFICATION DIALOG - Mobile Responsive Enhanced UI
        ═══════════════════════════════════════════════════════════════ */}
       <Dialog
         open={otpDialog.open}
@@ -2538,6 +2538,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
             borderRadius: 20,
             padding: '8px',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            margin: '16px',
           }
         }}
       >
@@ -2545,8 +2546,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
           <DialogTitle sx={{ 
             textAlign: 'center', 
             pb: 1, 
-            pt: 3,
-            px: 3,
+            pt: { xs: 2, sm: 3 },
+            px: { xs: 2, sm: 3 },
           }}>
             <div style={{
               width: 72,
@@ -2564,7 +2565,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
             </div>
             <div style={{
               fontFamily: "'Sora', sans-serif",
-              fontSize: 22,
+              fontSize: window.innerWidth <= 600 ? 18 : 22,
               fontWeight: 800,
               color: '#1a1a1a',
               marginBottom: 8,
@@ -2573,16 +2574,17 @@ const isSellerView = isSellerRole(context?.userData?.role);
               Verify Delivery OTP
             </div>
             <div style={{
-              fontSize: 14,
+              fontSize: window.innerWidth <= 600 ? 13 : 14,
               color: '#6b7280',
               fontWeight: 500,
               lineHeight: 1.5,
+              padding: '0 8px',
             }}>
               Enter the 6-digit OTP received by the customer
             </div>
           </DialogTitle>
 
-          <DialogContent sx={{ px: 3, pt: 2, pb: 1 }}>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 }, pt: 2, pb: 1 }}>
             <TextField
               autoFocus
               fullWidth
@@ -2592,11 +2594,20 @@ const isSellerView = isSellerRole(context?.userData?.role);
                 maxLength: 6,
                 style: { 
                   textAlign: 'center', 
-                  fontSize: 24, 
+                  fontSize: window.innerWidth <= 600 ? 20 : 24, 
                   fontWeight: 700,
-                  letterSpacing: '8px',
+                  letterSpacing: window.innerWidth <= 600 ? '6px' : '8px',
                   fontFamily: "'DM Mono', monospace",
+                  padding: '16px 8px',
                 }
+              }}
+              InputLabelProps={{
+                style: {
+                  fontSize: window.innerWidth <= 600 ? 14 : 16,
+                  fontWeight: 600,
+                  color: '#6b7280',
+                },
+                shrink: true,
               }}
               value={otpDialog.otp}
               onChange={(e) => {
@@ -2621,8 +2632,14 @@ const isSellerView = isSellerRole(context?.userData?.role);
                     borderWidth: 2,
                   },
                 },
+                '& .MuiInputLabel-root': {
+                  background: '#fff',
+                  padding: '0 6px',
+                  borderRadius: '4px',
+                },
                 '& .MuiInputLabel-root.Mui-focused': {
                   color: '#667eea',
+                  fontWeight: 700,
                 },
               }}
             />
@@ -2631,14 +2648,14 @@ const isSellerView = isSellerRole(context?.userData?.role);
               alignItems: 'center',
               gap: 8,
               marginTop: 16,
-              padding: '12px 16px',
+              padding: window.innerWidth <= 600 ? '10px 12px' : '12px 16px',
               background: '#fef3c7',
               borderRadius: 12,
               border: '1px solid #fde68a',
             }}>
-              <span style={{ fontSize: 18 }}>💡</span>
+              <span style={{ fontSize: window.innerWidth <= 600 ? 16 : 18, flexShrink: 0 }}>💡</span>
               <span style={{ 
-                fontSize: 12, 
+                fontSize: window.innerWidth <= 600 ? 11 : 12, 
                 color: '#92400e', 
                 fontWeight: 600,
                 lineHeight: 1.4,
@@ -2648,7 +2665,13 @@ const isSellerView = isSellerRole(context?.userData?.role);
             </div>
           </DialogContent>
 
-          <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 2 }}>
+          <DialogActions sx={{ 
+            px: { xs: 2, sm: 3 }, 
+            pb: { xs: 2, sm: 3 }, 
+            pt: 2, 
+            gap: { xs: 1.5, sm: 2 },
+            flexDirection: { xs: 'column', sm: 'row' },
+          }}>
             <Button
               onClick={() => setOtpDialog({ open: false, orderId: null, otp: '' })}
               variant="outlined"
@@ -2657,8 +2680,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
                 textTransform: 'none',
                 borderRadius: 3,
                 fontWeight: 700,
-                fontSize: 15,
-                py: 1.5,
+                fontSize: { xs: 14, sm: 15 },
+                py: { xs: 1.3, sm: 1.5 },
                 borderColor: '#e5e7eb',
                 color: '#6b7280',
                 '&:hover': {
@@ -2678,8 +2701,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
                 textTransform: 'none',
                 borderRadius: 3,
                 fontWeight: 700,
-                fontSize: 15,
-                py: 1.5,
+                fontSize: { xs: 14, sm: 15 },
+                py: { xs: 1.3, sm: 1.5 },
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)',
                 '&:hover': {
