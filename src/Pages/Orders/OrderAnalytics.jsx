@@ -2616,31 +2616,74 @@ const OrderAnalytics = () => {
       const allOrders = ordersResponse?.data || ordersResponse?.orders || [];
       console.log('✅ Orders fetched:', allOrders.length);
       
-      // PRIMARY: Extract ALL unique shops from orders (This is the most reliable way)
+      // DEBUG: Log first order to see structure
+      if (allOrders.length > 0) {
+        console.log('🔍 FIRST ORDER STRUCTURE:', allOrders[0]);
+        console.log('🔍 FIRST ORDER PRODUCTS:', allOrders[0].products);
+        if (allOrders[0].products && allOrders[0].products.length > 0) {
+          console.log('🔍 FIRST PRODUCT:', allOrders[0].products[0]);
+          console.log('🔍 Product shopId:', allOrders[0].products[0].shopId);
+          console.log('🔍 Product shopName:', allOrders[0].products[0].shopName);
+          console.log('🔍 Product shop-related keys:', Object.keys(allOrders[0].products[0]).filter(k => k.toLowerCase().includes('shop')));
+        }
+      }
+      
+      // PRIMARY: Extract ALL unique shops from orders
       console.log('📦 Extracting shops from order data...');
       const shopsFromOrders = {};
       let totalProductsProcessed = 0;
       
-      allOrders.forEach(order => {
+      allOrders.forEach((order, orderIdx) => {
         const products = order.products || [];
-        products.forEach(item => {
+        products.forEach((item, itemIdx) => {
           totalProductsProcessed++;
-          if (item.shopId) {
-            if (!shopsFromOrders[item.shopId]) {
-              shopsFromOrders[item.shopId] = {
-                _id: item.shopId,
-                shopName: item.shopName || item.shopDisplayName || 'Unknown Shop',
-                location: item.shopLocation || '',
+          
+          // Try to find shop ID from multiple possible fields
+          const shopId = item.shopId || item.shop_id || item.shop?._id || item.shop;
+          
+          // Try to find shop name from multiple possible fields
+          const shopName = item.shopName || 
+                          item.shopDisplayName || 
+                          item.shop_name || 
+                          item.shop?.name || 
+                          item.shop?.shopName ||
+                          item.shop?.location ||
+                          'Unknown Shop';
+          
+          if (shopId) {
+            if (!shopsFromOrders[shopId]) {
+              shopsFromOrders[shopId] = {
+                _id: shopId,
+                shopName: shopName,
+                location: item.shopLocation || item.shop?.location || '',
                 fromOrders: true,
-                firstSeenInOrder: order._id
+                firstSeenInOrder: order._id,
+                productCount: 0,
+                orderCount: 0,
+                orders: new Set()
               };
-              console.log(`🆕 New shop found: ${shopsFromOrders[item.shopId].shopName} (ID: ${item.shopId})`);
+              console.log(`🆕 Shop #${Object.keys(shopsFromOrders).length}: "${shopName}" (ID: ${shopId})`);
+            }
+            shopsFromOrders[shopId].productCount++;
+            shopsFromOrders[shopId].orders.add(order._id);
+            shopsFromOrders[shopId].orderCount = shopsFromOrders[shopId].orders.size;
+          } else {
+            // Log products with no shop ID
+            if (orderIdx < 3 && itemIdx < 2) { // Only log first few for debugging
+              console.warn(`⚠️ Product without shopId in order ${order._id}:`, {
+                productTitle: item.productTitle || item.name,
+                availableFields: Object.keys(item)
+              });
             }
           }
         });
       });
       
-      let allShopsData = Object.values(shopsFromOrders);
+      let allShopsData = Object.values(shopsFromOrders).map(shop => ({
+        ...shop,
+        orders: undefined // Remove Set object before storing
+      }));
+      
       console.log(`✅ Extracted ${allShopsData.length} unique shops from ${totalProductsProcessed} products in ${allOrders.length} orders`);
       
       // SECONDARY: Try to fetch from API (to get shops with zero orders)
@@ -2679,11 +2722,13 @@ const OrderAnalytics = () => {
           'Shop Name': s.shopName || s.name || s.location || 'Unknown',
           'Shop ID': s._id?.substring(0, 8) + '...',
           'Source': s.fromOrders ? '📦 Orders' : '📡 API',
-          'Has Orders': s.fromOrders ? '✅' : '❌'
+          'Products': s.productCount || 0,
+          'Orders': s.orderCount || 0
         })));
       } else {
         console.error('❌ NO SHOPS DATA AVAILABLE!');
         console.error('This means NO orders have any shop data!');
+        console.error('Please check order structure in console above');
       }
       
       setOrders(allOrders);
