@@ -2552,6 +2552,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
             padding: '8px',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             margin: '16px',
+            maxWidth: '420px',
           }
         }}
       >
@@ -2559,7 +2560,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
           <DialogTitle sx={{ 
             textAlign: 'center', 
             pb: 1, 
-            pt: { xs: 2, sm: 3 },
+            pt: { xs: 2.5, sm: 3 },
             px: { xs: 2, sm: 3 },
           }}>
             <div style={{
@@ -2578,7 +2579,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
             </div>
             <div style={{
               fontFamily: "'Sora', sans-serif",
-              fontSize: window.innerWidth <= 600 ? 18 : 22,
+              fontSize: mobileView ? 18 : 22,
               fontWeight: 800,
               color: '#1a1a1a',
               marginBottom: 8,
@@ -2587,7 +2588,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
               Verify Delivery OTP
             </div>
             <div style={{
-              fontSize: window.innerWidth <= 600 ? 13 : 14,
+              fontSize: mobileView ? 12 : 14,
               color: '#6b7280',
               fontWeight: 500,
               lineHeight: 1.5,
@@ -2598,29 +2599,35 @@ const isSellerView = isSellerRole(context?.userData?.role);
           </DialogTitle>
 
           <DialogContent sx={{ px: { xs: 2, sm: 3 }, pt: 2, pb: 1 }}>
+            {/* OTP Label - Positioned Above */}
+            <div style={{
+              fontSize: mobileView ? 13 : 14,
+              fontWeight: 700,
+              color: '#374151',
+              marginBottom: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+              <span>🔢</span>
+              <span>Enter 6-Digit OTP</span>
+            </div>
+
             <TextField
               autoFocus
               fullWidth
-              label="Enter OTP"
               type="text"
               inputProps={{ 
                 maxLength: 6,
                 style: { 
                   textAlign: 'center', 
-                  fontSize: window.innerWidth <= 600 ? 20 : 24, 
+                  fontSize: mobileView ? 24 : 28, 
                   fontWeight: 700,
-                  letterSpacing: window.innerWidth <= 600 ? '6px' : '8px',
-                  fontFamily: "'DM Mono', monospace",
-                  padding: '16px 8px',
+                  letterSpacing: mobileView ? '8px' : '12px',
+                  fontFamily: "'Courier New', monospace",
+                  padding: mobileView ? '18px 12px' : '20px 16px',
+                  color: '#111827',
                 }
-              }}
-              InputLabelProps={{
-                style: {
-                  fontSize: window.innerWidth <= 600 ? 14 : 16,
-                  fontWeight: 600,
-                  color: '#6b7280',
-                },
-                shrink: true,
               }}
               value={otpDialog.otp}
               onChange={(e) => {
@@ -2632,55 +2639,78 @@ const isSellerView = isSellerRole(context?.userData?.role);
                   handleOtpSubmit();
                 }
               }}
-              placeholder="000000"
+              placeholder="••••••"
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 3,
                   background: '#f9fafb',
-                  '&:hover fieldset': {
-                    borderColor: '#667eea',
+                  border: '2px solid #e5e7eb',
+                  transition: 'all 0.2s ease',
+                  '& fieldset': {
+                    border: 'none',
                   },
-                  '&.Mui-focused fieldset': {
+                  '&:hover': {
+                    background: '#f3f4f6',
                     borderColor: '#667eea',
-                    borderWidth: 2,
+                    boxShadow: '0 0 0 4px rgba(102, 126, 234, 0.1)',
+                  },
+                  '&.Mui-focused': {
+                    background: '#fff',
+                    borderColor: '#667eea',
+                    boxShadow: '0 0 0 4px rgba(102, 126, 234, 0.15)',
                   },
                 },
-                '& .MuiInputLabel-root': {
-                  background: '#fff',
-                  padding: '0 6px',
-                  borderRadius: '4px',
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#667eea',
-                  fontWeight: 700,
-                },
+                '& input': {
+                  '&::placeholder': {
+                    color: '#d1d5db',
+                    opacity: 1,
+                  }
+                }
               }}
             />
+
+            {/* Character Counter */}
+            <div style={{
+              textAlign: 'center',
+              marginTop: 8,
+              fontSize: 12,
+              color: otpDialog.otp.length >= 4 ? '#059669' : '#9ca3af',
+              fontWeight: 600,
+            }}>
+              {otpDialog.otp.length} / 6 digits entered
+            </div>
+
+            {/* Info Box */}
             <div style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: 8,
+              alignItems: 'flex-start',
+              gap: mobileView ? 8 : 10,
               marginTop: 16,
-              padding: window.innerWidth <= 600 ? '10px 12px' : '12px 16px',
+              padding: mobileView ? '12px' : '14px 16px',
               background: '#fef3c7',
               borderRadius: 12,
-              border: '1px solid #fde68a',
+              border: '1.5px solid #fde68a',
             }}>
-              <span style={{ fontSize: window.innerWidth <= 600 ? 16 : 18, flexShrink: 0 }}>💡</span>
               <span style={{ 
-                fontSize: window.innerWidth <= 600 ? 11 : 12, 
+                fontSize: mobileView ? 18 : 20, 
+                flexShrink: 0,
+                marginTop: 2,
+              }}>💡</span>
+              <span style={{ 
+                fontSize: mobileView ? 12 : 13, 
                 color: '#92400e', 
                 fontWeight: 600,
-                lineHeight: 1.4,
+                lineHeight: 1.5,
+                flex: 1,
               }}>
-                Ask the customer for the OTP they received via SMS
+                Ask the customer for the OTP they received via SMS on their registered mobile number
               </span>
             </div>
           </DialogContent>
 
           <DialogActions sx={{ 
             px: { xs: 2, sm: 3 }, 
-            pb: { xs: 2, sm: 3 }, 
+            pb: { xs: 2.5, sm: 3 }, 
             pt: 2, 
             gap: { xs: 1.5, sm: 2 },
             flexDirection: { xs: 'column', sm: 'row' },
@@ -2694,16 +2724,19 @@ const isSellerView = isSellerRole(context?.userData?.role);
                 borderRadius: 3,
                 fontWeight: 700,
                 fontSize: { xs: 14, sm: 15 },
-                py: { xs: 1.3, sm: 1.5 },
+                py: { xs: 1.5, sm: 1.6 },
                 borderColor: '#e5e7eb',
+                borderWidth: 2,
                 color: '#6b7280',
+                order: { xs: 2, sm: 1 },
                 '&:hover': {
                   borderColor: '#d1d5db',
+                  borderWidth: 2,
                   background: '#f9fafb',
                 },
               }}
             >
-              Cancel
+              ✕ Cancel
             </Button>
             <Button
               onClick={handleOtpSubmit}
@@ -2715,21 +2748,25 @@ const isSellerView = isSellerRole(context?.userData?.role);
                 borderRadius: 3,
                 fontWeight: 700,
                 fontSize: { xs: 14, sm: 15 },
-                py: { xs: 1.3, sm: 1.5 },
+                py: { xs: 1.5, sm: 1.6 },
+                order: { xs: 1, sm: 2 },
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)',
                 '&:hover': {
                   background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
                   boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
+                  transform: 'translateY(-1px)',
                 },
                 '&:disabled': {
                   background: '#e5e7eb',
                   color: '#9ca3af',
                   boxShadow: 'none',
+                  transform: 'none',
                 },
+                transition: 'all 0.2s ease',
               }}
             >
-              ✓ Verify & Complete Delivery
+              {otpDialog.otp.length >= 4 ? '✓ Verify & Complete' : '⏳ Enter OTP First'}
             </Button>
           </DialogActions>
         </div>
@@ -2742,6 +2779,13 @@ const isSellerView = isSellerRole(context?.userData?.role);
           }
           50% {
             transform: scale(1.05);
+          }
+        }
+        
+        /* Mobile optimization for OTP dialog */
+        @media (max-width: 600px) {
+          .MuiDialog-paper {
+            margin: 12px !important;
           }
         }
       `}</style>
