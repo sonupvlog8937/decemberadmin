@@ -1128,18 +1128,26 @@ const MonthlyReport = ({ orders, selectedMonth, fmt, allShops }) => {
   // Initialize ordersByShop with ALL registered shops
   const ordersByShop = {};
   
+  // Debug: Log to check if allShops data is coming
+  console.log('🏪 All Shops Data:', allShops);
+  console.log('📊 Total Shops Available:', allShops?.length || 0);
+  
   // First, add all registered shops with zero values
   (allShops || []).forEach(shop => {
-    ordersByShop[shop._id] = {
-      shopId: shop._id,
-      shopName: shop.shopName || shop.location || 'Unknown Shop',
-      orders: [],
-      totalOrders: 0,
-      totalRevenue: 0,
-      totalItems: 0,
-      productsSold: {}, // Track unique products
-    };
+    if (shop && shop._id) {
+      ordersByShop[shop._id] = {
+        shopId: shop._id,
+        shopName: shop.shopName || shop.name || shop.location || 'Unknown Shop',
+        orders: [],
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalItems: 0,
+        productsSold: {}, // Track unique products
+      };
+    }
   });
+  
+  console.log('✅ Initialized Shops:', Object.keys(ordersByShop).length);
   
   // Then populate with actual order data
   orders.forEach(order => {
@@ -2541,19 +2549,34 @@ const OrderAnalytics = () => {
 
     try {
       // Fetch both orders and all shops in parallel
+      console.log('🔄 Fetching orders and shops data...');
       const [ordersResponse, shopsResponse] = await Promise.all([
         fetchDataFromApi('/api/order/order-list?page=1&limit=10000'),
         fetchDataFromApi('/api/go-market/grocery-shops?limit=10000')
       ]);
       
-      const allOrders = ordersResponse?.data || [];
-      const allShopsData = shopsResponse?.data || [];
+      console.log('📦 Orders Response:', ordersResponse);
+      console.log('🏪 Shops Response:', shopsResponse);
+      
+      // Handle different response structures
+      const allOrders = ordersResponse?.data || ordersResponse?.orders || [];
+      const allShopsData = shopsResponse?.data || shopsResponse?.shops || shopsResponse?.results || [];
+      
+      console.log('✅ Orders fetched:', allOrders.length);
+      console.log('✅ Shops fetched:', allShopsData.length);
+      
+      if (allShopsData.length > 0) {
+        console.log('🏪 Sample Shop Data:', allShopsData[0]);
+        console.log('🏪 All Shop Names:', allShopsData.map(s => s.shopName || s.name || s.location).join(', '));
+      } else {
+        console.warn('⚠️ No shops data received!');
+      }
       
       setOrders(allOrders);
       setFilteredOrders(allOrders);
       setAllShops(allShopsData);
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('❌ Failed to fetch data:', error);
       setOrders([]);
       setFilteredOrders([]);
       setAllShops([]);
