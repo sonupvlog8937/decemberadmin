@@ -2542,20 +2542,21 @@ const OrderAnalytics = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [shopFilter, setShopFilter] = useState('all');
 
-  // Fetch ALL shops with pagination handling
+  // Fetch ALL shops (grocery + restaurants) with pagination handling
   const fetchAllShops = async () => {
     let allShops = [];
-    let page = 1;
-    let hasMore = true;
     
-    console.log('🔄 Fetching all shops with pagination...');
+    console.log('🔄 Fetching all shops (grocery + restaurants) with pagination...');
     
-    while (hasMore && page <= 10) { // Safety limit of 10 pages
-      try {
-        const response = await fetchDataFromApi(`/api/go-market/grocery-shops?page=${page}&limit=100`);
-        console.log(`📄 Page ${page} response:`, response);
+    try {
+      // Fetch Grocery Shops
+      let groceryPage = 1;
+      let hasMoreGrocery = true;
+      
+      while (hasMoreGrocery && groceryPage <= 10) {
+        const response = await fetchDataFromApi(`/api/go-market/grocery-shops?page=${groceryPage}&limit=100`);
+        console.log(`📄 Grocery Page ${groceryPage} response:`, response);
         
-        // Handle different response structures
         let shops = [];
         if (Array.isArray(response?.data)) {
           shops = response.data;
@@ -2567,39 +2568,71 @@ const OrderAnalytics = () => {
           shops = response;
         }
         
-        console.log(`📦 Page ${page} extracted shops:`, shops.length);
-        
         if (shops.length > 0) {
-          allShops = [...allShops, ...shops];
-          console.log(`✅ Page ${page}: ${shops.length} shops (Total so far: ${allShops.length})`);
-          
-          // Check if there are more pages
-          const totalPages = response?.totalPages || response?.pages || 0;
-          const hasNextPage = response?.hasNextPage;
-          
-          // Continue if:
-          // 1. We got a full page (100 items)
-          // 2. OR API explicitly says there's a next page
-          // 3. OR current page < totalPages
-          hasMore = (shops.length === 100) || hasNextPage || (totalPages > 0 && page < totalPages);
-          page++;
-          
-          console.log(`🔍 hasMore: ${hasMore}, totalPages: ${totalPages}, hasNextPage: ${hasNextPage}`);
+          // Tag as grocery
+          const taggedShops = shops.map(s => ({ ...s, shopType: 'grocery' }));
+          allShops = [...allShops, ...taggedShops];
+          console.log(`✅ Grocery Page ${groceryPage}: ${shops.length} shops (Total grocery: ${allShops.filter(s => s.shopType === 'grocery').length})`);
+          hasMoreGrocery = shops.length === 100;
+          groceryPage++;
         } else {
-          console.log('⏹️ No more shops on this page');
-          hasMore = false;
+          hasMoreGrocery = false;
         }
-      } catch (err) {
-        console.error(`❌ Error fetching page ${page}:`, err);
-        hasMore = false;
       }
+      
+      // Fetch Restaurant Shops
+      let restaurantPage = 1;
+      let hasMoreRestaurants = true;
+      
+      while (hasMoreRestaurants && restaurantPage <= 10) {
+        try {
+          const response = await fetchDataFromApi(`/api/go-market/restaurants?page=${restaurantPage}&limit=100`);
+          console.log(`🍽️ Restaurant Page ${restaurantPage} response:`, response);
+          
+          let restaurants = [];
+          if (Array.isArray(response?.data)) {
+            restaurants = response.data;
+          } else if (Array.isArray(response?.restaurants)) {
+            restaurants = response.restaurants;
+          } else if (Array.isArray(response?.results)) {
+            restaurants = response.results;
+          } else if (Array.isArray(response)) {
+            restaurants = response;
+          }
+          
+          if (restaurants.length > 0) {
+            // Tag as restaurant and normalize field names
+            const taggedRestaurants = restaurants.map(r => ({
+              _id: r._id,
+              shopName: r.name || r.displayName || r.restaurantName || 'Unknown Restaurant',
+              name: r.name || r.displayName,
+              location: r.location || r.address,
+              shopType: 'restaurant'
+            }));
+            allShops = [...allShops, ...taggedRestaurants];
+            console.log(`✅ Restaurant Page ${restaurantPage}: ${restaurants.length} restaurants (Total restaurants: ${allShops.filter(s => s.shopType === 'restaurant').length})`);
+            hasMoreRestaurants = restaurants.length === 100;
+            restaurantPage++;
+          } else {
+            hasMoreRestaurants = false;
+          }
+        } catch (err) {
+          console.warn(`⚠️ Restaurant page ${restaurantPage} failed:`, err);
+          hasMoreRestaurants = false;
+        }
+      }
+      
+    } catch (err) {
+      console.error(`❌ Error fetching shops:`, err);
     }
     
-    console.log(`✅ FINAL: Total shops fetched: ${allShops.length}`);
+    console.log(`✅ FINAL SHOPS: ${allShops.length} total (${allShops.filter(s => s.shopType === 'grocery').length} grocery + ${allShops.filter(s => s.shopType === 'restaurant').length} restaurants)`);
+    
     if (allShops.length > 0) {
       console.log(`🏪 First shop:`, allShops[0]);
       console.log(`🏪 Last shop:`, allShops[allShops.length - 1]);
     }
+    
     return allShops;
   };
 
