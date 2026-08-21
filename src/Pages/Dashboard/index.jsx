@@ -83,7 +83,7 @@ const QuickAccess = ({ onAddProduct, onScrollToAnalytics }) => {
     { label: "Categories",  icon: <IconCategory />,   to: "/category",  color: "#f97316" },
     { label: "Reviews",     icon: <IconStar fill />,  to: "/reviews",   color: "#ec4899" },
     { label: "Add Product", icon: <FaPlus size={17} />, onClick: onAddProduct, color: "#14b8a6" },
-    { label: "Analytics",   icon: <IconRevenue />,    onClick: onScrollToAnalytics, color: "#f59e0b" },
+    { label: "Analytics",   icon: <IconRevenue />,    to: "/order-analytics", color: "#f59e0b" },
   ];
   return (
     <div className="qa-grid">
