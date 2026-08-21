@@ -1,12 +1,17 @@
 # 📊 Order Analytics & Print System - Complete Guide
 
 ## 🎯 Quick Overview
-**By default, analytics shows last 7 days data** with complete order details including:
+**Two View Modes:**
+- **📅 Weekly View**: Last 7 days data by default (customizable date range)
+- **📆 Monthly View**: Complete month-wise shop breakdown with all orders
+
+**Features:**
 - Customer name, email, phone
 - Shop-wise breakdown  
 - Product details with images
 - Order amounts and payment status
 - Expandable detailed view
+- Professional print-ready reports
 
 ---
 
@@ -64,9 +69,37 @@ Har shop ke liye detailed analysis:
 - Expand/collapse functionality
 - All details print ho jati hain
 
+### 7. **Monthly Report View**
+- **Shop-wise organized display**
+- Har shop ke liye dedicated section
+- Shop ka total revenue prominent display
+- Shop ke sabhi orders chronologically
+- Har order mein:
+  - Order number aur date
+  - Customer details
+  - Payment info
+  - Products with images
+  - Order total
+- Month summary with key metrics
+- Print-optimized layout
+
 ---
 
 ## 🚀 How to Use
+
+### Switching Views
+
+#### Weekly View (Default)
+1. Top par **"📅 Weekly"** button click karo
+2. Date range select karo (default: last 7 days)
+3. Filters apply karo
+4. Summary stats, charts, aur detailed orders dikhenge
+
+#### Monthly View
+1. Top par **"📆 Monthly"** button click karo
+2. Month selector se koi bhi month choose karo
+3. Shop-wise organized report dikhega
+4. Har shop ke orders grouped rahenge
 
 ### Access Kaise Karein
 
@@ -87,13 +120,20 @@ Simply navigate to: `/order-analytics`
 
 ## 📋 Using Filters
 
-### Default Date Range
+### View Mode Selection
+**Two modes available:**
+- **📅 Weekly**: Custom date range with charts and detailed breakdown
+- **📆 Monthly**: Month selection with shop-organized view
+
+### Weekly View Filters
+
+#### Default Date Range
 **By default, last 7 days ka data show hota hai:**
 - Date From: Automatically 7 days ago
 - Date To: Today's date
 - Easily change kar sakte ho apni requirement ke according
 
-### Date Range Filter
+#### Date Range Filter
 ```
 1. "Date From" field mein start date select karo
 2. "Date To" field mein end date select karo
@@ -115,8 +155,67 @@ Simply navigate to: `/order-analytics`
 - Specific Shop: Dropdown se koi bhi shop select karo
 ```
 
+### Monthly View Filters
+
+#### Month Selector
+```
+1. Type "month" input field use karo
+2. Dropdown se year aur month select karo
+3. Automatically us month ka data show hoga
+4. Current month tak ke months available hain
+```
+
+#### Additional Filters (Both Views)
+- Status filter (pending, delivered, etc.)
+- Shop filter (specific shop select karo)
+- Clear filters button (reset karne ke liye)
+
 ### Clear Filters
-"✕ Clear Filters" button par click karke sab filters reset ho jayenge
+"✕ Clear Filters" button par click karke sab filters **last 7 days default setting** par reset ho jayenge
+
+---
+
+## 📝 Detailed Orders Section
+
+### What You'll See
+Har order ke liye complete information:
+
+1. **Order Header**
+   - Order number (#1, #2, etc.)
+   - Date aur time
+   - Status badge (Pending, Delivered, etc.)
+   - Expand/Collapse button
+
+2. **Customer Information**
+   - Customer name with avatar
+   - Email ya phone number
+   - Order ID
+
+3. **Payment Details**
+   - Payment method (💰 Online Paid / 💵 COD)
+   - Total amount (big, bold, green)
+
+4. **Products by Shop** (when expanded)
+   - Shop naam with item count
+   - Shop ka total amount
+   - Har product ki details:
+     - Product image (ya placeholder)
+     - Product name
+     - Quantity
+     - Unit price
+     - Total price
+     - Variants (Size, Color, Weight, RAM, etc.)
+   
+5. **Order Total**
+   - Total items count
+   - Number of shops
+   - Grand total amount
+
+### Expand/Collapse
+- By default orders collapsed hote hain (space bachane ke liye)
+- "▶ Expand Details" button se expand karo
+- "▼ Collapse" button se collapse karo
+- Print karte waqt sab automatically expand ho jate hain
 
 ---
 
@@ -128,6 +227,8 @@ Simply navigate to: `/order-analytics`
 3. Settings adjust karo (portrait/landscape, margins, etc.)
 4. Print/Save as PDF karo
 
+**Note:** Jo bhi view selected hai (Weekly/Monthly), wahi print hoga!
+
 ### Method 2: Browser Print
 1. `Ctrl + P` (Windows) ya `Cmd + P` (Mac) press karo
 2. Print dialog khulega
@@ -138,10 +239,35 @@ Simply navigate to: `/order-analytics`
 ```
 - Paper Size: A4
 - Orientation: Portrait
-- Margins: Default
-- Scale: 100%
-- Background Graphics: On (for better look)
+- Margins: Default (ya Custom: 10mm)
+- Scale: 100% (ya Fit to page)
+- Background Graphics: On (for colors & gradients)
+- Print Headers/Footers: Optional
 ```
+
+### What Prints in Each View
+
+#### Weekly View Print:
+- ✅ Report header with date range
+- ✅ Summary statistics (4 cards)
+- ✅ Shop-wise breakdown table
+- ✅ All detailed orders
+- ✅ All products with images
+- ✅ Customer information
+- ✅ Footer with branding
+
+#### Monthly View Print:
+- ✅ Monthly report header
+- ✅ Month summary (4 key metrics)
+- ✅ **Shop-wise sections** (har shop alag page par)
+- ✅ **Shop name aur total revenue**
+- ✅ **Shop ke sabhi orders**
+- ✅ **Har order ki complete details**
+- ✅ **Customer info per order**
+- ✅ **Products with images**
+- ✅ Footer with branding
+
+**Monthly report zyada clean aur organized print hoti hai, perfect for shop-wise distribution!**
 
 ---
 
@@ -179,7 +305,24 @@ Detailed breakdown with:
 
 ## 💡 Tips & Best Practices
 
-### 1. Regular Reporting
+### 1. When to Use Weekly vs Monthly View
+
+**Use Weekly View when:**
+- Daily analysis chahiye
+- Charts aur trends dekhne hain
+- Short-term performance track karna hai
+- Specific date range ka data chahiye
+- Quick overview chahiye with graphs
+
+**Use Monthly View when:**
+- Complete month ka report chahiye
+- Shop-wise distribution karna hai
+- Har shop ko uska individual report dena hai
+- Clean, organized presentation chahiye
+- Print karke file mein rakhna hai
+- Accounting/bookkeeping ke liye
+
+### 2. Monthly Report Best Practices
 - Daily end mein analytics check karo
 - Weekly reports print karke store karo
 - Monthly trends analyze karo
@@ -208,19 +351,42 @@ Detailed breakdown with:
 
 ## 🎨 What Gets Printed
 
-### Included in Print:
-✅ Report header with title aur date  
+### Weekly View - Included in Print:
+✅ Report header with date range  
 ✅ Summary statistics (4 main metrics)  
 ✅ Complete shop-wise breakdown table  
+✅ **Detailed orders list with all information**
+✅ **All products with images and details**
+✅ **Customer names and contact info**
 ✅ Grand total row  
 ✅ Professional footer with branding  
 
-### Excluded from Print:
+### Monthly View - Included in Print:
+✅ Monthly report header with month name  
+✅ Month summary (4 key metrics with purple gradient)  
+✅ **Shop-wise sections** (beautifully organized)
+✅ **Each shop on separate page** (clean break)
+✅ **Shop header with name & total revenue** (green badge)
+✅ **All orders under each shop** (chronological)
+✅ **Complete order details** (customer, payment, products)
+✅ **Product images and specifications**
+✅ **Order totals and subtotals**
+✅ Professional footer
+
+### Excluded from Print (Both Views):
 ❌ Navigation buttons (Back, Refresh)  
 ❌ Print button itself  
 ❌ All filter controls  
-❌ Charts (charts ko print karne ke liye screenshot lo)  
-❌ Background gradients (for clean print)  
+❌ View toggle buttons (Weekly/Monthly)
+❌ Expand/Collapse buttons (weekly view)
+❌ Charts (weekly view - take screenshot if needed)  
+❌ Background gradients on page (for clean print)  
+
+**Special Note for Monthly View:**
+- Har shop ka section ek alag page par start hota hai
+- Colors aur gradients properly print hote hain (green badges, purple headers)
+- Shop-wise organization perfect hai distribution ke liye
+- Har shop ko uska own report mil sakta hai
 
 ---
 
@@ -292,10 +458,66 @@ Agar koi issue ho ya confusion ho to:
 Order Analytics System aapko provide karta hai:
 - ✨ Professional data visualization
 - 📊 Detailed shop-wise breakdown
+- 📋 **Complete order details with customer info**
+- 🛍️ **Product-level breakdown with images**
+- 🏪 **Shop-wise grouping of products**
 - 🖨️ Print-ready A4 reports
 - 🔍 Powerful filtering options
 - 📈 Revenue & performance tracking
 - 💼 Business intelligence insights
+- 📅 **Last 7 days data by default**
+
+---
+
+## 📸 Example Report Structure
+
+```
+┌─────────────────────────────────────────┐
+│  📊 ORDER ANALYTICS REPORT              │
+│  Generated: 20 Jan 2025, 3:45 PM        │
+│  Period: 13 Jan - 20 Jan 2025           │
+│  Orders: 45 | Status: All | Shop: All   │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│  SUMMARY STATS                          │
+│  📦 Total: 45 | 💰 Revenue: ₹1,25,000  │
+│  📊 Avg: ₹2,778 | 🏪 Shops: 12         │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│  SHOP-WISE BREAKDOWN                    │
+│  #1 ABC Store    | 15 orders | ₹45,000 │
+│  #2 XYZ Shop     | 12 orders | ₹38,000 │
+│  ...                                     │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│  DETAILED ORDERS                        │
+│  ─────────────────────────────────────  │
+│  Order #1 | 20 Jan 2025, 2:30 PM       │
+│  Status: Delivered                      │
+│  ─────────────────────────────────────  │
+│  👤 Customer: Rahul Kumar               │
+│      Email: rahul@example.com           │
+│  🆔 Order ID: 67890abc123...            │
+│  💳 Payment: Online Paid                │
+│  💰 Total: ₹2,500                       │
+│  ─────────────────────────────────────  │
+│  🏪 ABC Store (2 items) - ₹2,500       │
+│     📦 Product A                        │
+│        Qty: 2 | Unit: ₹750             │
+│        Size: L | Color: Blue            │
+│        Total: ₹1,500                    │
+│     📦 Product B                        │
+│        Qty: 1 | Unit: ₹1,000           │
+│        Total: ₹1,000                    │
+│  ─────────────────────────────────────  │
+│  Order Total: ₹2,500 (2 items)         │
+│                                          │
+│  [Next order...]                        │
+└─────────────────────────────────────────┘
+```
 
 **Happy Analyzing! 🚀**
 

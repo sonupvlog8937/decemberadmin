@@ -275,6 +275,237 @@ const STYLES = `
   margin: 0 0 20px;
 }
 
+/* ─── View Mode Toggle ──────────────────────────────────────────────────── */
+.oa-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.oa-view-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.oa-view-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.oa-view-btn.active {
+  background: #fff;
+  color: #667eea;
+  font-weight: 700;
+}
+
+/* ─── Monthly Report Styles ────────────────────────────────────────────── */
+.oa-monthly-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 24px;
+  border-radius: 16px 16px 0 0;
+  margin-bottom: 0;
+}
+
+.oa-monthly-title {
+  font-size: 24px;
+  font-weight: 900;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.oa-monthly-subtitle {
+  font-size: 13px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.oa-shop-section {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.oa-shop-header {
+  background: linear-gradient(to right, #f9fafb, #fff);
+  padding: 20px 24px;
+  border-bottom: 2px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.oa-shop-name-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.oa-shop-main-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oa-shop-stats-inline {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.oa-shop-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.oa-shop-total-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  white-space: nowrap;
+}
+
+.oa-shop-orders-list {
+  padding: 0;
+}
+
+.oa-shop-order-item {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.2s ease;
+}
+
+.oa-shop-order-item:last-child {
+  border-bottom: none;
+}
+
+.oa-shop-order-item:hover {
+  background: #f9fafb;
+}
+
+.oa-month-summary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  padding: 32px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+}
+
+.oa-month-summary-title {
+  font-size: 16px;
+  opacity: 0.9;
+  margin: 0 0 20px;
+  font-weight: 600;
+}
+
+.oa-month-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.oa-month-stat {
+  text-align: center;
+}
+
+.oa-month-stat-value {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.oa-month-stat-label {
+  font-size: 12px;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+/* Print styles for monthly report */
+@media print {
+  .oa-shop-section {
+    page-break-inside: avoid;
+    margin-bottom: 16px;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  .oa-shop-header {
+    background: #f9fafb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .oa-monthly-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    page-break-after: avoid;
+  }
+  
+  .oa-month-summary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    page-break-inside: avoid;
+    page-break-after: avoid;
+  }
+  
+  .oa-shop-total-badge {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .oa-shop-order-item {
+    page-break-inside: avoid;
+  }
+  
+  .oa-view-toggle {
+    display: none !important;
+  }
+  
+  /* Ensure all product images print */
+  .oa-shop-order-item img {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Better page breaks */
+  .oa-shop-section:not(:last-child) {
+    page-break-after: always;
+  }
+}
+
 /* ─── Detailed Orders Table ─────────────────────────────────────────────── */
 .oa-orders-card {
   background: #fff;
@@ -531,6 +762,19 @@ const STYLES = `
   
   .oa-products-collapsed {
     display: block !important;
+  }
+  
+  .oa-product-item {
+    break-inside: avoid;
+  }
+  
+  .oa-customer-avatar {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .oa-order-row {
+    break-inside: avoid;
   }
 }
 .oa-table-card {
@@ -821,6 +1065,353 @@ const STYLES = `
 }
 `;
 
+// ─── Monthly Report Component ──────────────────────────────────────────────────
+const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getMonthName = (monthStr) => {
+    if (!monthStr) return '';
+    const [year, month] = monthStr.split('-');
+    const date = new Date(year, parseInt(month) - 1);
+    return date.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+  };
+
+  const getStatusStyle = (status) => {
+    const s = status?.toLowerCase() || '';
+    if (s === 'pending') return { bg: '#fef3c7', color: '#92400e', text: 'Pending' };
+    if (s === 'confirmed') return { bg: '#dbeafe', color: '#1e40af', text: 'Confirmed' };
+    if (s === 'processing') return { bg: '#ede9fe', color: '#5b21b6', text: 'Processing' };
+    if (s === 'shipped') return { bg: '#e0e7ff', color: '#4338ca', text: 'Shipped' };
+    if (s === 'delivered') return { bg: '#d1fae5', color: '#065f46', text: 'Delivered' };
+    if (s === 'cancelled') return { bg: '#fee2e2', color: '#991b1b', text: 'Cancelled' };
+    return { bg: '#f3f4f6', color: '#374151', text: status };
+  };
+
+  // Group orders by shop
+  const ordersByShop = {};
+  
+  orders.forEach(order => {
+    const products = order.products || [];
+    products.forEach(item => {
+      const shopId = item.shopId || 'unknown';
+      const shopName = item.shopName || item.shopDisplayName || 'Unknown Shop';
+      
+      if (!ordersByShop[shopId]) {
+        ordersByShop[shopId] = {
+          shopId,
+          shopName,
+          orders: [],
+          totalOrders: 0,
+          totalRevenue: 0,
+          totalItems: 0,
+        };
+      }
+      
+      // Check if order already added
+      const existingOrder = ordersByShop[shopId].orders.find(o => o._id === order._id);
+      if (!existingOrder) {
+        ordersByShop[shopId].orders.push({
+          ...order,
+          shopProducts: [item],
+          shopTotal: (item.price || 0) * (item.quantity || 1),
+        });
+        ordersByShop[shopId].totalOrders++;
+      } else {
+        existingOrder.shopProducts.push(item);
+        existingOrder.shopTotal += (item.price || 0) * (item.quantity || 1);
+      }
+      
+      ordersByShop[shopId].totalRevenue += (item.price || 0) * (item.quantity || 1);
+      ordersByShop[shopId].totalItems += item.quantity || 1;
+    });
+  });
+
+  // Convert to array and sort by revenue
+  const shopsArray = Object.values(ordersByShop).sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+  // Calculate month totals
+  const monthTotals = {
+    totalOrders: orders.length,
+    totalShops: shopsArray.length,
+    totalRevenue: shopsArray.reduce((sum, shop) => sum + shop.totalRevenue, 0),
+    totalItems: shopsArray.reduce((sum, shop) => sum + shop.totalItems, 0),
+  };
+
+  if (orders.length === 0) {
+    return (
+      <div className="oa-empty">
+        <div className="oa-empty-icon">📅</div>
+        <h3 className="oa-empty-title">No Orders This Month</h3>
+        <p className="oa-empty-text">
+          No orders found for {getMonthName(selectedMonth)}. Try selecting a different month.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Monthly Header */}
+      <div className="oa-monthly-header">
+        <h2 className="oa-monthly-title">
+          📅 Monthly Report - {getMonthName(selectedMonth)}
+        </h2>
+        <p className="oa-monthly-subtitle">
+          Complete shop-wise breakdown with detailed order information
+        </p>
+      </div>
+
+      {/* Month Summary */}
+      <div className="oa-month-summary">
+        <div className="oa-month-summary-title">📊 Month at a Glance</div>
+        <div className="oa-month-stats-grid">
+          <div className="oa-month-stat">
+            <div className="oa-month-stat-value">{monthTotals.totalOrders}</div>
+            <div className="oa-month-stat-label">Total Orders</div>
+          </div>
+          <div className="oa-month-stat">
+            <div className="oa-month-stat-value">{monthTotals.totalShops}</div>
+            <div className="oa-month-stat-label">Active Shops</div>
+          </div>
+          <div className="oa-month-stat">
+            <div className="oa-month-stat-value">{fmt(monthTotals.totalRevenue)}</div>
+            <div className="oa-month-stat-label">Total Revenue</div>
+          </div>
+          <div className="oa-month-stat">
+            <div className="oa-month-stat-value">{monthTotals.totalItems}</div>
+            <div className="oa-month-stat-label">Items Sold</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Shop-wise breakdown */}
+      {shopsArray.map((shop, shopIndex) => (
+        <div key={shop.shopId} className="oa-shop-section">
+          {/* Shop Header */}
+          <div className="oa-shop-header">
+            <div className="oa-shop-name-group">
+              <h3 className="oa-shop-main-name">
+                🏪 {shop.shopName}
+              </h3>
+              <div className="oa-shop-stats-inline">
+                <div className="oa-shop-stat-item">
+                  <span>📦</span>
+                  <span><strong>{shop.totalOrders}</strong> orders</span>
+                </div>
+                <div className="oa-shop-stat-item">
+                  <span>📊</span>
+                  <span><strong>{shop.totalItems}</strong> items</span>
+                </div>
+                <div className="oa-shop-stat-item">
+                  <span style={{ fontSize: 10, color: '#9ca3af' }}>ID: {shop.shopId}</span>
+                </div>
+              </div>
+            </div>
+            <div className="oa-shop-total-badge">
+              {fmt(shop.totalRevenue)}
+            </div>
+          </div>
+
+          {/* Orders List */}
+          <div className="oa-shop-orders-list">
+            {shop.orders.map((order, orderIndex) => {
+              const statusStyle = getStatusStyle(order.order_status);
+              
+              return (
+                <div key={order._id} className="oa-shop-order-item">
+                  {/* Order header */}
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
+                    flexWrap: 'wrap',
+                    gap: 12 
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                      <span style={{
+                        background: '#f3f4f6',
+                        color: '#374151',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: 12,
+                        fontWeight: 700
+                      }}>
+                        Order #{orderIndex + 1}
+                      </span>
+                      <span style={{ fontSize: 12, color: '#6b7280' }}>
+                        📅 {formatDate(order.createdAt)}
+                      </span>
+                      <div 
+                        className="oa-badge" 
+                        style={{ background: statusStyle.bg, color: statusStyle.color }}
+                      >
+                        {statusStyle.text}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: '#059669' }}>
+                      {fmt(order.shopTotal)}
+                    </div>
+                  </div>
+
+                  {/* Customer info */}
+                  <div style={{ 
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 16,
+                    marginBottom: 16,
+                    padding: 16,
+                    background: '#f9fafb',
+                    borderRadius: 10
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>
+                        👤 CUSTOMER
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
+                        {order.userId?.name || 'Guest'}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#6b7280' }}>
+                        {order.userId?.email || order.userId?.phone || '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>
+                        💳 PAYMENT
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
+                        {order.paymentId ? '💰 Online Paid' : '💵 COD'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>
+                        🆔 ORDER ID
+                      </div>
+                      <div style={{ 
+                        fontSize: 10, 
+                        fontWeight: 600, 
+                        color: '#6b7280',
+                        fontFamily: 'Courier New, monospace',
+                        wordBreak: 'break-all'
+                      }}>
+                        {order._id}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Products */}
+                  <div style={{ 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8
+                  }}>
+                    <div style={{ 
+                      fontSize: 11, 
+                      fontWeight: 700, 
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5 
+                    }}>
+                      📦 Products ({order.shopProducts.length})
+                    </div>
+                    {order.shopProducts.map((item, itemIndex) => {
+                      const itemTotal = (item.price || 0) * (item.quantity || 1);
+                      return (
+                        <div key={itemIndex} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          padding: 10,
+                          background: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: 8
+                        }}>
+                          {item.image ? (
+                            <img 
+                              src={item.image} 
+                              alt={item.productTitle}
+                              style={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 8,
+                                objectFit: 'cover',
+                                border: '1px solid #e5e7eb',
+                                flexShrink: 0
+                              }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: 48,
+                              height: 48,
+                              borderRadius: 8,
+                              background: '#f3f4f6',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 20,
+                              flexShrink: 0
+                            }}>📦</div>
+                          )}
+                          
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ 
+                              fontSize: 13, 
+                              fontWeight: 600, 
+                              color: '#111827',
+                              marginBottom: 4,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {item.productTitle || 'Unknown Product'}
+                            </div>
+                            <div style={{ 
+                              fontSize: 11, 
+                              color: '#6b7280',
+                              display: 'flex',
+                              gap: 8,
+                              flexWrap: 'wrap'
+                            }}>
+                              <span>Qty: {item.quantity || 1}</span>
+                              <span>•</span>
+                              <span>Unit: {fmt(item.price)}</span>
+                              {item.size && <><span>•</span><span>Size: {item.size}</span></>}
+                              {item.color && <><span>•</span><span>Color: {item.color}</span></>}
+                            </div>
+                          </div>
+                          
+                          <div style={{ 
+                            fontSize: 14, 
+                            fontWeight: 800, 
+                            color: '#059669',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {fmt(itemTotal)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* Monthly Report Footer (will be handled by parent print footer) */}
+    </>
+  );
+};
+
 // ─── Detailed Orders List Component ────────────────────────────────────────────
 const DetailedOrdersList = ({ orders, fmt }) => {
   const [expandedOrders, setExpandedOrders] = React.useState(new Set());
@@ -1084,6 +1675,13 @@ const OrderAnalytics = () => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   
+  // View Mode: weekly (default) or monthly
+  const [viewMode, setViewMode] = useState('weekly'); // 'weekly' or 'monthly'
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  
   // Filters - Default to last 1 week
   const getLastWeekDate = () => {
     const date = new Date();
@@ -1128,12 +1726,25 @@ const OrderAnalytics = () => {
   useEffect(() => {
     let filtered = [...orders];
 
-    // Date filter
-    if (dateFrom) {
-      filtered = filtered.filter(o => new Date(o.createdAt) >= new Date(dateFrom));
-    }
-    if (dateTo) {
-      filtered = filtered.filter(o => new Date(o.createdAt) <= new Date(dateTo + 'T23:59:59'));
+    // View mode based filtering
+    if (viewMode === 'monthly') {
+      // Filter by selected month
+      if (selectedMonth) {
+        const [year, month] = selectedMonth.split('-');
+        filtered = filtered.filter(o => {
+          const orderDate = new Date(o.createdAt);
+          return orderDate.getFullYear() === parseInt(year) && 
+                 orderDate.getMonth() === parseInt(month) - 1;
+        });
+      }
+    } else {
+      // Weekly view - use date filters
+      if (dateFrom) {
+        filtered = filtered.filter(o => new Date(o.createdAt) >= new Date(dateFrom));
+      }
+      if (dateTo) {
+        filtered = filtered.filter(o => new Date(o.createdAt) <= new Date(dateTo + 'T23:59:59'));
+      }
     }
 
     // Status filter
@@ -1150,7 +1761,7 @@ const OrderAnalytics = () => {
     }
 
     setFilteredOrders(filtered);
-  }, [orders, dateFrom, dateTo, statusFilter, shopFilter]);
+  }, [orders, dateFrom, dateTo, statusFilter, shopFilter, viewMode, selectedMonth]);
 
   // Calculate analytics
   const analytics = React.useMemo(() => {
@@ -1281,10 +1892,26 @@ const OrderAnalytics = () => {
                     📊 Order Analytics Dashboard
                   </h1>
                   <p className="oa-subtitle">
-                    Complete data analysis • Last 7 days by default • Shop-wise breakdown • Print-ready reports
+                    Weekly • Monthly reports • Shop-wise breakdown • Print-ready reports
                   </p>
                 </div>
                 <div className="oa-actions">
+                  {/* View Mode Toggle */}
+                  <div className="oa-view-toggle">
+                    <button
+                      className={`oa-view-btn ${viewMode === 'weekly' ? 'active' : ''}`}
+                      onClick={() => setViewMode('weekly')}
+                    >
+                      📅 Weekly
+                    </button>
+                    <button
+                      className={`oa-view-btn ${viewMode === 'monthly' ? 'active' : ''}`}
+                      onClick={() => setViewMode('monthly')}
+                    >
+                      📆 Monthly
+                    </button>
+                  </div>
+
                   <button
                     className="oa-btn oa-btn-secondary"
                     onClick={() => navigate('/orders')}
@@ -1310,24 +1937,42 @@ const OrderAnalytics = () => {
 
               {/* Filters */}
               <div className="oa-filters">
-                <div className="oa-filter-group">
-                  <label className="oa-filter-label">Date From</label>
-                  <input
-                    type="date"
-                    className="oa-filter-input"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                  />
-                </div>
-                <div className="oa-filter-group">
-                  <label className="oa-filter-label">Date To</label>
-                  <input
-                    type="date"
-                    className="oa-filter-input"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                  />
-                </div>
+                {viewMode === 'monthly' ? (
+                  // Monthly View - Month Selector
+                  <div className="oa-filter-group">
+                    <label className="oa-filter-label">Select Month</label>
+                    <input
+                      type="month"
+                      className="oa-filter-input"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      max={getTodayDate().slice(0, 7)}
+                    />
+                  </div>
+                ) : (
+                  // Weekly View - Date Range
+                  <>
+                    <div className="oa-filter-group">
+                      <label className="oa-filter-label">Date From</label>
+                      <input
+                        type="date"
+                        className="oa-filter-input"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                      />
+                    </div>
+                    <div className="oa-filter-group">
+                      <label className="oa-filter-label">Date To</label>
+                      <input
+                        type="date"
+                        className="oa-filter-input"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+                
                 <div className="oa-filter-group">
                   <label className="oa-filter-label">Status</label>
                   <select
@@ -1357,14 +2002,17 @@ const OrderAnalytics = () => {
                     ))}
                   </select>
                 </div>
-                {(dateFrom || dateTo || statusFilter !== 'all' || shopFilter !== 'all') && (
+                {(statusFilter !== 'all' || shopFilter !== 'all' || 
+                  (viewMode === 'weekly' && (dateFrom !== getLastWeekDate() || dateTo !== getTodayDate()))) && (
                   <div className="oa-filter-group" style={{ justifyContent: 'flex-end' }}>
                     <button
                       className="oa-btn oa-btn-secondary"
                       style={{ marginTop: 'auto' }}
                       onClick={() => {
-                        setDateFrom(getLastWeekDate());
-                        setDateTo(getTodayDate());
+                        if (viewMode === 'weekly') {
+                          setDateFrom(getLastWeekDate());
+                          setDateTo(getTodayDate());
+                        }
                         setStatusFilter('all');
                         setShopFilter('all');
                       }}
@@ -1380,18 +2028,36 @@ const OrderAnalytics = () => {
             <div className="oa-printable">
               {/* Print Header */}
               <div className="oa-print-header">
-                <h1 className="oa-print-title">Order Analytics Report</h1>
+                <h1 className="oa-print-title">
+                  {viewMode === 'monthly' ? '📆 Monthly Order Analytics Report' : '📅 Weekly Order Analytics Report'}
+                </h1>
                 <p className="oa-print-meta">
-                  Generated on: {new Date().toLocaleString('en-IN')} | 
-                  Period: {dateFrom ? new Date(dateFrom).toLocaleDateString('en-IN') : 'All time'} to {dateTo ? new Date(dateTo).toLocaleDateString('en-IN') : 'Present'} | 
-                  Total Orders: {analytics.totalOrders} | 
-                  Status: {statusFilter === 'all' ? 'All' : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} |
-                  Shop: {shopFilter === 'all' ? 'All Shops' : uniqueShops.find(([id]) => id === shopFilter)?.[1] || 'Unknown'}
+                  <strong>Generated:</strong> {new Date().toLocaleString('en-IN')} | 
+                  <strong> Period:</strong> {viewMode === 'monthly' 
+                    ? `${new Date(selectedMonth + '-01').toLocaleString('en-IN', { month: 'long', year: 'numeric' })}`
+                    : `${dateFrom ? new Date(dateFrom).toLocaleDateString('en-IN') : 'All time'} to ${dateTo ? new Date(dateTo).toLocaleDateString('en-IN') : 'Present'}`
+                  } | 
+                  <strong> Orders:</strong> {analytics.totalOrders} | 
+                  <strong> Revenue:</strong> {fmt(analytics.totalRevenue)} | 
+                  <strong> Shops:</strong> {analytics.shopStats.length}
+                  {statusFilter !== 'all' && ` | Status: ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}`}
+                  {shopFilter !== 'all' && ` | Shop: ${uniqueShops.find(([id]) => id === shopFilter)?.[1] || 'Unknown'}`}
                 </p>
               </div>
 
-              {/* Summary Stats */}
-              <div className="oa-summary">
+              {/* Conditional Rendering based on View Mode */}
+              {viewMode === 'monthly' ? (
+                // Monthly Report View
+                <MonthlyReport 
+                  orders={filteredOrders} 
+                  selectedMonth={selectedMonth}
+                  fmt={fmt}
+                />
+              ) : (
+                // Weekly/Default View
+                <>
+                  {/* Summary Stats */}
+                  <div className="oa-summary">
                 <div className="oa-stat-card">
                   <div className="oa-stat-header">
                     <div className="oa-stat-icon" style={{ background: '#eff6ff', color: '#3b82f6' }}>
@@ -1565,12 +2231,17 @@ const OrderAnalytics = () => {
                   {/* Detailed Orders List */}
                   <DetailedOrdersList orders={filteredOrders} fmt={fmt} />
                 </>
-              ) : (
+              ) : null}
+              </>
+              )}
+
+              {/* Empty State - only if no orders in current view */}
+              {filteredOrders.length === 0 && (
                 <div className="oa-empty">
                   <div className="oa-empty-icon">📦</div>
                   <h3 className="oa-empty-title">No Data Available</h3>
                   <p className="oa-empty-text">
-                    No orders found matching your filter criteria. Try adjusting the filters or date range.
+                    No orders found matching your filter criteria. Try adjusting the filters or {viewMode === 'monthly' ? 'selecting a different month' : 'date range'}.
                   </p>
                 </div>
               )}
