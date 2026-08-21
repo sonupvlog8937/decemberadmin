@@ -2712,12 +2712,28 @@ const OrderAnalytics = () => {
         });
       });
       
-      let allShopsData = Object.values(shopsFromOrders).map(shop => ({
-        ...shop,
-        orders: undefined // Remove Set object before storing
-      }));
+      let allShopsData = Object.values(shopsFromOrders)
+        .filter(shop => {
+          // Filter out unknown/invalid shops
+          const isValid = shop._id && 
+                         shop._id !== 'unknown' && 
+                         shop._id !== 'null' && 
+                         shop.shopName && 
+                         shop.shopName !== 'Unknown Shop' &&
+                         shop.shopName.trim().length > 0;
+          
+          if (!isValid) {
+            console.warn(`⚠️ Filtering out invalid shop:`, shop);
+          }
+          
+          return isValid;
+        })
+        .map(shop => ({
+          ...shop,
+          orders: undefined // Remove Set object before storing
+        }));
       
-      console.log(`✅ Extracted ${allShopsData.length} unique shops from ${totalProductsProcessed} products in ${allOrders.length} orders`);
+      console.log(`✅ Extracted ${allShopsData.length} VALID shops from ${totalProductsProcessed} products in ${allOrders.length} orders`);
       
       // SECONDARY: Try to fetch from API (to get shops with zero orders)
       try {
