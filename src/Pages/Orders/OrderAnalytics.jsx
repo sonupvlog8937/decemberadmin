@@ -2555,7 +2555,19 @@ const OrderAnalytics = () => {
         const response = await fetchDataFromApi(`/api/go-market/grocery-shops?page=${page}&limit=100`);
         console.log(`📄 Page ${page} response:`, response);
         
-        const shops = response?.data || response?.shops || response?.results || [];
+        // Handle different response structures
+        let shops = [];
+        if (Array.isArray(response?.data)) {
+          shops = response.data;
+        } else if (Array.isArray(response?.shops)) {
+          shops = response.shops;
+        } else if (Array.isArray(response?.results)) {
+          shops = response.results;
+        } else if (Array.isArray(response)) {
+          shops = response;
+        }
+        
+        console.log(`📦 Page ${page} extracted shops:`, shops.length);
         
         if (shops.length > 0) {
           allShops = [...allShops, ...shops];
@@ -2563,11 +2575,18 @@ const OrderAnalytics = () => {
           
           // Check if there are more pages
           const totalPages = response?.totalPages || response?.pages || 0;
-          const total = response?.total || response?.count || 0;
+          const hasNextPage = response?.hasNextPage;
           
-          hasMore = (page < totalPages) || (shops.length === 100);
+          // Continue if:
+          // 1. We got a full page (100 items)
+          // 2. OR API explicitly says there's a next page
+          // 3. OR current page < totalPages
+          hasMore = (shops.length === 100) || hasNextPage || (totalPages > 0 && page < totalPages);
           page++;
+          
+          console.log(`🔍 hasMore: ${hasMore}, totalPages: ${totalPages}, hasNextPage: ${hasNextPage}`);
         } else {
+          console.log('⏹️ No more shops on this page');
           hasMore = false;
         }
       } catch (err) {
@@ -2576,7 +2595,11 @@ const OrderAnalytics = () => {
       }
     }
     
-    console.log(`✅ Total shops fetched: ${allShops.length}`);
+    console.log(`✅ FINAL: Total shops fetched: ${allShops.length}`);
+    if (allShops.length > 0) {
+      console.log(`🏪 First shop:`, allShops[0]);
+      console.log(`🏪 Last shop:`, allShops[allShops.length - 1]);
+    }
     return allShops;
   };
 
@@ -2593,35 +2616,74 @@ const OrderAnalytics = () => {
       const allOrders = ordersResponse?.data || ordersResponse?.orders || [];
       console.log('✅ Orders fetched:', allOrders.length);
       
-      // Fetch ALL shops with pagination
-      let allShopsData = await fetchAllShops();
+      // PRIMARY: Extract ALL unique shops from orders (This is the most reliable way)
+      console.log('📦 Extracting shops from order data...');
+      const shopsFromOrders = {};
+      let totalProductsProcessed = 0;
       
-      // Fallback: Extract unique shops from orders if API fails
-      if (allShopsData.length === 0) {
-        console.warn('⚠️ No shops from API, extracting from orders...');
-        const shopsFromOrders = {};
-        allOrders.forEach(order => {
-          (order.products || []).forEach(item => {
-            if (item.shopId && !shopsFromOrders[item.shopId]) {
+      allOrders.forEach(order => {
+        const products = order.products || [];
+        products.forEach(item => {
+          totalProductsProcessed++;
+          if (item.shopId) {
+            if (!shopsFromOrders[item.shopId]) {
               shopsFromOrders[item.shopId] = {
                 _id: item.shopId,
                 shopName: item.shopName || item.shopDisplayName || 'Unknown Shop',
-                fromOrders: true
+                location: item.shopLocation || '',
+                fromOrders: true,
+                firstSeenInOrder: order._id
               };
+              console.log(`🆕 New shop found: ${shopsFromOrders[item.shopId].shopName} (ID: ${item.shopId})`);
+            }
+          }
+        });
+      });
+      
+      let allShopsData = Object.values(shopsFromOrders);
+      console.log(`✅ Extracted ${allShopsData.length} unique shops from ${totalProductsProcessed} products in ${allOrders.length} orders`);
+      
+      // SECONDARY: Try to fetch from API (to get shops with zero orders)
+      try {
+        console.log('🔄 Attempting to fetch additional shops from API...');
+        const apiShops = await fetchAllShops();
+        console.log(`📡 API returned ${apiShops.length} shops`);
+        
+        if (apiShops.length > 0) {
+          // Merge: Add API shops that we don't have from orders
+          apiShops.forEach(apiShop => {
+            if (apiShop._id && !shopsFromOrders[apiShop._id]) {
+              allShopsData.push({
+                ...apiShop,
+                shopName: apiShop.shopName || apiShop.name || apiShop.location || 'Unknown Shop',
+                fromAPI: true,
+                hasNoOrders: true
+              });
+              console.log(`➕ Added zero-order shop from API: ${apiShop.shopName || 'Unknown'}`);
             }
           });
-        });
-        allShopsData = Object.values(shopsFromOrders);
-        console.log('📦 Extracted shops from orders:', allShopsData.length);
+        }
+      } catch (apiErr) {
+        console.warn('⚠️ API fetch failed, using only shops from orders:', apiErr);
       }
       
       console.log('✅ Final Shops Count:', allShopsData.length);
       
       if (allShopsData.length > 0) {
         console.log('🏪 Sample Shop:', allShopsData[0]);
-        console.log('🏪 All Shop IDs:', allShopsData.map(s => s._id).join(', '));
+        console.log('🏪 All Shop Names:', allShopsData.map(s => 
+          `${s.shopName || s.name || s.location} (ID: ${s._id})`
+        ));
+        console.table(allShopsData.map((s, i) => ({
+          '#': i + 1,
+          'Shop Name': s.shopName || s.name || s.location || 'Unknown',
+          'Shop ID': s._id?.substring(0, 8) + '...',
+          'Source': s.fromOrders ? '📦 Orders' : '📡 API',
+          'Has Orders': s.fromOrders ? '✅' : '❌'
+        })));
       } else {
         console.error('❌ NO SHOPS DATA AVAILABLE!');
+        console.error('This means NO orders have any shop data!');
       }
       
       setOrders(allOrders);
