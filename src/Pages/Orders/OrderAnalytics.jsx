@@ -2542,39 +2542,92 @@ const OrderAnalytics = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [shopFilter, setShopFilter] = useState('all');
 
+  // Fetch ALL shops with pagination handling
+  const fetchAllShops = async () => {
+    let allShops = [];
+    let page = 1;
+    let hasMore = true;
+    
+    console.log('🔄 Fetching all shops with pagination...');
+    
+    while (hasMore && page <= 10) { // Safety limit of 10 pages
+      try {
+        const response = await fetchDataFromApi(`/api/go-market/grocery-shops?page=${page}&limit=100`);
+        console.log(`📄 Page ${page} response:`, response);
+        
+        const shops = response?.data || response?.shops || response?.results || [];
+        
+        if (shops.length > 0) {
+          allShops = [...allShops, ...shops];
+          console.log(`✅ Page ${page}: ${shops.length} shops (Total so far: ${allShops.length})`);
+          
+          // Check if there are more pages
+          const totalPages = response?.totalPages || response?.pages || 0;
+          const total = response?.total || response?.count || 0;
+          
+          hasMore = (page < totalPages) || (shops.length === 100);
+          page++;
+        } else {
+          hasMore = false;
+        }
+      } catch (err) {
+        console.error(`❌ Error fetching page ${page}:`, err);
+        hasMore = false;
+      }
+    }
+    
+    console.log(`✅ Total shops fetched: ${allShops.length}`);
+    return allShops;
+  };
+
   // Fetch orders and all shops
   const fetchOrders = async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
 
     try {
-      // Fetch both orders and all shops in parallel
-      console.log('🔄 Fetching orders and shops data...');
-      const [ordersResponse, shopsResponse] = await Promise.all([
-        fetchDataFromApi('/api/order/order-list?page=1&limit=10000'),
-        fetchDataFromApi('/api/go-market/grocery-shops?limit=10000')
-      ]);
+      console.log('🔄 Starting data fetch...');
       
-      console.log('📦 Orders Response:', ordersResponse);
-      console.log('🏪 Shops Response:', shopsResponse);
-      
-      // Handle different response structures
+      // Fetch orders
+      const ordersResponse = await fetchDataFromApi('/api/order/order-list?page=1&limit=10000');
       const allOrders = ordersResponse?.data || ordersResponse?.orders || [];
-      const allShopsData = shopsResponse?.data || shopsResponse?.shops || shopsResponse?.results || [];
-      
       console.log('✅ Orders fetched:', allOrders.length);
-      console.log('✅ Shops fetched:', allShopsData.length);
+      
+      // Fetch ALL shops with pagination
+      let allShopsData = await fetchAllShops();
+      
+      // Fallback: Extract unique shops from orders if API fails
+      if (allShopsData.length === 0) {
+        console.warn('⚠️ No shops from API, extracting from orders...');
+        const shopsFromOrders = {};
+        allOrders.forEach(order => {
+          (order.products || []).forEach(item => {
+            if (item.shopId && !shopsFromOrders[item.shopId]) {
+              shopsFromOrders[item.shopId] = {
+                _id: item.shopId,
+                shopName: item.shopName || item.shopDisplayName || 'Unknown Shop',
+                fromOrders: true
+              };
+            }
+          });
+        });
+        allShopsData = Object.values(shopsFromOrders);
+        console.log('📦 Extracted shops from orders:', allShopsData.length);
+      }
+      
+      console.log('✅ Final Shops Count:', allShopsData.length);
       
       if (allShopsData.length > 0) {
-        console.log('🏪 Sample Shop Data:', allShopsData[0]);
-        console.log('🏪 All Shop Names:', allShopsData.map(s => s.shopName || s.name || s.location).join(', '));
+        console.log('🏪 Sample Shop:', allShopsData[0]);
+        console.log('🏪 All Shop IDs:', allShopsData.map(s => s._id).join(', '));
       } else {
-        console.warn('⚠️ No shops data received!');
+        console.error('❌ NO SHOPS DATA AVAILABLE!');
       }
       
       setOrders(allOrders);
       setFilteredOrders(allOrders);
       setAllShops(allShopsData);
+      
     } catch (error) {
       console.error('❌ Failed to fetch data:', error);
       setOrders([]);
