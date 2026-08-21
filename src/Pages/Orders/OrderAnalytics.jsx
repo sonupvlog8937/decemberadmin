@@ -504,6 +504,36 @@ const STYLES = `
   .oa-shop-section:not(:last-child) {
     page-break-after: always;
   }
+  
+  /* Print product cards with colors */
+  [style*="background: linear-gradient"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Product cards grid should wrap properly */
+  [style*="gridTemplateColumns"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  /* Ensure rank badges print with color */
+  [style*="position: absolute"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Print revenue banners with gradient */
+  [style*="background: linear-gradient(135deg, #10b981, #059669)"] {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Progress bars */
+  [style*="background: linear-gradient(90deg"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 
 /* ─── Detailed Orders Table ─────────────────────────────────────────────── */
@@ -1317,132 +1347,362 @@ const MonthlyReport = ({ orders, selectedMonth, fmt, allShops }) => {
               </div>
             ) : (
               <>
-                {/* Product Analysis Section - only show if has orders */}
+                {/* COMPLETE Product Sales Cards - Professional Display */}
                 <div style={{ 
-                  background: '#f9fafb', 
-                  padding: '20px 24px',
+                  background: 'linear-gradient(135deg, #f9fafb 0%, #fff 100%)', 
+                  padding: '24px',
                   borderBottom: '2px solid #e5e7eb' 
                 }}>
+                  {/* Section Header */}
                   <div style={{ 
-                    fontSize: 13, 
-                    fontWeight: 700, 
-                    color: '#374151',
-                    marginBottom: 12,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
+                    marginBottom: 20,
+                    paddingBottom: 16,
+                    borderBottom: '2px solid #e5e7eb'
                   }}>
-                    <span style={{ fontSize: 18 }}>📈</span>
-                    <span>Product Sales Analysis ({productsArray.length} products)</span>
-                  </div>
-
-              {/* Products Grid */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: 12
-              }}>
-                {productsArray.slice(0, 6).map((product, idx) => (
-                  <div key={idx} style={{
-                    background: '#fff',
-                    border: '1.5px solid #e5e7eb',
-                    borderRadius: 10,
-                    padding: 12,
-                    display: 'flex',
-                    gap: 10,
-                    alignItems: 'flex-start',
-                    transition: 'all 0.2s ease',
-                  }}>
-                    {product.image ? (
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        style={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: 8,
-                          objectFit: 'cover',
-                          border: '1px solid #e5e7eb',
-                          flexShrink: 0
-                        }}
-                      />
-                    ) : (
+                    <div style={{ 
+                      fontSize: 16, 
+                      fontWeight: 800, 
+                      color: '#111827',
+                      marginBottom: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10
+                    }}>
+                      <span style={{ 
+                        fontSize: 24,
+                        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}>📦</span>
+                      <span>Complete Product Sales Breakdown</span>
+                    </div>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                      gap: 12,
+                      marginTop: 12
+                    }}>
                       <div style={{
-                        width: 50,
-                        height: 50,
-                        borderRadius: 8,
-                        background: '#f3f4f6',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 20,
-                        flexShrink: 0
-                      }}>📦</div>
-                    )}
-                    
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ 
-                        fontSize: 12, 
-                        fontWeight: 600, 
-                        color: '#111827',
-                        marginBottom: 4,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        background: '#eff6ff',
+                        padding: '10px 14px',
+                        borderRadius: 10,
+                        border: '1px solid #dbeafe',
+                        textAlign: 'center'
                       }}>
-                        {product.name}
+                        <div style={{ fontSize: 20, fontWeight: 900, color: '#1e40af' }}>
+                          {productsArray.length}
+                        </div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          Total Products
+                        </div>
                       </div>
                       <div style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 6,
-                        fontSize: 10,
-                        color: '#6b7280',
-                        marginBottom: 6
+                        background: '#f0fdf4',
+                        padding: '10px 14px',
+                        borderRadius: 10,
+                        border: '1px solid #dcfce7',
+                        textAlign: 'center'
                       }}>
-                        <span style={{ 
-                          background: '#eff6ff', 
-                          color: '#1e40af',
-                          padding: '2px 6px',
-                          borderRadius: 4,
-                          fontWeight: 600
-                        }}>
-                          Qty: {product.totalQuantity}
-                        </span>
-                        <span style={{ 
-                          background: '#f0fdf4', 
-                          color: '#166534',
-                          padding: '2px 6px',
-                          borderRadius: 4,
-                          fontWeight: 600
-                        }}>
-                          {product.timesOrdered} orders
-                        </span>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: '#166534' }}>
+                          {shop.totalItems}
+                        </div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: '#4ade80', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          Units Sold
+                        </div>
                       </div>
                       <div style={{
-                        fontSize: 13,
-                        fontWeight: 800,
-                        color: '#059669'
+                        background: '#fef3c7',
+                        padding: '10px 14px',
+                        borderRadius: 10,
+                        border: '1px solid #fde68a',
+                        textAlign: 'center'
                       }}>
-                        {fmt(product.totalRevenue)}
+                        <div style={{ fontSize: 20, fontWeight: 900, color: '#92400e' }}>
+                          {shop.totalOrders}
+                        </div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          Total Orders
+                        </div>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
 
-              {productsArray.length > 6 && (
-                <div style={{
-                  marginTop: 12,
-                  fontSize: 12,
-                  color: '#6b7280',
-                  textAlign: 'center',
-                  fontWeight: 600
-                }}>
-                  + {productsArray.length - 6} more products...
+                  {/* ALL Products Grid - Professional Cards */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                    gap: 16
+                  }}>
+                    {productsArray.map((product, idx) => (
+                      <div key={idx} style={{
+                        background: '#fff',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: 14,
+                        padding: 16,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 12,
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}>
+                        {/* Rank Badge */}
+                        <div style={{
+                          position: 'absolute',
+                          top: 10,
+                          right: 10,
+                          background: idx < 3 ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : '#e5e7eb',
+                          color: idx < 3 ? '#fff' : '#6b7280',
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 13,
+                          fontWeight: 900,
+                          boxShadow: idx < 3 ? '0 4px 12px rgba(251, 191, 36, 0.4)' : 'none'
+                        }}>
+                          #{idx + 1}
+                        </div>
+
+                        {/* Product Image & Name */}
+                        <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                          {product.image ? (
+                            <img 
+                              src={product.image} 
+                              alt={product.name}
+                              style={{
+                                width: 80,
+                                height: 80,
+                                borderRadius: 12,
+                                objectFit: 'cover',
+                                border: '2px solid #f3f4f6',
+                                flexShrink: 0,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                              }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: 80,
+                              height: 80,
+                              borderRadius: 12,
+                              background: 'linear-gradient(135deg, #f3f4f6, #e5e7eb)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 32,
+                              flexShrink: 0,
+                              border: '2px solid #e5e7eb'
+                            }}>📦</div>
+                          )}
+                          
+                          <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>
+                            <div style={{ 
+                              fontSize: 15, 
+                              fontWeight: 800, 
+                              color: '#111827',
+                              marginBottom: 6,
+                              lineHeight: 1.3,
+                              wordWrap: 'break-word'
+                            }}>
+                              {product.name}
+                            </div>
+                            <div style={{
+                              fontSize: 11,
+                              color: '#9ca3af',
+                              fontWeight: 600
+                            }}>
+                              Unit Price: {fmt(product.unitPrice)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div style={{
+                          height: 1,
+                          background: 'linear-gradient(to right, transparent, #e5e7eb, transparent)'
+                        }} />
+
+                        {/* Stats Grid */}
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: 10
+                        }}>
+                          <div style={{
+                            background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
+                            padding: '10px 12px',
+                            borderRadius: 10,
+                            border: '1px solid #bfdbfe'
+                          }}>
+                            <div style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: '#3b82f6',
+                              textTransform: 'uppercase',
+                              letterSpacing: 0.5,
+                              marginBottom: 4
+                            }}>
+                              📊 Quantity
+                            </div>
+                            <div style={{
+                              fontSize: 22,
+                              fontWeight: 900,
+                              color: '#1e40af',
+                              lineHeight: 1
+                            }}>
+                              {product.totalQuantity}
+                            </div>
+                            <div style={{
+                              fontSize: 9,
+                              color: '#60a5fa',
+                              marginTop: 2,
+                              fontWeight: 600
+                            }}>
+                              units sold
+                            </div>
+                          </div>
+
+                          <div style={{
+                            background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+                            padding: '10px 12px',
+                            borderRadius: 10,
+                            border: '1px solid #bbf7d0'
+                          }}>
+                            <div style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: '#22c55e',
+                              textTransform: 'uppercase',
+                              letterSpacing: 0.5,
+                              marginBottom: 4
+                            }}>
+                              🛒 Orders
+                            </div>
+                            <div style={{
+                              fontSize: 22,
+                              fontWeight: 900,
+                              color: '#166534',
+                              lineHeight: 1
+                            }}>
+                              {product.timesOrdered}
+                            </div>
+                            <div style={{
+                              fontSize: 9,
+                              color: '#4ade80',
+                              marginTop: 2,
+                              fontWeight: 600
+                            }}>
+                              times ordered
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Revenue Banner */}
+                        <div style={{
+                          background: 'linear-gradient(135deg, #10b981, #059669)',
+                          padding: '12px',
+                          borderRadius: 10,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)'
+                        }}>
+                          <div style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: 'rgba(255,255,255,0.9)',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5
+                          }}>
+                            💰 Total Revenue
+                          </div>
+                          <div style={{
+                            fontSize: 18,
+                            fontWeight: 900,
+                            color: '#fff',
+                            letterSpacing: -0.5
+                          }}>
+                            {fmt(product.totalRevenue)}
+                          </div>
+                        </div>
+
+                        {/* Performance Indicator */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          paddingTop: 4
+                        }}>
+                          <div style={{
+                            flex: 1,
+                            height: 6,
+                            background: '#f3f4f6',
+                            borderRadius: 3,
+                            overflow: 'hidden'
+                          }}>
+                            <div style={{
+                              height: '100%',
+                              background: idx < 3 
+                                ? 'linear-gradient(90deg, #10b981, #059669)' 
+                                : idx < 10
+                                ? 'linear-gradient(90deg, #3b82f6, #2563eb)'
+                                : 'linear-gradient(90deg, #94a3b8, #64748b)',
+                              width: `${Math.min((product.totalRevenue / productsArray[0].totalRevenue) * 100, 100)}%`,
+                              transition: 'width 0.5s ease'
+                            }} />
+                          </div>
+                          <div style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: '#6b7280'
+                          }}>
+                            {Math.round((product.totalRevenue / shop.totalRevenue) * 100)}%
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Summary Footer */}
+                  <div style={{
+                    marginTop: 20,
+                    padding: '16px 20px',
+                    background: 'linear-gradient(135deg, #f9fafb, #f3f4f6)',
+                    borderRadius: 12,
+                    border: '1px solid #e5e7eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 12
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8
+                    }}>
+                      <span style={{ fontSize: 18 }}>✅</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>
+                        All {productsArray.length} products displayed • {shop.totalItems} total units • {shop.totalOrders} orders
+                      </span>
+                    </div>
+                    <div style={{
+                      fontSize: 16,
+                      fontWeight: 900,
+                      color: '#059669',
+                      padding: '6px 14px',
+                      background: '#d1fae5',
+                      borderRadius: 8,
+                      border: '1px solid #a7f3d0'
+                    }}>
+                      Shop Total: {fmt(shop.totalRevenue)}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
 
             {/* Orders List */}
             <div className="oa-shop-orders-list">
