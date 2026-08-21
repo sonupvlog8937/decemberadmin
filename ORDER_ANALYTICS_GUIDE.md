@@ -1,5 +1,15 @@
 # 📊 Order Analytics & Print System - Complete Guide
 
+## 🎯 Quick Overview
+**By default, analytics shows last 7 days data** with complete order details including:
+- Customer name, email, phone
+- Shop-wise breakdown  
+- Product details with images
+- Order amounts and payment status
+- Expandable detailed view
+
+---
+
 ## Overview
 Yeh ek professional data analysis aur printing system hai jo admin ko complete order analytics provide karta hai with shop-wise breakdown, charts, aur A4-size print-ready reports.
 
@@ -38,8 +48,21 @@ Har shop ke liye detailed analysis:
 - Header with report title aur generation date
 - Summary statistics table
 - Detailed shop-wise breakdown table
+- **Complete detailed orders list with all products**
 - Footer with company branding
 - Print karne par sirf important data print hota hai (buttons aur filters hide ho jate hain)
+
+### 6. **Detailed Orders List**
+- Har order ki complete details
+- Customer name, email/phone
+- Order ID aur date/time
+- Payment method (COD/Online)
+- Shop-wise product grouping
+- Product images, names, quantities
+- Individual item prices
+- Order total with breakdown
+- Expand/collapse functionality
+- All details print ho jati hain
 
 ---
 
@@ -63,6 +86,12 @@ Simply navigate to: `/order-analytics`
 ---
 
 ## 📋 Using Filters
+
+### Default Date Range
+**By default, last 7 days ka data show hota hai:**
+- Date From: Automatically 7 days ago
+- Date To: Today's date
+- Easily change kar sakte ho apni requirement ke according
 
 ### Date Range Filter
 ```
