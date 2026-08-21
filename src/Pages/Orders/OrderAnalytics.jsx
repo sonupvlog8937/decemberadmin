@@ -1066,7 +1066,7 @@ const STYLES = `
 `;
 
 // ─── Monthly Report Component ──────────────────────────────────────────────────
-const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
+const MonthlyReport = ({ orders, selectedMonth, fmt, allShops }) => {
   const formatDate = (dateStr) => {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleString('en-IN', {
@@ -1095,15 +1095,30 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
     return { bg: '#f3f4f6', color: '#374151', text: status };
   };
 
-  // Group orders by shop with detailed product analysis
+  // Initialize ordersByShop with ALL registered shops
   const ordersByShop = {};
   
+  // First, add all registered shops with zero values
+  (allShops || []).forEach(shop => {
+    ordersByShop[shop._id] = {
+      shopId: shop._id,
+      shopName: shop.shopName || shop.location || 'Unknown Shop',
+      orders: [],
+      totalOrders: 0,
+      totalRevenue: 0,
+      totalItems: 0,
+      productsSold: {}, // Track unique products
+    };
+  });
+  
+  // Then populate with actual order data
   orders.forEach(order => {
     const products = order.products || [];
     products.forEach(item => {
       const shopId = item.shopId || 'unknown';
       const shopName = item.shopName || item.shopDisplayName || 'Unknown Shop';
       
+      // If shop doesn't exist in our list (shouldn't happen), add it
       if (!ordersByShop[shopId]) {
         ordersByShop[shopId] = {
           shopId,
@@ -1152,16 +1167,29 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
     });
   });
 
-  // Convert to array and sort by revenue
-  const shopsArray = Object.values(ordersByShop).sort((a, b) => b.totalRevenue - a.totalRevenue);
+  // Convert to array and sort: shops with orders first (by revenue), then shops without orders (alphabetically)
+  const shopsArray = Object.values(ordersByShop).sort((a, b) => {
+    // If both have orders, sort by revenue (descending)
+    if (a.totalOrders > 0 && b.totalOrders > 0) {
+      return b.totalRevenue - a.totalRevenue;
+    }
+    // If only a has orders, a comes first
+    if (a.totalOrders > 0) return -1;
+    // If only b has orders, b comes first
+    if (b.totalOrders > 0) return 1;
+    // If neither has orders, sort alphabetically by shop name
+    return a.shopName.localeCompare(b.shopName);
+  });
 
-  // Calculate month totals
+  // Calculate month totals (only count shops with orders for active shops)
+  const shopsWithOrders = shopsArray.filter(shop => shop.totalOrders > 0);
   const monthTotals = {
     totalOrders: orders.length,
-    totalShops: shopsArray.length,
-    totalRevenue: shopsArray.reduce((sum, shop) => sum + shop.totalRevenue, 0),
-    totalItems: shopsArray.reduce((sum, shop) => sum + shop.totalItems, 0),
-    totalUniqueProducts: shopsArray.reduce((sum, shop) => sum + Object.keys(shop.productsSold).length, 0),
+    totalShops: allShops?.length || shopsArray.length, // Total registered shops
+    activeShops: shopsWithOrders.length, // Shops that received orders
+    totalRevenue: shopsWithOrders.reduce((sum, shop) => sum + shop.totalRevenue, 0),
+    totalItems: shopsWithOrders.reduce((sum, shop) => sum + shop.totalItems, 0),
+    totalUniqueProducts: shopsWithOrders.reduce((sum, shop) => sum + Object.keys(shop.productsSold).length, 0),
   };
 
   if (orders.length === 0) {
@@ -1198,6 +1226,10 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
           </div>
           <div className="oa-month-stat">
             <div className="oa-month-stat-value">{monthTotals.totalShops}</div>
+            <div className="oa-month-stat-label">Total Shops</div>
+          </div>
+          <div className="oa-month-stat">
+            <div className="oa-month-stat-value">{monthTotals.activeShops}</div>
             <div className="oa-month-stat-label">Active Shops</div>
           </div>
           <div className="oa-month-stat">
@@ -1219,6 +1251,7 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
       {shopsArray.map((shop, shopIndex) => {
         // Get top selling products
         const productsArray = Object.values(shop.productsSold).sort((a, b) => b.totalRevenue - a.totalRevenue);
+        const hasOrders = shop.totalOrders > 0;
         
         return (
           <div key={shop.shopId} className="oa-shop-section">
@@ -1226,7 +1259,20 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
             <div className="oa-shop-header">
               <div className="oa-shop-name-group">
                 <h3 className="oa-shop-main-name">
-                  🏪 {shop.shopName}
+                  {hasOrders ? '🏪' : '🔒'} {shop.shopName}
+                  {!hasOrders && (
+                    <span style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      background: '#fee2e2',
+                      color: '#991b1b',
+                      padding: '4px 10px',
+                      borderRadius: 20,
+                      marginLeft: 8
+                    }}>
+                      No Sales
+                    </span>
+                  )}
                 </h3>
                 <div className="oa-shop-stats-inline">
                   <div className="oa-shop-stat-item">
@@ -1246,29 +1292,49 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
                   </div>
                 </div>
               </div>
-              <div className="oa-shop-total-badge">
+              <div className="oa-shop-total-badge" style={{
+                background: hasOrders ? 'linear-gradient(135deg, #10b981, #059669)' : '#9ca3af'
+              }}>
                 {fmt(shop.totalRevenue)}
               </div>
             </div>
 
-            {/* Product Analysis Section */}
-            <div style={{ 
-              background: '#f9fafb', 
-              padding: '20px 24px',
-              borderBottom: '2px solid #e5e7eb' 
-            }}>
-              <div style={{ 
-                fontSize: 13, 
-                fontWeight: 700, 
-                color: '#374151',
-                marginBottom: 12,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8
+            {/* Show message for shops with no orders */}
+            {!hasOrders ? (
+              <div style={{
+                padding: '40px 24px',
+                textAlign: 'center',
+                background: '#f9fafb',
+                borderTop: '1px solid #e5e7eb'
               }}>
-                <span style={{ fontSize: 18 }}>📈</span>
-                <span>Product Sales Analysis ({productsArray.length} products)</span>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+                  No orders this month
+                </div>
+                <div style={{ fontSize: 13, color: '#6b7280' }}>
+                  This shop hasn't received any orders in the selected period.
+                </div>
               </div>
+            ) : (
+              <>
+                {/* Product Analysis Section - only show if has orders */}
+                <div style={{ 
+                  background: '#f9fafb', 
+                  padding: '20px 24px',
+                  borderBottom: '2px solid #e5e7eb' 
+                }}>
+                  <div style={{ 
+                    fontSize: 13, 
+                    fontWeight: 700, 
+                    color: '#374151',
+                    marginBottom: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}>
+                    <span style={{ fontSize: 18 }}>📈</span>
+                    <span>Product Sales Analysis ({productsArray.length} products)</span>
+                  </div>
 
               {/* Products Grid */}
               <div style={{
@@ -1575,6 +1641,8 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
                 );
               })}
             </div>
+            </>
+            )}
           </div>
         );
       })}
@@ -1846,6 +1914,7 @@ const OrderAnalytics = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
+  const [allShops, setAllShops] = useState([]); // Store all registered shops
   
   // View Mode: weekly (default) or monthly
   const [viewMode, setViewMode] = useState('weekly'); // 'weekly' or 'monthly'
@@ -1870,20 +1939,29 @@ const OrderAnalytics = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [shopFilter, setShopFilter] = useState('all');
 
-  // Fetch orders
+  // Fetch orders and all shops
   const fetchOrders = async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
 
     try {
-      const response = await fetchDataFromApi('/api/order/order-list?page=1&limit=10000');
-      const allOrders = response?.data || [];
+      // Fetch both orders and all shops in parallel
+      const [ordersResponse, shopsResponse] = await Promise.all([
+        fetchDataFromApi('/api/order/order-list?page=1&limit=10000'),
+        fetchDataFromApi('/api/go-market/grocery-shops?limit=10000')
+      ]);
+      
+      const allOrders = ordersResponse?.data || [];
+      const allShopsData = shopsResponse?.data || [];
+      
       setOrders(allOrders);
       setFilteredOrders(allOrders);
+      setAllShops(allShopsData);
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      console.error('Failed to fetch data:', error);
       setOrders([]);
       setFilteredOrders([]);
+      setAllShops([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -1947,14 +2025,29 @@ const OrderAnalytics = () => {
       byStatus[status] = (byStatus[status] || 0) + 1;
     });
 
-    // By shop
+    // Initialize shop stats with ALL registered shops
     const shopStats = {};
+    
+    // First, add all registered shops with zero values
+    allShops.forEach(shop => {
+      shopStats[shop._id] = {
+        shopId: shop._id,
+        shopName: shop.shopName || shop.location || 'Unknown Shop',
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalItems: 0,
+        orders: [],
+      };
+    });
+
+    // Then, populate with actual order data
     filteredOrders.forEach(order => {
       const items = order.products || [];
       items.forEach(item => {
         const shopId = item.shopId || 'Unknown';
         const shopName = item.shopName || item.shopDisplayName || 'Unknown Shop';
         
+        // If shop doesn't exist in our list (shouldn't happen), add it
         if (!shopStats[shopId]) {
           shopStats[shopId] = {
             shopId,
@@ -1976,8 +2069,19 @@ const OrderAnalytics = () => {
       });
     });
 
-    // Convert to array and sort by revenue
-    const shopArray = Object.values(shopStats).sort((a, b) => b.totalRevenue - a.totalRevenue);
+    // Convert to array and sort: shops with orders first (by revenue), then shops without orders (alphabetically)
+    const shopArray = Object.values(shopStats).sort((a, b) => {
+      // If both have orders, sort by revenue (descending)
+      if (a.totalOrders > 0 && b.totalOrders > 0) {
+        return b.totalRevenue - a.totalRevenue;
+      }
+      // If only a has orders, a comes first
+      if (a.totalOrders > 0) return -1;
+      // If only b has orders, b comes first
+      if (b.totalOrders > 0) return 1;
+      // If neither has orders, sort alphabetically by shop name
+      return a.shopName.localeCompare(b.shopName);
+    });
 
     // Daily stats for chart
     const dailyStats = {};
@@ -1999,7 +2103,7 @@ const OrderAnalytics = () => {
       shopStats: shopArray,
       dailyStats: dailyArray,
     };
-  }, [filteredOrders]);
+  }, [filteredOrders, allShops]);
 
   // Format currency
   const fmt = (amount) => {
@@ -2478,6 +2582,7 @@ const OrderAnalytics = () => {
                   orders={filteredOrders} 
                   selectedMonth={selectedMonth}
                   fmt={fmt}
+                  allShops={allShops}
                 />
               ) : (
                 // Weekly/Default View
