@@ -1095,7 +1095,7 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
     return { bg: '#f3f4f6', color: '#374151', text: status };
   };
 
-  // Group orders by shop
+  // Group orders by shop with detailed product analysis
   const ordersByShop = {};
   
   orders.forEach(order => {
@@ -1112,8 +1112,26 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
           totalOrders: 0,
           totalRevenue: 0,
           totalItems: 0,
+          productsSold: {}, // Track unique products
         };
       }
+      
+      // Track products sold
+      const productKey = item.productId || item.productTitle || 'unknown';
+      if (!ordersByShop[shopId].productsSold[productKey]) {
+        ordersByShop[shopId].productsSold[productKey] = {
+          name: item.productTitle || 'Unknown Product',
+          image: item.image,
+          totalQuantity: 0,
+          totalRevenue: 0,
+          unitPrice: item.price || 0,
+          timesOrdered: 0,
+        };
+      }
+      
+      ordersByShop[shopId].productsSold[productKey].totalQuantity += item.quantity || 1;
+      ordersByShop[shopId].productsSold[productKey].totalRevenue += (item.price || 0) * (item.quantity || 1);
+      ordersByShop[shopId].productsSold[productKey].timesOrdered++;
       
       // Check if order already added
       const existingOrder = ordersByShop[shopId].orders.find(o => o._id === order._id);
@@ -1143,6 +1161,7 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
     totalShops: shopsArray.length,
     totalRevenue: shopsArray.reduce((sum, shop) => sum + shop.totalRevenue, 0),
     totalItems: shopsArray.reduce((sum, shop) => sum + shop.totalItems, 0),
+    totalUniqueProducts: shopsArray.reduce((sum, shop) => sum + Object.keys(shop.productsSold).length, 0),
   };
 
   if (orders.length === 0) {
@@ -1165,7 +1184,7 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
           📅 Monthly Report - {getMonthName(selectedMonth)}
         </h2>
         <p className="oa-monthly-subtitle">
-          Complete shop-wise breakdown with detailed order information
+          Complete shop-wise breakdown with product analysis
         </p>
       </div>
 
@@ -1189,223 +1208,376 @@ const MonthlyReport = ({ orders, selectedMonth, fmt }) => {
             <div className="oa-month-stat-value">{monthTotals.totalItems}</div>
             <div className="oa-month-stat-label">Items Sold</div>
           </div>
+          <div className="oa-month-stat">
+            <div className="oa-month-stat-value">{monthTotals.totalUniqueProducts}</div>
+            <div className="oa-month-stat-label">Unique Products</div>
+          </div>
         </div>
       </div>
 
       {/* Shop-wise breakdown */}
-      {shopsArray.map((shop, shopIndex) => (
-        <div key={shop.shopId} className="oa-shop-section">
-          {/* Shop Header */}
-          <div className="oa-shop-header">
-            <div className="oa-shop-name-group">
-              <h3 className="oa-shop-main-name">
-                🏪 {shop.shopName}
-              </h3>
-              <div className="oa-shop-stats-inline">
-                <div className="oa-shop-stat-item">
-                  <span>📦</span>
-                  <span><strong>{shop.totalOrders}</strong> orders</span>
-                </div>
-                <div className="oa-shop-stat-item">
-                  <span>📊</span>
-                  <span><strong>{shop.totalItems}</strong> items</span>
-                </div>
-                <div className="oa-shop-stat-item">
-                  <span style={{ fontSize: 10, color: '#9ca3af' }}>ID: {shop.shopId}</span>
+      {shopsArray.map((shop, shopIndex) => {
+        // Get top selling products
+        const productsArray = Object.values(shop.productsSold).sort((a, b) => b.totalRevenue - a.totalRevenue);
+        
+        return (
+          <div key={shop.shopId} className="oa-shop-section">
+            {/* Shop Header */}
+            <div className="oa-shop-header">
+              <div className="oa-shop-name-group">
+                <h3 className="oa-shop-main-name">
+                  🏪 {shop.shopName}
+                </h3>
+                <div className="oa-shop-stats-inline">
+                  <div className="oa-shop-stat-item">
+                    <span>📦</span>
+                    <span><strong>{shop.totalOrders}</strong> orders</span>
+                  </div>
+                  <div className="oa-shop-stat-item">
+                    <span>📊</span>
+                    <span><strong>{shop.totalItems}</strong> items sold</span>
+                  </div>
+                  <div className="oa-shop-stat-item">
+                    <span>🛍️</span>
+                    <span><strong>{productsArray.length}</strong> unique products</span>
+                  </div>
+                  <div className="oa-shop-stat-item">
+                    <span style={{ fontSize: 10, color: '#9ca3af' }}>ID: {shop.shopId}</span>
+                  </div>
                 </div>
               </div>
+              <div className="oa-shop-total-badge">
+                {fmt(shop.totalRevenue)}
+              </div>
             </div>
-            <div className="oa-shop-total-badge">
-              {fmt(shop.totalRevenue)}
-            </div>
-          </div>
 
-          {/* Orders List */}
-          <div className="oa-shop-orders-list">
-            {shop.orders.map((order, orderIndex) => {
-              const statusStyle = getStatusStyle(order.order_status);
-              
-              return (
-                <div key={order._id} className="oa-shop-order-item">
-                  {/* Order header */}
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between',
-                    marginBottom: 12,
-                    flexWrap: 'wrap',
-                    gap: 12 
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                      <span style={{
-                        background: '#f3f4f6',
-                        color: '#374151',
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: 12,
-                        fontWeight: 700
-                      }}>
-                        Order #{orderIndex + 1}
-                      </span>
-                      <span style={{ fontSize: 12, color: '#6b7280' }}>
-                        📅 {formatDate(order.createdAt)}
-                      </span>
-                      <div 
-                        className="oa-badge" 
-                        style={{ background: statusStyle.bg, color: statusStyle.color }}
-                      >
-                        {statusStyle.text}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: '#059669' }}>
-                      {fmt(order.shopTotal)}
-                    </div>
-                  </div>
+            {/* Product Analysis Section */}
+            <div style={{ 
+              background: '#f9fafb', 
+              padding: '20px 24px',
+              borderBottom: '2px solid #e5e7eb' 
+            }}>
+              <div style={{ 
+                fontSize: 13, 
+                fontWeight: 700, 
+                color: '#374151',
+                marginBottom: 12,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}>
+                <span style={{ fontSize: 18 }}>📈</span>
+                <span>Product Sales Analysis ({productsArray.length} products)</span>
+              </div>
 
-                  {/* Customer info */}
-                  <div style={{ 
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: 16,
-                    marginBottom: 16,
-                    padding: 16,
-                    background: '#f9fafb',
-                    borderRadius: 10
-                  }}>
-                    <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>
-                        👤 CUSTOMER
-                      </div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
-                        {order.userId?.name || 'Guest'}
-                      </div>
-                      <div style={{ fontSize: 11, color: '#6b7280' }}>
-                        {order.userId?.email || order.userId?.phone || '—'}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>
-                        💳 PAYMENT
-                      </div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
-                        {order.paymentId ? '💰 Online Paid' : '💵 COD'}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>
-                        🆔 ORDER ID
-                      </div>
-                      <div style={{ 
-                        fontSize: 10, 
-                        fontWeight: 600, 
-                        color: '#6b7280',
-                        fontFamily: 'Courier New, monospace',
-                        wordBreak: 'break-all'
-                      }}>
-                        {order._id}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Products */}
-                  <div style={{ 
+              {/* Products Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 12
+              }}>
+                {productsArray.slice(0, 6).map((product, idx) => (
+                  <div key={idx} style={{
+                    background: '#fff',
+                    border: '1.5px solid #e5e7eb',
+                    borderRadius: 10,
+                    padding: 12,
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8
+                    gap: 10,
+                    alignItems: 'flex-start',
+                    transition: 'all 0.2s ease',
                   }}>
-                    <div style={{ 
-                      fontSize: 11, 
-                      fontWeight: 700, 
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.5 
-                    }}>
-                      📦 Products ({order.shopProducts.length})
-                    </div>
-                    {order.shopProducts.map((item, itemIndex) => {
-                      const itemTotal = (item.price || 0) * (item.quantity || 1);
-                      return (
-                        <div key={itemIndex} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          padding: 10,
-                          background: '#fff',
+                    {product.image ? (
+                      <img 
+                        src={product.image} 
+                        alt={product.name}
+                        style={{
+                          width: 50,
+                          height: 50,
+                          borderRadius: 8,
+                          objectFit: 'cover',
                           border: '1px solid #e5e7eb',
-                          borderRadius: 8
+                          flexShrink: 0
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 8,
+                        background: '#f3f4f6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 20,
+                        flexShrink: 0
+                      }}>📦</div>
+                    )}
+                    
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ 
+                        fontSize: 12, 
+                        fontWeight: 600, 
+                        color: '#111827',
+                        marginBottom: 4,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {product.name}
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 6,
+                        fontSize: 10,
+                        color: '#6b7280',
+                        marginBottom: 6
+                      }}>
+                        <span style={{ 
+                          background: '#eff6ff', 
+                          color: '#1e40af',
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          fontWeight: 600
                         }}>
-                          {item.image ? (
-                            <img 
-                              src={item.image} 
-                              alt={item.productTitle}
-                              style={{
+                          Qty: {product.totalQuantity}
+                        </span>
+                        <span style={{ 
+                          background: '#f0fdf4', 
+                          color: '#166534',
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          fontWeight: 600
+                        }}>
+                          {product.timesOrdered} orders
+                        </span>
+                      </div>
+                      <div style={{
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: '#059669'
+                      }}>
+                        {fmt(product.totalRevenue)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {productsArray.length > 6 && (
+                <div style={{
+                  marginTop: 12,
+                  fontSize: 12,
+                  color: '#6b7280',
+                  textAlign: 'center',
+                  fontWeight: 600
+                }}>
+                  + {productsArray.length - 6} more products...
+                </div>
+              )}
+            </div>
+
+            {/* Orders List */}
+            <div className="oa-shop-orders-list">
+              <div style={{
+                padding: '16px 24px',
+                background: '#fafbfc',
+                borderBottom: '1px solid #e5e7eb',
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5
+              }}>
+                📋 Order Details ({shop.totalOrders} orders)
+              </div>
+
+              {shop.orders.map((order, orderIndex) => {
+                const statusStyle = getStatusStyle(order.order_status);
+                
+                return (
+                  <div key={order._id} className="oa-shop-order-item">
+                    {/* Order header */}
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      marginBottom: 12,
+                      flexWrap: 'wrap',
+                      gap: 12 
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                        <span style={{
+                          background: '#f3f4f6',
+                          color: '#374151',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: 12,
+                          fontWeight: 700
+                        }}>
+                          Order #{orderIndex + 1}
+                        </span>
+                        <span style={{ fontSize: 12, color: '#6b7280' }}>
+                          📅 {formatDate(order.createdAt)}
+                        </span>
+                        <div 
+                          className="oa-badge" 
+                          style={{ background: statusStyle.bg, color: statusStyle.color }}
+                        >
+                          {statusStyle.text}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#059669' }}>
+                        {fmt(order.shopTotal)}
+                      </div>
+                    </div>
+
+                    {/* Customer info */}
+                    <div style={{ 
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: 16,
+                      marginBottom: 16,
+                      padding: 16,
+                      background: '#f9fafb',
+                      borderRadius: 10
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>
+                          👤 CUSTOMER
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
+                          {order.userId?.name || 'Guest'}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#6b7280' }}>
+                          {order.userId?.email || order.userId?.phone || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>
+                          💳 PAYMENT
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
+                          {order.paymentId ? '💰 Online Paid' : '💵 COD'}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', marginBottom: 4 }}>
+                          🆔 ORDER ID
+                        </div>
+                        <div style={{ 
+                          fontSize: 10, 
+                          fontWeight: 600, 
+                          color: '#6b7280',
+                          fontFamily: 'Courier New, monospace',
+                          wordBreak: 'break-all'
+                        }}>
+                          {order._id}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Products */}
+                    <div style={{ 
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8
+                    }}>
+                      <div style={{ 
+                        fontSize: 11, 
+                        fontWeight: 700, 
+                        color: '#6b7280',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5 
+                      }}>
+                        📦 Products ({order.shopProducts.length})
+                      </div>
+                      {order.shopProducts.map((item, itemIndex) => {
+                        const itemTotal = (item.price || 0) * (item.quantity || 1);
+                        return (
+                          <div key={itemIndex} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12,
+                            padding: 10,
+                            background: '#fff',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 8
+                          }}>
+                            {item.image ? (
+                              <img 
+                                src={item.image} 
+                                alt={item.productTitle}
+                                style={{
+                                  width: 48,
+                                  height: 48,
+                                  borderRadius: 8,
+                                  objectFit: 'cover',
+                                  border: '1px solid #e5e7eb',
+                                  flexShrink: 0
+                                }}
+                              />
+                            ) : (
+                              <div style={{
                                 width: 48,
                                 height: 48,
                                 borderRadius: 8,
-                                objectFit: 'cover',
-                                border: '1px solid #e5e7eb',
+                                background: '#f3f4f6',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 20,
                                 flexShrink: 0
-                              }}
-                            />
-                          ) : (
-                            <div style={{
-                              width: 48,
-                              height: 48,
-                              borderRadius: 8,
-                              background: '#f3f4f6',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: 20,
-                              flexShrink: 0
-                            }}>📦</div>
-                          )}
-                          
-                          <div style={{ flex: 1, minWidth: 0 }}>
+                              }}>📦</div>
+                            )}
+                            
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ 
+                                fontSize: 13, 
+                                fontWeight: 600, 
+                                color: '#111827',
+                                marginBottom: 4,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {item.productTitle || 'Unknown Product'}
+                              </div>
+                              <div style={{ 
+                                fontSize: 11, 
+                                color: '#6b7280',
+                                display: 'flex',
+                                gap: 8,
+                                flexWrap: 'wrap'
+                              }}>
+                                <span>Qty: {item.quantity || 1}</span>
+                                <span>•</span>
+                                <span>Unit: {fmt(item.price)}</span>
+                                {item.size && <><span>•</span><span>Size: {item.size}</span></>}
+                                {item.color && <><span>•</span><span>Color: {item.color}</span></>}
+                              </div>
+                            </div>
+                            
                             <div style={{ 
-                              fontSize: 13, 
-                              fontWeight: 600, 
-                              color: '#111827',
-                              marginBottom: 4,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
+                              fontSize: 14, 
+                              fontWeight: 800, 
+                              color: '#059669',
                               whiteSpace: 'nowrap'
                             }}>
-                              {item.productTitle || 'Unknown Product'}
-                            </div>
-                            <div style={{ 
-                              fontSize: 11, 
-                              color: '#6b7280',
-                              display: 'flex',
-                              gap: 8,
-                              flexWrap: 'wrap'
-                            }}>
-                              <span>Qty: {item.quantity || 1}</span>
-                              <span>•</span>
-                              <span>Unit: {fmt(item.price)}</span>
-                              {item.size && <><span>•</span><span>Size: {item.size}</span></>}
-                              {item.color && <><span>•</span><span>Color: {item.color}</span></>}
+                              {fmt(itemTotal)}
                             </div>
                           </div>
-                          
-                          <div style={{ 
-                            fontSize: 14, 
-                            fontWeight: 800, 
-                            color: '#059669',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {fmt(itemTotal)}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Monthly Report Footer (will be handled by parent print footer) */}
     </>
