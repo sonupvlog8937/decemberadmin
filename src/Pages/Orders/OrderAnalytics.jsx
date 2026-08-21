@@ -1838,6 +1838,154 @@ const OrderAnalytics = () => {
     }).format(amount || 0);
   };
 
+  // Export shop-wise data as CSV
+  const exportShopWiseData = () => {
+    if (filteredOrders.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    // Prepare CSV data
+    const csvRows = [];
+    
+    // Header
+    csvRows.push([
+      'Shop ID',
+      'Shop Name',
+      'Order ID',
+      'Order Date',
+      'Customer Name',
+      'Customer Contact',
+      'Order Status',
+      'Payment Method',
+      'Product Name',
+      'Product Quantity',
+      'Product Price',
+      'Product Total',
+      'Order Total',
+    ].join(','));
+
+    // Data rows
+    filteredOrders.forEach(order => {
+      const products = order.products || [];
+      const customerName = order.userId?.name || 'Guest';
+      const customerContact = order.userId?.email || order.userId?.phone || '-';
+      const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString('en-IN') : '-';
+      const orderStatus = order.order_status || '-';
+      const paymentMethod = order.paymentId ? 'Online' : 'COD';
+      const orderTotal = order.totalAmt || 0;
+
+      products.forEach(item => {
+        const shopId = item.shopId || 'Unknown';
+        const shopName = (item.shopName || item.shopDisplayName || 'Unknown Shop').replace(/,/g, ';');
+        const productName = (item.productTitle || 'Unknown Product').replace(/,/g, ';');
+        const quantity = item.quantity || 1;
+        const price = item.price || 0;
+        const productTotal = price * quantity;
+
+        csvRows.push([
+          shopId,
+          shopName,
+          order._id,
+          orderDate,
+          customerName.replace(/,/g, ';'),
+          customerContact,
+          orderStatus,
+          paymentMethod,
+          productName,
+          quantity,
+          price,
+          productTotal,
+          orderTotal,
+        ].join(','));
+      });
+    });
+
+    // Create CSV content
+    const csvContent = csvRows.join('\n');
+    
+    // Create blob and download
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    const fileName = viewMode === 'monthly' 
+      ? `shopwise_orders_${selectedMonth}.csv`
+      : `shopwise_orders_${dateFrom}_to_${dateTo}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export shop summary as CSV
+  const exportShopSummary = () => {
+    if (analytics.shopStats.length === 0) {
+      alert('No shop data to export');
+      return;
+    }
+
+    // Prepare CSV data
+    const csvRows = [];
+    
+    // Header
+    csvRows.push([
+      'Sr. No.',
+      'Shop ID',
+      'Shop Name',
+      'Total Orders',
+      'Total Items Sold',
+      'Total Revenue',
+      'Average Order Value',
+    ].join(','));
+
+    // Data rows
+    analytics.shopStats.forEach((shop, index) => {
+      csvRows.push([
+        index + 1,
+        shop.shopId,
+        (shop.shopName || 'Unknown Shop').replace(/,/g, ';'),
+        shop.totalOrders,
+        shop.totalItems,
+        shop.totalRevenue,
+        (shop.totalRevenue / shop.totalOrders).toFixed(2),
+      ].join(','));
+    });
+
+    // Add totals row
+    csvRows.push([
+      '',
+      '',
+      'TOTAL',
+      analytics.totalOrders,
+      analytics.shopStats.reduce((sum, s) => sum + s.totalItems, 0),
+      analytics.totalRevenue,
+      (analytics.totalRevenue / analytics.totalOrders).toFixed(2),
+    ].join(','));
+
+    // Create CSV content
+    const csvContent = csvRows.join('\n');
+    
+    // Create blob and download
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    const fileName = viewMode === 'monthly' 
+      ? `shop_summary_${selectedMonth}.csv`
+      : `shop_summary_${dateFrom}_to_${dateTo}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Chart colors
   const CHART_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9', '#f97316'];
 
@@ -1916,7 +2064,7 @@ const OrderAnalytics = () => {
                     className="oa-btn oa-btn-secondary"
                     onClick={() => navigate('/orders')}
                   >
-                    ← Back to Orders
+                    ← Back
                   </button>
                   <button
                     className="oa-btn oa-btn-secondary"
@@ -1926,11 +2074,117 @@ const OrderAnalytics = () => {
                     <span className={refreshing ? 'spinning' : ''}>🔄</span>
                     {refreshing ? 'Refreshing...' : 'Refresh'}
                   </button>
+                  
+                  {/* Export Buttons Dropdown */}
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <button
+                      className="oa-btn oa-btn-secondary"
+                      onClick={(e) => {
+                        const menu = e.currentTarget.nextElementSibling;
+                        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      📊 Export Data ▼
+                    </button>
+                    <div
+                      style={{
+                        display: 'none',
+                        position: 'absolute',
+                        right: 0,
+                        top: '100%',
+                        marginTop: '4px',
+                        background: '#fff',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                        minWidth: '220px',
+                        zIndex: 1000,
+                        overflow: 'hidden',
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    >
+                      <button
+                        onClick={() => {
+                          exportShopSummary();
+                          document.querySelectorAll('[style*="display: block"]').forEach(el => {
+                            if (el.style.position === 'absolute') el.style.display = 'none';
+                          });
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: 'none',
+                          background: 'transparent',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <span style={{ fontSize: '18px' }}>📋</span>
+                        <div>
+                          <div>Shop Summary</div>
+                          <div style={{ fontSize: '11px', color: '#9ca3af', fontWeight: '500' }}>
+                            Revenue & totals per shop
+                          </div>
+                        </div>
+                      </button>
+                      <div style={{ height: '1px', background: '#f3f4f6', margin: '0 8px' }} />
+                      <button
+                        onClick={() => {
+                          exportShopWiseData();
+                          document.querySelectorAll('[style*="display: block"]').forEach(el => {
+                            if (el.style.position === 'absolute') el.style.display = 'none';
+                          });
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: 'none',
+                          background: 'transparent',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <span style={{ fontSize: '18px' }}>📦</span>
+                        <div>
+                          <div>Detailed Orders</div>
+                          <div style={{ fontSize: '11px', color: '#9ca3af', fontWeight: '500' }}>
+                            All orders with products
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
                   <button
                     className="oa-btn oa-btn-print"
                     onClick={handlePrint}
                   >
-                    🖨️ Print Report
+                    🖨️ Print
                   </button>
                 </div>
               </div>

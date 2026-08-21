@@ -229,7 +229,119 @@ Har order ke liye complete information:
 
 **Note:** Jo bhi view selected hai (Weekly/Monthly), wahi print hoga!
 
-### Method 2: Browser Print
+---
+
+## 📊 Export Data (CSV Download)
+
+### Export Options
+Page par **"📊 Export Data"** button se 2 options milte hain:
+
+#### 1. Shop Summary Export
+**Kya milta hai:**
+- Shop-wise revenue summary
+- Total orders per shop
+- Total items sold per shop
+- Average order value per shop
+- Grand totals
+
+**File format:** `shop_summary_YYYY-MM.csv`
+
+**Use case:**
+- Quick shop performance overview
+- Accounting aur bookkeeping
+- Commission calculations
+- Performance comparison
+
+#### 2. Detailed Orders Export
+**Kya milta hai:**
+- Har order ki complete details
+- Shop-wise organized
+- Product-level breakdown
+- Customer information
+- Payment details
+- Order status
+
+**Columns include:**
+- Shop ID & Name
+- Order ID & Date
+- Customer Name & Contact
+- Order Status
+- Payment Method
+- Product Name
+- Product Quantity & Price
+- Product Total
+- Order Total
+
+**File format:** `shopwise_orders_YYYY-MM-DD_to_YYYY-MM-DD.csv`
+
+**Use case:**
+- Detailed analysis in Excel
+- Accounting software import
+- Inventory tracking
+- Customer analysis
+- Shop-wise distribution
+
+### How to Export:
+```
+1. "📊 Export Data" button par click karo
+2. Dropdown menu khulega with 2 options:
+   
+   📋 Shop Summary
+   - Revenue & totals per shop
+   
+   📦 Detailed Orders  
+   - All orders with products
+
+3. Apna option select karo
+4. CSV file automatically download ho jayega
+5. Excel ya Google Sheets mein open karo
+```
+
+### CSV File Usage:
+**Excel mein:**
+1. File download ho gaya
+2. Excel open karo
+3. File → Open → Downloaded CSV
+4. Data import ho jayega
+5. Pivot tables, charts bana sakte ho
+
+**Google Sheets mein:**
+1. Google Sheets open karo
+2. File → Import → Upload
+3. CSV file select karo
+4. Import settings adjust karo
+5. Analysis start karo
+
+### Export Features:
+✅ **Proper formatting**: Indian date/time format  
+✅ **UTF-8 encoding**: Hindi names support  
+✅ **Comma handling**: Semicolon use for commas in text  
+✅ **Filter applied**: Current filters ka data export hoga  
+✅ **Date range**: File name mein date range included  
+✅ **Monthly/Weekly**: View mode ke according naming  
+
+---
+
+## 🖨️ Print vs Export - Kab kya use karein?
+
+### Use Print when:
+- Quick visual review chahiye
+- Hard copy chahiye meeting ke liye
+- PDF save karna hai presentation ke liye
+- Shop ko distribute karna hai physical copy
+
+### Use Export when:
+- Excel mein analysis karna hai
+- Data ko manipulate karna hai
+- Accounting software mein import karna hai
+- Long-term storage chahiye
+- Multiple formats mein share karna hai
+- Calculations karne hain
+- Pivot tables banane hain
+
+---
+
+## 🖨️ Print Settings (Method 2 - Browser Print)
 1. `Ctrl + P` (Windows) ya `Cmd + P` (Mac) press karo
 2. Print dialog khulega
 3. Print settings adjust karo

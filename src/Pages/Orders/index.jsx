@@ -1902,7 +1902,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
             <span className={`ao-refresh-icon${isRefreshing ? ' spinning' : ''}`}>🔄</span>
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </button>
-          {/* <button 
+          <button 
             className="ao-refresh-btn" 
             onClick={() => window.location.href = '/order-analytics'}
             title="View analytics & print reports"
@@ -1914,7 +1914,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
           >
             <span style={{ fontSize: '16px' }}>📊</span>
             Analytics
-          </button> */}
+          </button>
           <div className="ao-search-wrap">
             <SearchBox
               searchQuery={searchQuery}
