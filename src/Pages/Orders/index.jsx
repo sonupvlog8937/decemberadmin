@@ -660,6 +660,7 @@ const fmtDate = (d) =>
 /* ── Status badge ── */
 const STATUS_COLORS = {
   pending:    { bg: "#fef3c7", color: "#92400e", dot: "#f59e0b" },
+  confirmed:  { bg: "#dbeafe", color: "#1e40af", dot: "#3b82f6" },
   confirm:    { bg: "#dbeafe", color: "#1e40af", dot: "#3b82f6" },
   processing: { bg: "#ede9fe", color: "#5b21b6", dot: "#8b5cf6" },
   shipped:    { bg: "#e0f2fe", color: "#0369a1", dot: "#0ea5e9" },
@@ -1627,7 +1628,12 @@ const isSellerView = isSellerRole(context?.userData?.role);
     const val = e.target.value;
     setOrderStatus(val);
     editData(`/api/order/order-status/${id}`, { id, order_status: val }).then((res) => {
-      if (res?.data?.error === false) context.alertBox("success", res?.data?.message);
+      if (res?.data?.error === false || res?.data?.success) {
+        context.alertBox("success", res?.data?.message || "Order status updated");
+        refreshOrders();
+      } else {
+        context.alertBox("error", res?.data?.message || "Could not update order status");
+      }
     });
   };
 
@@ -2181,7 +2187,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             }}
                           >
                             <MenuItem value="pending">⏳ Pending</MenuItem>
-                            <MenuItem value="confirm">✅ Confirm</MenuItem>
+                            <MenuItem value="confirmed">✅ Confirm</MenuItem>
                             <MenuItem value="processing">⚙️ Processing</MenuItem>
                             <MenuItem value="shipped">🚚 Shipped</MenuItem>
                             {/* Hide "delivered" option for sellers - only admin and riders can mark as delivered */}
