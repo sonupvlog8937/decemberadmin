@@ -1730,15 +1730,32 @@ const isSellerView = isSellerRole(context?.userData?.role);
 
   const sendOtpAndDeliver = async (orderId) => {
     startOrderProcessing(orderId, 'deliver');
-    const sent = await postData(`/api/order/rider/orders/${orderId}/send-otp`, {});
-    if (sent?.error === true) {
+    
+    try {
+      const sent = await postData(`/api/order/rider/orders/${orderId}/send-otp`, {});
+      
+      console.log('📤 [OTP Response]:', sent);
+      
+      if (sent?.error === true) {
+        finishOrderProcessing();
+        return context.alertBox('error', sent?.message || 'Could not send delivery OTP. Please check if customer mobile number exists.');
+      }
+      
+      if (!sent?.success) {
+        finishOrderProcessing();
+        return context.alertBox('error', 'Failed to send OTP. Please try again or contact support.');
+      }
+      
+      context.alertBox('success', sent?.message || 'OTP sent to customer mobile number successfully');
+      
+      // Open modern OTP dialog instead of window.prompt
+      setOtpDialog({ open: true, orderId, otp: '' });
+    } catch (error) {
+      console.error('❌ [OTP Error]:', error);
+      context.alertBox('error', 'Network error while sending OTP. Please check your connection.');
+    } finally {
       finishOrderProcessing();
-      return context.alertBox('error', sent?.message || 'Could not send delivery OTP');
     }
-    context.alertBox('success', sent?.message || 'OTP sent to customer mobile number');
-    // Open modern OTP dialog instead of window.prompt
-    setOtpDialog({ open: true, orderId, otp: '' });
-    finishOrderProcessing();
   };
 
   const handleOtpSubmit = async () => {

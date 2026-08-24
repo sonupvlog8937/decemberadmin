@@ -160,11 +160,12 @@ const AddSubCategory = () => {
             return false
         }
 
-        if (previews?.length === 0) {
-            context.alertBox("error", "Please select category image");
-            setIsLoading(false);
-            return false
-        }
+        // Image is now optional for sub categories
+        // if (previews?.length === 0) {
+        //     context.alertBox("error", "Please select category image");
+        //     setIsLoading(false);
+        //     return false
+        // }
 
         postData("/api/category/create", formFields).then((res) => {
             setTimeout(() => {
@@ -200,11 +201,12 @@ const AddSubCategory = () => {
             return false
         }
 
-        if (previews2?.length === 0) {
-            context.alertBox("error", "Please select category image");
-            setIsLoading2(false);
-            return false
-        }
+        // Image is now optional for third level categories
+        // if (previews2?.length === 0) {
+        //     context.alertBox("error", "Please select category image");
+        //     setIsLoading2(false);
+        //     return false
+        // }
 
         postData("/api/category/create", formFields2).then((res) => {
             setTimeout(() => {
