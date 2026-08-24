@@ -1783,19 +1783,6 @@ const isSellerView = isSellerRole(context?.userData?.role);
     window.location.href = `tel:${phone}`;
   };
 
-  const cancelRiderOrder = (orderId) => {
-    if (!window.confirm('Are you sure you want to cancel this order? This will remove it from your assignments and the order will be available for other riders.')) {
-      return;
-    }
-    startOrderProcessing(orderId, 'cancel');
-    editData(`/api/order/rider/orders/${orderId}/cancel`, {}).then((res) => {
-      if (res?.data?.success || res?.data?.error === false) {
-        context.alertBox('success', res?.data?.message || 'Order cancelled successfully');
-        refreshOrders();
-      } else context.alertBox('error', res?.data?.message || 'Could not cancel order');
-    }).finally(() => finishOrderProcessing());
-  };
-
   const handleReturnRefundUpdate = (id, mode) => {
     const payload = mode === "approve"
       ? { returnStatus: "approved", refundStatus: "processing" }
@@ -2262,24 +2249,14 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                   </button>
                                 )}
                                 {order?.deliveryAssignment?.status === "assigned" && (
-                                  <>
-                                    <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)} disabled={isProcessingAction(order._id, 'confirm')}>
-                                      {isProcessingAction(order._id, 'confirm') ? (
-                                        <>
-                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
-                                          {' Confirming...'}
-                                        </>
-                                      ) : '✅ Confirm Order'}
-                                    </button>
-                                    <button className="ao-receipt-btn" onClick={() => cancelRiderOrder(order._id)} disabled={isProcessingAction(order._id, 'cancel')} style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
-                                      {isProcessingAction(order._id, 'cancel') ? (
-                                        <>
-                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
-                                          {' Cancelling...'}
-                                        </>
-                                      ) : '❌ Cancel Order'}
-                                    </button>
-                                  </>
+                                  <button className="ao-receipt-btn" onClick={() => confirmAssignedOrder(order._id)} disabled={isProcessingAction(order._id, 'confirm')}>
+                                    {isProcessingAction(order._id, 'confirm') ? (
+                                      <>
+                                        <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
+                                        {' Confirming...'}
+                                      </>
+                                    ) : '✅ Confirm Order'}
+                                  </button>
                                 )}
                                 {order?.deliveryAssignment?.status === "confirmed" && (
                                   <>
@@ -2291,14 +2268,6 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                           {' Delivering...'}
                                         </>
                                       ) : '📬 Deliver with OTP'}
-                                    </button>
-                                    <button className="ao-receipt-btn" onClick={() => cancelRiderOrder(order._id)} disabled={isProcessingAction(order._id, 'cancel')} style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
-                                      {isProcessingAction(order._id, 'cancel') ? (
-                                        <>
-                                          <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>🔄</span>
-                                          {' Cancelling...'}
-                                        </>
-                                      ) : '❌ Cancel Order'}
                                     </button>
                                   </>
                                 )}
