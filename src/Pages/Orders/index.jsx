@@ -1626,14 +1626,35 @@ const isSellerView = isSellerRole(context?.userData?.role);
   /* status change */
   const handleChange = (e, id) => {
     const val = e.target.value;
+    console.log('🔄 Status change requested:', { orderId: id, newStatus: val });
+    
+    // Optimistic update - तुरंत UI में दिखाएं
+    setOrdersData(prevOrders => 
+      prevOrders.map(order => 
+        order._id === id 
+          ? { ...order, order_status: val } 
+          : order
+      )
+    );
     setOrderStatus(val);
+    
+    // API call करें
     editData(`/api/order/order-status/${id}`, { id, order_status: val }).then((res) => {
       if (res?.data?.error === false || res?.data?.success) {
+        console.log('✅ Status updated successfully');
         context.alertBox("success", res?.data?.message || "Order status updated");
+        // Refresh orders to ensure consistency
         refreshOrders();
       } else {
+        console.error('❌ Status update failed:', res?.data?.message);
         context.alertBox("error", res?.data?.message || "Could not update order status");
+        // Revert optimistic update on failure
+        refreshOrders();
       }
+    }).catch(error => {
+      console.error('❌ Status update error:', error);
+      // Revert optimistic update on error
+      refreshOrders();
     });
   };
 
@@ -1829,6 +1850,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
 
   /* fetch on page / status change */
   useEffect(() => {
+    console.log('📦 Loading orders - page:', pageOrder);
     context?.setProgress(50);
     fetchDataFromApi(buildOrdersListUrl()).then((res) => {
       if (res?.error === false) { setOrdersData(res?.data); setOrders(res); context?.setProgress(100); }
@@ -1837,6 +1859,29 @@ const isSellerView = isSellerRole(context?.userData?.role);
       if (res?.error === false) setTotalOrdersData(res);
     });
   }, [orderStatus, pageOrder, riderFilter]);
+
+  /* Auto-refresh orders every 10 seconds */
+  useEffect(() => {
+    console.log('⏰ Setting up auto-refresh (10s interval)');
+    const intervalId = setInterval(() => {
+      console.log('🔄 Auto-refreshing orders...');
+      fetchDataFromApi(buildOrdersListUrl()).then((res) => {
+        if (res?.error === false) { 
+          setOrdersData(res?.data); 
+          setOrders(res); 
+          console.log('✅ Orders auto-refreshed:', res?.data?.length, 'orders');
+        }
+      });
+      fetchDataFromApi(buildOrdersListUrl(true)).then((res) => {
+        if (res?.error === false) setTotalOrdersData(res);
+      });
+    }, 60000); // 10 seconds
+
+    return () => {
+      console.log('🛑 Clearing auto-refresh interval');
+      clearInterval(intervalId);
+    };
+  }, [pageOrder, riderFilter]);
 
   /* search filter */
   useEffect(() => {
