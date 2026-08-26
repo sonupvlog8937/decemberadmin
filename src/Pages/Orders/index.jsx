@@ -1573,6 +1573,7 @@ const Orders = () => {
   const [ordersData,       setOrdersData]         = useState([]);
   const [orders,           setOrders]             = useState([]);
   const [pageOrder,        setPageOrder]          = useState(1);
+  const [itemsPerPage,     setItemsPerPage]       = useState(25); // Items per page limit
   const [searchQuery,      setSearchQuery]        = useState("");
   const [totalOrdersData,  setTotalOrdersData]    = useState({});
   const [selectedProduct,  setSelectedProduct]    = useState(null);
@@ -1638,23 +1639,28 @@ const isSellerView = isSellerRole(context?.userData?.role);
     );
     setOrderStatus(val);
     
-    // API call करें
+    // API call करें (background में)
     editData(`/api/order/order-status/${id}`, { id, order_status: val }).then((res) => {
       if (res?.data?.error === false || res?.data?.success) {
         console.log('✅ Status updated successfully');
         context.alertBox("success", res?.data?.message || "Order status updated");
-        // Refresh orders to ensure consistency
-        refreshOrders();
+        // ❌ refreshOrders() हटा दिया - सिर्फ auto-refresh से update होगा
       } else {
         console.error('❌ Status update failed:', res?.data?.message);
         context.alertBox("error", res?.data?.message || "Could not update order status");
-        // Revert optimistic update on failure
-        refreshOrders();
+        // Error होने पर revert करें - पुराना status वापस लाएं
+        setOrdersData(prevOrders => 
+          prevOrders.map(order => 
+            order._id === id 
+              ? { ...order, order_status: order.order_status } // API से next auto-refresh में सही status आएगा
+              : order
+          )
+        );
       }
     }).catch(error => {
       console.error('❌ Status update error:', error);
-      // Revert optimistic update on error
-      refreshOrders();
+      context.alertBox("error", "Network error occurred");
+      // Error होने पर next auto-refresh में सही status आएगा
     });
   };
 
@@ -1666,38 +1672,80 @@ const isSellerView = isSellerRole(context?.userData?.role);
 
   const assignRider = (orderId, riderId) => {
     if (!riderId) return;
+    console.log('👤 Assigning rider to order:', { orderId, riderId });
     setAssigningOrderId(orderId);
+    
+    // Optimistic update
+    setOrdersData(prevOrders => 
+      prevOrders.map(order => 
+        order._id === orderId 
+          ? { 
+              ...order, 
+              deliveryAssignment: { 
+                ...order.deliveryAssignment, 
+                riderId,
+                status: 'assigned' 
+              },
+              order_status: 'assigned_to_rider'
+            } 
+          : order
+      )
+    );
+    
     editData(`/api/order/assign-rider/${orderId}`, { riderId }).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
+        console.log('✅ Rider assigned successfully');
         context.alertBox('success', res?.data?.message || 'Order assigned');
-        fetchDataFromApi(`${ordersListEndpoint}?page=${pageOrder}&limit=20`).then((next) => {
-          if (next?.error === false) setOrdersData(next?.data || []);
-        });
-      } else context.alertBox('error', res?.data?.message || 'Could not assign order');
+        // ❌ Manual refresh हटा दिया - सिर्फ auto-refresh से update होगा
+      } else {
+        console.error('❌ Assign rider failed:', res?.data?.message);
+        context.alertBox('error', res?.data?.message || 'Could not assign order');
+      }
     }).finally(() => setAssigningOrderId(null));
   };
 
   const broadcastOrder = (orderId) => {
+    console.log('📢 Broadcasting order to riders:', orderId);
     setAssigningOrderId(orderId);
+    
+    // Optimistic update - order status को "broadcast" में update करें
+    setOrdersData(prevOrders => 
+      prevOrders.map(order => 
+        order._id === orderId 
+          ? { 
+              ...order, 
+              deliveryAssignment: { 
+                ...order.deliveryAssignment, 
+                status: 'broadcast' 
+              },
+              order_status: 'assigned_to_rider'
+            } 
+          : order
+      )
+    );
+    
     editData(`/api/order/broadcast-order/${orderId}`, {}).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
+        console.log('✅ Order broadcast successfully');
         context.alertBox('success', res?.data?.message || 'Order broadcast to market riders');
-        refreshOrders();
+        // ❌ refreshOrders() हटा दिया - सिर्फ auto-refresh से update होगा
       } else {
+        console.error('❌ Broadcast failed:', res?.data?.message);
         context.alertBox('error', res?.data?.message || 'Could not broadcast order');
+        // Error होने पर next auto-refresh में सही status आएगा
       }
     }).finally(() => setAssigningOrderId(null));
   };
 
   const buildOrdersListUrl = (includeTotals = false, filterValue = riderFilter) => {
     if (!isDeliveryRider) {
-      return includeTotals ? ordersListEndpoint : `${ordersListEndpoint}?page=${pageOrder}&limit=20`;
+      return includeTotals ? ordersListEndpoint : `${ordersListEndpoint}?page=${pageOrder}&limit=${itemsPerPage}`;
     }
 
     const params = new URLSearchParams();
     if (!includeTotals) {
       params.set('page', pageOrder);
-      params.set('limit', 20);
+      params.set('limit', itemsPerPage);
     }
     if (filterValue === 'available') {
       params.set('status', 'broadcast');
@@ -1745,13 +1793,34 @@ const isSellerView = isSellerRole(context?.userData?.role);
   const isProcessingAction = (orderId, action) => processingOrderId === orderId && processingAction === action;
 
   const confirmAssignedOrder = (orderId) => {
+    console.log('✅ Confirming assigned order:', orderId);
     startOrderProcessing(orderId, 'confirm');
+    
+    // Optimistic update
+    setOrdersData(prevOrders => 
+      prevOrders.map(order => 
+        order._id === orderId 
+          ? { 
+              ...order, 
+              deliveryAssignment: { 
+                ...order.deliveryAssignment, 
+                status: 'confirmed' 
+              }
+            } 
+          : order
+      )
+    );
+    
     editData(`/api/order/rider/orders/${orderId}/confirm`, {}).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
+        console.log('✅ Order confirmed successfully');
         context.alertBox('success', res?.data?.message || 'Order confirmed for delivery');
         setRiderFilter('assigned');
-        refreshOrders('assigned');
-      } else context.alertBox('error', res?.data?.message || 'Could not confirm order');
+        // ❌ refreshOrders() हटा दिया - सिर्फ auto-refresh से update होगा
+      } else {
+        console.error('❌ Confirm order failed:', res?.data?.message);
+        context.alertBox('error', res?.data?.message || 'Could not confirm order');
+      }
     }).finally(() => finishOrderProcessing());
   };
 
@@ -1790,14 +1859,35 @@ const isSellerView = isSellerRole(context?.userData?.role);
     if (!otp || otp.length < 4) {
       return context.alertBox('error', 'Please enter a valid OTP');
     }
+    console.log('📦 Delivering order with OTP:', { orderId, otp });
     startOrderProcessing(orderId, 'deliver');
     setOtpDialog({ ...otpDialog, open: false });
     
+    // Optimistic update
+    setOrdersData(prevOrders => 
+      prevOrders.map(order => 
+        order._id === orderId 
+          ? { 
+              ...order, 
+              deliveryAssignment: { 
+                ...order.deliveryAssignment, 
+                status: 'delivered' 
+              },
+              order_status: 'delivered'
+            } 
+          : order
+      )
+    );
+    
     editData(`/api/order/rider/orders/${orderId}/deliver`, { otp }).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
-        context.alertBox('success', res?.data?.message || 'Order delivered and ₹20 earning credited');
-        refreshOrders();
-      } else context.alertBox('error', res?.data?.message || 'Delivery OTP verification failed');
+        console.log('✅ Order delivered successfully');
+        context.alertBox('success', res?.data?.message || 'Order delivered and earning credited');
+        // ❌ refreshOrders() हटा दिया - सिर्फ auto-refresh से update होगा
+      } else {
+        console.error('❌ Delivery failed:', res?.data?.message);
+        context.alertBox('error', res?.data?.message || 'Delivery OTP verification failed');
+      }
     }).finally(() => {
       finishOrderProcessing();
       setOtpDialog({ open: false, orderId: null, otp: '' });
@@ -1858,7 +1948,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
     fetchDataFromApi(buildOrdersListUrl(true)).then((res) => {
       if (res?.error === false) setTotalOrdersData(res);
     });
-  }, [orderStatus, pageOrder, riderFilter]);
+  }, [orderStatus, pageOrder, riderFilter, itemsPerPage]);
 
   /* Auto-refresh orders every 10 seconds */
   useEffect(() => {
@@ -1881,7 +1971,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
       console.log('🛑 Clearing auto-refresh interval');
       clearInterval(intervalId);
     };
-  }, [pageOrder, riderFilter]);
+  }, [pageOrder, riderFilter, itemsPerPage]);
 
   /* search filter */
   useEffect(() => {
@@ -2549,7 +2639,33 @@ const isSellerView = isSellerRole(context?.userData?.role);
 
         {/* ── Pagination ── */}
         {orders?.totalPages > 1 && (
-          <div className="ao-page-footer">
+          <div className="ao-page-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+            {/* Items per page selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>Items per page:</span>
+              <Select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(e.target.value);
+                  setPageOrder(1); // Reset to page 1 when changing limit
+                }}
+                size="small"
+                sx={{
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  fontFamily: "'DM Sans', sans-serif",
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderRadius: '8px',
+                  },
+                }}
+              >
+                <MenuItem value={25}>25</MenuItem>
+                <MenuItem value={50}>50</MenuItem>
+                <MenuItem value={100}>100</MenuItem>
+              </Select>
+            </div>
+
+            {/* Pagination controls */}
             <Pagination
               showFirstButton
               showLastButton
@@ -2570,6 +2686,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
                 },
               }}
             />
+            
+            {/* Total count display */}
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>
+              Showing {((pageOrder - 1) * itemsPerPage) + 1}-{Math.min(pageOrder * itemsPerPage, orders?.totalCount || 0)} of {orders?.totalCount || 0}
+            </div>
           </div>
         )}
 
