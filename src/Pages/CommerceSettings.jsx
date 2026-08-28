@@ -11,6 +11,7 @@ const CommerceSettings = () => {
     goMarketDeliveryFeePerKm: 0,
     goMarketRiderFeePerKm: 0,
     goMarketRiderPickupFee: 0,
+    firstOrderFreeDelivery: true,
     collections: [],
   });
   const [saving, setSaving] = useState(false);
@@ -204,6 +205,73 @@ const CommerceSettings = () => {
                 💡 <strong>Info:</strong> When order total ≥ "Free Shipping Above" amount, both
                 shipping and delivery fees become FREE automatically.
               </p>
+            </div>
+
+            {/* First Order Free Delivery Toggle */}
+            <div
+              style={{
+                marginTop: 16,
+                padding: 16,
+                backgroundColor: "#f0fdf4",
+                borderRadius: 8,
+                border: "1px solid #bbf7d0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <h4 style={{ fontSize: 14, fontWeight: 700, color: "#166534", margin: 0, marginBottom: 4 }}>
+                  🎁 First Order Free Delivery
+                </h4>
+                <p style={{ fontSize: 12, color: "#15803d", margin: 0 }}>
+                  When enabled, customers won't pay shipping & delivery fees on their first order
+                </p>
+              </div>
+              <label
+                style={{
+                  position: "relative",
+                  display: "inline-block",
+                  width: 52,
+                  height: 28,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={form.firstOrderFreeDelivery}
+                  onChange={(e) => set("firstOrderFreeDelivery", e.target.checked)}
+                  style={{ opacity: 0, width: 0, height: 0 }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    cursor: "pointer",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: form.firstOrderFreeDelivery ? "#16a34a" : "#cbd5e1",
+                    borderRadius: 28,
+                    transition: "0.3s",
+                  }}
+                >
+                  <span
+                    style={{
+                      position: "absolute",
+                      content: "",
+                      height: 22,
+                      width: 22,
+                      left: form.firstOrderFreeDelivery ? 26 : 3,
+                      bottom: 3,
+                      backgroundColor: "white",
+                      borderRadius: "50%",
+                      transition: "0.3s",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                    }}
+                  />
+                </span>
+              </label>
             </div>
           </div>
 
