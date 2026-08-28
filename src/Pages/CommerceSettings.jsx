@@ -22,6 +22,7 @@ const CommerceSettings = () => {
         setForm({
           ...res.data,
           collections: res.data.collections || [],
+          firstOrderFreeDelivery: res.data.firstOrderFreeDelivery === true, // Strict check
         });
       }
     });
@@ -38,7 +39,9 @@ const CommerceSettings = () => {
   const save = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await editData("/api/settings/commerce", form);
+    console.log("💾 Saving commerce settings:", form);
+    const result = await editData("/api/settings/commerce", form);
+    console.log("✅ Save result:", result);
     setSaving(false);
   };
 
