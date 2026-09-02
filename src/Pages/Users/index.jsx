@@ -27,6 +27,7 @@ import {
     Skeleton,
 } from '@mui/material';
 import { MdLocalPhone, MdOutlineMarkEmailRead, MdSearch, MdRefresh, MdClose } from 'react-icons/md';
+import { FaWhatsapp } from 'react-icons/fa';
 import { SlCalender } from 'react-icons/sl';
 import { FaCheckDouble, FaUserShield, FaStore, FaUsers, FaUserPlus, FaTruckFast } from 'react-icons/fa6';
 import { MdDeleteOutline, MdPersonOff, MdWarning } from 'react-icons/md';
@@ -760,18 +761,50 @@ export const Users = () => {
 
                                         {/* Phone */}
                                         <TableCell>
-                                            <span
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: 5,
-                                                    fontSize: 12,
-                                                    color: user?.mobile ? '#111827' : '#9ca3af',
-                                                }}
-                                            >
-                                                <MdLocalPhone size={13} />
-                                                {user?.mobile || '—'}
-                                            </span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                                <span
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 5,
+                                                        fontSize: 12,
+                                                        color: user?.mobile ? '#111827' : '#9ca3af',
+                                                    }}
+                                                >
+                                                    <MdLocalPhone size={13} />
+                                                    {user?.mobile || '—'}
+                                                </span>
+                                                {user?.mobile && (
+                                                    <Tooltip title="Send WhatsApp Message" arrow>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => {
+                                                                const message = encodeURIComponent(
+                                                                    '🎉 *Zeedaddy की तरफ से खास ऑफर!* 🎉\n\n' +
+                                                                    '🛍️ अब Zeedaddy पर खरीदारी करें और पाएं *10% की सीधी छूट!* 🔥\n\n' +
+                                                                    '🎁 *कूपन कोड: ZEEDADDY10*\n\n' +
+                                                                    'बस खरीदारी करते समय इस कूपन कोड का इस्तेमाल करें और अपनी पसंदीदा चीज़ों पर *10% बचत* करें। 💰\n\n' +
+                                                                    '⏰ *ऑफर सीमित समय के लिए है!*\n' +
+                                                                    'आज ही ऑर्डर करें और इस शानदार ऑफर का लाभ उठाएं। ❤️\n\n' +
+                                                                    '🛒 *Zeedaddy — आपकी खरीदारी, आपकी पसंद!*'
+                                                                );
+                                                                window.open(`https://wa.me/${user.mobile}?text=${message}`, '_blank');
+                                                            }}
+                                                            sx={{
+                                                                color: '#25D366',
+                                                                bgcolor: '#25D36610',
+                                                                '&:hover': {
+                                                                    bgcolor: '#25D36620',
+                                                                    transform: 'scale(1.1)',
+                                                                },
+                                                                transition: 'all 0.2s',
+                                                            }}
+                                                        >
+                                                            <FaWhatsapp size={16} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+                                            </div>
                                         </TableCell>
 
                                         {/* Email Verify */}

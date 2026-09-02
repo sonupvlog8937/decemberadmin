@@ -7,6 +7,7 @@ import {
   FiCheckCircle, FiAlertCircle, FiMail, FiShield,
   FiTruck, FiRefreshCw, FiEye, FiZap, FiAward
 } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import { MdOutlineStore, MdOutlineShield, MdOutlineVerified } from "react-icons/md";
 import { BsStarFill, BsCheckCircleFill } from "react-icons/bs";
 import { TbTruckDelivery } from "react-icons/tb";
@@ -430,7 +431,51 @@ const StoreProfile = () => {
                       {isEditMode
                         ? <input name="contactNo" value={editForm.contactNo} onChange={onChange}
                             placeholder="10-digit mobile" maxLength={10} style={S.input(!!errors.contactNo)} />
-                        : <div style={form.contactNo ? S.viewValue : S.viewEmpty}>{form.contactNo || "Not set"}</div>}
+                        : <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={form.contactNo ? S.viewValue : S.viewEmpty}>
+                              {form.contactNo || "Not set"}
+                            </div>
+                            {form.contactNo && (
+                              <button
+                                onClick={() => {
+                                  const message = encodeURIComponent(
+                                    '🎉 *Zeedaddy की तरफ से खास ऑफर!* 🎉\n\n' +
+                                    '🛍️ अब Zeedaddy पर खरीदारी करें और पाएं *10% की सीधी छूट!* 🔥\n\n' +
+                                    '🎁 *कूपन कोड: ZEEDADDY10*\n\n' +
+                                    'बस खरीदारी करते समय इस कूपन कोड का इस्तेमाल करें और अपनी पसंदीदा चीज़ों पर *10% बचत* करें। 💰\n\n' +
+                                    '⏰ *ऑफर सीमित समय के लिए है!*\n' +
+                                    'आज ही ऑर्डर करें और इस शानदार ऑफर का लाभ उठाएं। ❤️\n\n' +
+                                    '🛒 *Zeedaddy — आपकी खरीदारी, आपकी पसंद!*'
+                                  );
+                                  window.open(`https://wa.me/${form.contactNo}?text=${message}`, '_blank');
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: 36,
+                                  height: 36,
+                                  border: 'none',
+                                  borderRadius: 8,
+                                  background: '#25D36615',
+                                  color: '#25D366',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                }}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.background = '#25D36625';
+                                  e.currentTarget.style.transform = 'scale(1.1)';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.background = '#25D36615';
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                                title="Send WhatsApp Message"
+                              >
+                                <FaWhatsapp size={18} />
+                              </button>
+                            )}
+                          </div>}
                     </Field>
 
                     <Field icon={FiMapPin} label="Store Location">
