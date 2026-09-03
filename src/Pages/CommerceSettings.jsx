@@ -8,6 +8,7 @@ const CommerceSettings = () => {
     deliveryFee: 0,
     freeShippingAbove: 0,
     goMarketShippingFee: 0,
+    goMarketBaseDeliveryFee: 0,
     goMarketDeliveryFeePerKm: 0,
     goMarketRiderFeePerKm: 0,
     goMarketRiderPickupFee: 0,
@@ -152,6 +153,21 @@ const CommerceSettings = () => {
               </div>
 
               <div>
+                <label style={labelStyle}>Go Market Base Delivery Fee (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.goMarketBaseDeliveryFee}
+                  onChange={(e) => set("goMarketBaseDeliveryFee", Number(e.target.value))}
+                  placeholder="10"
+                  style={inputStyle}
+                />
+                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
+                  Starting delivery fee (added to distance-based fee)
+                </p>
+              </div>
+
+              <div>
                 <label style={labelStyle}>Go Market Delivery Fee / km (₹)</label>
                 <input
                   type="number"
@@ -162,7 +178,7 @@ const CommerceSettings = () => {
                   style={inputStyle}
                 />
                 <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                  Per-kilometer delivery fee used for Go Market
+                  Per-kilometer delivery fee (Distance × Rate)
                 </p>
               </div>
                <div>
