@@ -450,29 +450,56 @@ const MarketplaceAddProduct = () => {
                     <SectionCard icon={<TbColorFilter size={15} />} iconBg="#fdf4ff" iconColor="#a21caf" title="Colour Options" subtitle="Add colour variants with images">
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             {formFields.colorOptions.map((colorItem, index) => (
-                                <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr auto', gap: 10, background: '#f9fafb', padding: '12px', borderRadius: 10, border: '1px solid #e5e7eb' }}>
-                                    <div>
-                                        <label style={lbl}>Colour Name</label>
-                                        <input style={inp} placeholder="Red" value={colorItem.name} onChange={(e) => handleColorOptionChange(index, 'name', e.target.value)} />
-                                    </div>
-                                    <div>
-                                        <label style={lbl}>Colour Code</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                            <input type="color" value={colorItem.code || '#000000'} onChange={(e) => handleColorOptionChange(index, 'code', e.target.value)}
-                                                style={{ width: 36, height: 36, borderRadius: 6, border: '1px solid #d1d5db', cursor: 'pointer', padding: 2 }} />
-                                            <input style={{ ...inp, flex: 1 }} placeholder="#ff0000" value={colorItem.code} onChange={(e) => handleColorOptionChange(index, 'code', e.target.value)} />
+                                <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: 10, background: '#f9fafb', padding: '12px', borderRadius: 10, border: '1px solid #e5e7eb' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 10 }}>
+                                        <div>
+                                            <label style={lbl}>Colour Name</label>
+                                            <input style={inp} placeholder="Red" value={colorItem.name} onChange={(e) => handleColorOptionChange(index, 'name', e.target.value)} />
+                                        </div>
+                                        <div>
+                                            <label style={lbl}>Colour Code</label>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <input type="color" value={colorItem.code || '#000000'} onChange={(e) => handleColorOptionChange(index, 'code', e.target.value)}
+                                                    style={{ width: 36, height: 36, borderRadius: 6, border: '1px solid #d1d5db', cursor: 'pointer', padding: 2 }} />
+                                                <input style={{ ...inp, flex: 1 }} placeholder="#ff0000" value={colorItem.code} onChange={(e) => handleColorOptionChange(index, 'code', e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                                            <button type="button" onClick={() => removeColorOption(index)}
+                                                disabled={formFields.colorOptions.length === 1}
+                                                style={{ width: 34, height: 34, borderRadius: 8, background: '#fee2e2', border: 'none', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: formFields.colorOptions.length === 1 ? 0.4 : 1 }}>
+                                                <IoMdClose size={16} />
+                                            </button>
                                         </div>
                                     </div>
                                     <div>
-                                        <label style={lbl}>Image URLs (comma separated)</label>
-                                        <input style={inp} placeholder="https://…, https://…" value={colorItem.images} onChange={(e) => handleColorOptionChange(index, 'images', e.target.value)} />
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                                        <button type="button" onClick={() => removeColorOption(index)}
-                                            disabled={formFields.colorOptions.length === 1}
-                                            style={{ width: 34, height: 34, borderRadius: 8, background: '#fee2e2', border: 'none', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: formFields.colorOptions.length === 1 ? 0.4 : 1 }}>
-                                            <IoMdClose size={16} />
-                                        </button>
+                                        <label style={lbl}>Colour Images</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 8, marginTop: 6 }}>
+                                            {(colorItem.images && typeof colorItem.images === 'string' ? colorItem.images.split(',').map(s => s.trim()).filter(Boolean) : []).map((img, imgIdx) => (
+                                                <div key={imgIdx} style={{ position: 'relative' }}>
+                                                    <span onClick={() => {
+                                                        const imgs = colorItem.images.split(',').map(s => s.trim()).filter(Boolean);
+                                                        imgs.splice(imgIdx, 1);
+                                                        handleColorOptionChange(index, 'images', imgs.join(', '));
+                                                    }} style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: '50%', background: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
+                                                        <IoMdClose style={{ color: '#fff', fontSize: 11 }} />
+                                                    </span>
+                                                    <div style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid #e5e7eb', height: 80, background: '#fff' }}>
+                                                        <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <UploadBox 
+                                                multiple={true} 
+                                                name="colorImages" 
+                                                url="/api/product/uploadImages" 
+                                                setPreviewsFun={(urls) => {
+                                                    const existing = colorItem.images ? colorItem.images.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                    const combined = [...existing, ...urls].join(', ');
+                                                    handleColorOptionChange(index, 'images', combined);
+                                                }} 
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             ))}

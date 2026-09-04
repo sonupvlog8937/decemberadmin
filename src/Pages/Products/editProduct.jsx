@@ -251,11 +251,22 @@ const EditProduct = () => {
 
     const onChangeInput = (e) => {
         const { name, value } = e.target;
-        setFormFields(() => {
-            return {
-                ...formFields,
-                [name]: value
+        setFormFields((prev) => {
+            const updated = { ...prev, [name]: value };
+
+            // Auto-calculate discount when price or oldPrice changes
+            if (name === 'price' || name === 'oldPrice') {
+                const price = name === 'price' ? parseFloat(value) : parseFloat(updated.price);
+                const oldPrice = name === 'oldPrice' ? parseFloat(value) : parseFloat(updated.oldPrice);
+
+                if (price > 0 && oldPrice > 0 && oldPrice > price) {
+                    updated.discount = Math.round(((oldPrice - price) / oldPrice) * 100);
+                } else {
+                    updated.discount = 0;
+                }
             }
+
+            return updated;
         })
     }
 
@@ -682,8 +693,15 @@ const EditProduct = () => {
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Discount</h3>
-                            <input type="number" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm ' name="discount" value={formFields.discount} onChange={onChangeInput} />
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Discount (Auto)</h3>
+                            <input 
+                                type="number" 
+                                className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] rounded-sm p-3 text-sm bg-gray-100 text-gray-600 cursor-not-allowed' 
+                                name="discount" 
+                                value={formFields.discount} 
+                                readOnly
+                                placeholder="Auto-calculated"
+                            />
                         </div>
 
                         <div className='col'>
@@ -794,12 +812,40 @@ const EditProduct = () => {
 
                         <div className='grid grid-cols-1 gap-3'>
                             {formFields?.colorOptions?.map((colorItem, index) => (
-                                <div key={index} className='grid grid-cols-1 md:grid-cols-4 gap-3 bg-gray-100 p-3 rounded-sm'>
-                                    <input type="text" placeholder='Colour Name (Red)' className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] rounded-sm p-3 text-sm' value={colorItem.name} onChange={(e) => handleColorOptionChange(index, 'name', e.target.value)} />
-                                    <input type="text" placeholder='Colour Code (#ff0000)' className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] rounded-sm p-3 text-sm' value={colorItem.code} onChange={(e) => handleColorOptionChange(index, 'code', e.target.value)} />
-                                    <input type="text" placeholder='Image URLs (comma separated)' className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] rounded-sm p-3 text-sm md:col-span-2' value={colorItem.images} onChange={(e) => handleColorOptionChange(index, 'images', e.target.value)} />
-                                    <div className='md:col-span-4'>
+                                <div key={index} className='flex flex-col gap-3 bg-gray-100 p-3 rounded-sm'>
+                                    <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
+                                        <input type="text" placeholder='Colour Name (Red)' className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] rounded-sm p-3 text-sm' value={colorItem.name} onChange={(e) => handleColorOptionChange(index, 'name', e.target.value)} />
+                                        <input type="text" placeholder='Colour Code (#ff0000)' className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] rounded-sm p-3 text-sm' value={colorItem.code} onChange={(e) => handleColorOptionChange(index, 'code', e.target.value)} />
                                         <Button type="button" color="error" onClick={() => removeColorOption(index)} disabled={formFields?.colorOptions?.length === 1}>Remove</Button>
+                                    </div>
+                                    <div>
+                                        <label className='text-[13px] font-[500] mb-2 block'>Colour Images</label>
+                                        <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2'>
+                                            {(colorItem.images && typeof colorItem.images === 'string' ? colorItem.images.split(',').map(s => s.trim()).filter(Boolean) : []).map((img, imgIdx) => (
+                                                <div key={imgIdx} className='relative'>
+                                                    <span onClick={() => {
+                                                        const imgs = colorItem.images.split(',').map(s => s.trim()).filter(Boolean);
+                                                        imgs.splice(imgIdx, 1);
+                                                        handleColorOptionChange(index, 'images', imgs.join(', '));
+                                                    }} className='absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-red-600 flex items-center justify-center cursor-pointer z-10'>
+                                                        <IoMdClose className='text-white text-[11px]' />
+                                                    </span>
+                                                    <div className='rounded overflow-hidden border border-gray-300 h-[80px] bg-white'>
+                                                        <img src={img} className='w-full h-full object-cover' alt="" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <UploadBox 
+                                                multiple={true} 
+                                                name="colorImages" 
+                                                url="/api/product/uploadImages" 
+                                                setPreviewsFun={(urls) => {
+                                                    const existing = colorItem.images ? colorItem.images.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                    const combined = [...existing, ...urls].join(', ');
+                                                    handleColorOptionChange(index, 'images', combined);
+                                                }} 
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             ))}
