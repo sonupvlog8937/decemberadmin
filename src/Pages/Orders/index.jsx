@@ -777,13 +777,16 @@ const ProductModal = ({ item, onClose }) => {
                   🏪 Seller Information
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#6366f1', marginBottom: 4 }}>
-                  {item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A'}
+                  {item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A'}
                 </div>
-                {(item.sellerId?.phone || item.sellerId?.sellerProfile?.phone || item.sellerId?.storeProfile?.phone) && (
+                {(item.sellerId?.mobile || item.sellerId?.storeProfile?.contactNo) && (
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#10b981' }}>
-                    📱 {item.sellerId?.phone || item.sellerId?.sellerProfile?.phone || item.sellerId?.storeProfile?.phone}
+                    📱 {item.sellerId?.mobile || item.sellerId?.storeProfile?.contactNo}
                   </div>
                 )}
+              </div>
+            </>
+          )}
               </div>
             </>
           )}
@@ -2611,13 +2614,13 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                         <div style={{ marginTop: 4, paddingTop: 4, borderTop: '1px solid #f0f0f7' }}>
                                           <div style={{ fontSize: 11, color: "#6366f1", fontWeight: 600 }}>
                                             🏪 {(() => {
-                                              const sellerName = item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A';
+                                              const sellerName = item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A';
                                               return String(sellerName);
                                             })()}
                                           </div>
-                                          {(item.sellerId?.phone || item.sellerId?.sellerProfile?.phone || item.sellerId?.storeProfile?.phone) && (
+                                          {(item.sellerId?.mobile || item.sellerId?.storeProfile?.contactNo) && (
                                             <div style={{ fontSize: 11, color: "#10b981", fontWeight: 600, marginTop: 2 }}>
-                                              📱 {String(item.sellerId?.phone || item.sellerId?.sellerProfile?.phone || item.sellerId?.storeProfile?.phone)}
+                                              📱 {String(item.sellerId?.mobile || item.sellerId?.storeProfile?.contactNo)}
                                             </div>
                                           )}
                                         </div>
