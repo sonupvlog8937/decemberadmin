@@ -755,6 +755,39 @@ const ProductModal = ({ item, onClose }) => {
             </>
           )}
 
+          {/* Seller Information */}
+          {item.sellerId && (
+            <>
+              <div className="ao-modal-divider" />
+              <div style={{ 
+                background: '#f8fafc', 
+                border: '1px solid #e2e8f0', 
+                borderRadius: 10, 
+                padding: '12px 14px',
+                marginBottom: 8
+              }}>
+                <div style={{ 
+                  fontSize: 10, 
+                  fontWeight: 700, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.08em', 
+                  color: '#9ca3af', 
+                  marginBottom: 8 
+                }}>
+                  🏪 Seller Information
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#6366f1', marginBottom: 4 }}>
+                  {item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A'}
+                </div>
+                {(item.sellerId?.phone || item.sellerId?.sellerProfile?.phone || item.sellerId?.storeProfile?.phone) && (
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#10b981' }}>
+                    📱 {item.sellerId?.phone || item.sellerId?.sellerProfile?.phone || item.sellerId?.storeProfile?.phone}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           <div className="ao-modal-divider" />
 
           {/* Footer */}
@@ -2575,11 +2608,18 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                     <div className="ao-prod-info">
                                       <div className="ao-prod-name">{String(item.productTitle || 'N/A')}</div>
                                       {item.sellerId && (
-                                        <div style={{ fontSize:11, color:"#6366f1", fontWeight:600, marginTop:2 }}>
-                                          Seller: {(() => {
-                                            const sellerName = item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A';
-                                            return String(sellerName);
-                                          })()}
+                                        <div style={{ marginTop: 4, paddingTop: 4, borderTop: '1px solid #f0f0f7' }}>
+                                          <div style={{ fontSize: 11, color: "#6366f1", fontWeight: 600 }}>
+                                            🏪 {(() => {
+                                              const sellerName = item.sellerId?.sellerProfile?.storeName || item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A';
+                                              return String(sellerName);
+                                            })()}
+                                          </div>
+                                          {(item.sellerId?.phone || item.sellerId?.sellerProfile?.phone || item.sellerId?.storeProfile?.phone) && (
+                                            <div style={{ fontSize: 11, color: "#10b981", fontWeight: 600, marginTop: 2 }}>
+                                              📱 {String(item.sellerId?.phone || item.sellerId?.sellerProfile?.phone || item.sellerId?.storeProfile?.phone)}
+                                            </div>
+                                          )}
                                         </div>
                                       )}
                                       <div className="ao-prod-tags">
