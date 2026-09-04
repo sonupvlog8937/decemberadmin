@@ -489,16 +489,39 @@ const MarketplaceAddProduct = () => {
                                                     </div>
                                                 </div>
                                             ))}
-                                            <UploadBox 
-                                                multiple={true} 
-                                                name="colorImages" 
-                                                url="/api/product/uploadImages" 
-                                                setPreviewsFun={(urls) => {
-                                                    const existing = colorItem.images ? colorItem.images.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                                    const combined = [...existing, ...urls].join(', ');
-                                                    handleColorOptionChange(index, 'images', combined);
-                                                }} 
-                                            />
+                                            <div style={{ position: 'relative', borderRadius: 6, overflow: 'hidden', border: '1px dashed #d1d5db', height: 80, background: '#f9fafb', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
+                                                <MdImage style={{ fontSize: 24, color: '#9ca3af' }} />
+                                                <span style={{ fontSize: 10, color: '#6b7280', fontWeight: 500 }}>Upload</span>
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*" 
+                                                    multiple 
+                                                    onChange={(e) => {
+                                                        const files = Array.from(e.target.files);
+                                                        if (files.length > 0) {
+                                                            const formData = new FormData();
+                                                            files.forEach(file => formData.append('images', file));
+                                                            
+                                                            fetch(`${import.meta.env.VITE_API_URL}/api/product/uploadImages`, {
+                                                                method: 'POST',
+                                                                headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
+                                                                body: formData
+                                                            })
+                                                            .then(res => res.json())
+                                                            .then(data => {
+                                                                if (data.images) {
+                                                                    const existing = colorItem.images ? colorItem.images.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                                    const combined = [...existing, ...data.images].join(', ');
+                                                                    handleColorOptionChange(index, 'images', combined);
+                                                                }
+                                                            })
+                                                            .catch(err => console.error('Upload error:', err));
+                                                        }
+                                                        e.target.value = '';
+                                                    }}
+                                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

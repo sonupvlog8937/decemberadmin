@@ -8,6 +8,7 @@ import 'react-lazy-load-image-component/src/effects/blur.css';
 import { IoMdClose } from "react-icons/io";
 import { Button } from '@mui/material';
 import { FaCloudUploadAlt } from "react-icons/fa";
+import { MdImage } from "react-icons/md";
 import { MyContext } from '../../App';
 import { deleteImages, editData, fetchDataFromApi, postData } from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
@@ -835,16 +836,39 @@ const EditProduct = () => {
                                                     </div>
                                                 </div>
                                             ))}
-                                            <UploadBox 
-                                                multiple={true} 
-                                                name="colorImages" 
-                                                url="/api/product/uploadImages" 
-                                                setPreviewsFun={(urls) => {
-                                                    const existing = colorItem.images ? colorItem.images.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                                    const combined = [...existing, ...urls].join(', ');
-                                                    handleColorOptionChange(index, 'images', combined);
-                                                }} 
-                                            />
+                                            <div className='relative rounded overflow-hidden border border-dashed border-gray-300 h-[80px] bg-gray-50 cursor-pointer flex items-center justify-center flex-col gap-1'>
+                                                <MdImage className='text-[24px] text-gray-400' />
+                                                <span className='text-[10px] text-gray-500 font-medium'>Upload</span>
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*" 
+                                                    multiple 
+                                                    onChange={(e) => {
+                                                        const files = Array.from(e.target.files);
+                                                        if (files.length > 0) {
+                                                            const formData = new FormData();
+                                                            files.forEach(file => formData.append('images', file));
+                                                            
+                                                            fetch(`${import.meta.env.VITE_API_URL}/api/product/uploadImages`, {
+                                                                method: 'POST',
+                                                                headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
+                                                                body: formData
+                                                            })
+                                                            .then(res => res.json())
+                                                            .then(data => {
+                                                                if (data.images) {
+                                                                    const existing = colorItem.images ? colorItem.images.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                                    const combined = [...existing, ...data.images].join(', ');
+                                                                    handleColorOptionChange(index, 'images', combined);
+                                                                }
+                                                            })
+                                                            .catch(err => console.error('Upload error:', err));
+                                                        }
+                                                        e.target.value = '';
+                                                    }}
+                                                    className='absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer'
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
