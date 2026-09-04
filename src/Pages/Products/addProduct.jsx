@@ -365,7 +365,16 @@ const MarketplaceAddProduct = () => {
                             {!isGoMarketSeller && (
                                 <>
                                     <Field label="MRP Price *"><input style={inp} type="number" name="oldPrice" value={formFields.oldPrice} onChange={onChangeInput} placeholder="0.00" /></Field>
-                                    <Field label="Discount % *"><input style={inp} type="number" name="discount" value={formFields.discount} onChange={onChangeInput} placeholder="0" /></Field>
+                                    <Field label="Discount % (Auto)">
+                                        <input 
+                                            style={{...inp, background: '#f9fafb', color: '#6b7280', cursor: 'not-allowed'}} 
+                                            type="number" 
+                                            name="discount" 
+                                            value={formFields.discount} 
+                                            readOnly
+                                            placeholder="Auto-calculated" 
+                                        />
+                                    </Field>
                                 </>
                             )}
                             {isGoMarketSeller && (
