@@ -63,7 +63,6 @@ const EditProduct = () => {
 
     const [productCat, setProductCat] = React.useState('');
     const [productSubCat, setProductSubCat] = React.useState('');
-    const [productFeatured, setProductFeatured] = React.useState('');
     const [productRams, setProductRams] = React.useState([]);
     const [productRamsData, setProductRamsData] = React.useState([]);
     const [productWeight, setProductWeight] = React.useState([]);
@@ -151,7 +150,6 @@ const EditProduct = () => {
             setProductCat(res?.product?.catId);
             setProductSubCat(res?.product?.subCatId);
             setProductThirdLavelCat(res?.product?.thirdsubCatId);
-            setProductFeatured(res?.product?.isFeatured)
             setProductRams(res?.product?.productRam)
             setProductSize(res?.product?.size)
             setProductWeight(res?.product?.productWeight);
@@ -204,11 +202,6 @@ const EditProduct = () => {
         formFields.thirdsubCat = selectedThirdCat?.name || "";
     }
 
-
-    const handleChangeProductFeatured = (event) => {
-        setProductFeatured(event.target.value);
-        formFields.isFeatured = event.target.value
-    };
 
     const handleChangeProductRams = (event) => {
         const {
@@ -663,23 +656,6 @@ const EditProduct = () => {
                             <h3 className='text-[14px] font-[500] mb-1  text-black'>Product MRP Price</h3>
                             <input type="number" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm ' name="oldPrice" value={formFields.oldPrice} onChange={onChangeInput} />
                         </div>
-
-                        <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Is Featured?</h3>
-                            <Select
-                                labelId="demo-simple-select-label"
-                                id="productCatDrop"
-                                size="small"
-                                className='w-full'
-                                value={productFeatured}
-                                label="Category"
-                                onChange={handleChangeProductFeatured}
-                            >
-                                <MenuItem value={true}>True</MenuItem>
-                                <MenuItem value={false}>False</MenuItem>
-                            </Select>
-                        </div>
-
 
                         <div className='col'>
                             <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Stock</h3>
