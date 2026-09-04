@@ -787,9 +787,6 @@ const ProductModal = ({ item, onClose }) => {
               </div>
             </>
           )}
-              </div>
-            </>
-          )}
 
           <div className="ao-modal-divider" />
 
