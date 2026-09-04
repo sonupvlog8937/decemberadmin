@@ -11,10 +11,6 @@ const UploadBox = (props) => {
 
     const context = useContext(MyContext);
 
-    let selectedImages = [];
-
-    const formdata = new FormData();
-
     const onChangeFile = async (e, apiEndPoint) => {
 
         try {
@@ -23,6 +19,7 @@ const UploadBox = (props) => {
 
             setUploading(true);
 
+            const formdata = new FormData();
 
             for (var i = 0; i < files.length; i++) {
 
@@ -32,9 +29,7 @@ const UploadBox = (props) => {
                 ) {
 
                     const file = files[i];
-
-                    selectedImages.push(file);
-                    formdata.append(props?.name, file);
+                    formdata.append('images', file);
 
 
                 } else {
@@ -46,13 +41,14 @@ const UploadBox = (props) => {
 
             uploadImages(apiEndPoint, formdata).then((res) => {
                 setUploading(false);
-                //props.setPreviews(res?.data?.images)
-               // setPreviews((prevItems) => [...prevItems, res?.data?.images]);
                 props.setPreviewsFun(res?.data?.images);
+                // Reset file input
+                e.target.value = '';
             })
 
         } catch (error) {
             console.log(error);
+            setUploading(false);
         }
     }
 
