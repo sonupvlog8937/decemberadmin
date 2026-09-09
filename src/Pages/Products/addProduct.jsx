@@ -194,25 +194,57 @@ const MarketplaceAddProduct = () => {
     const addSpecification = () => setFormFields((p) => ({ ...p, specifications: [...p.specifications, { key: '', value: '' }] }));
     const removeSpecification = (i) => setFormFields((p) => ({ ...p, specifications: p.specifications.filter((_, idx) => idx !== i) }));
 
-    const setPreviewsFun = (arr) => {
-        const combined = [...previews, ...arr];
-        setPreviews([]); setTimeout(() => { setPreviews(combined); formFields.images = combined; }, 10);
+    const setPreviewsFun = (previewsArr) => {
+        const imgArr = previews;
+        for (let i = 0; i < previewsArr.length; i++) {
+            imgArr.push(previewsArr[i])
+        }
+
+        setPreviews([])
+        setTimeout(() => {
+            setPreviews(imgArr)
+            formFields.images = imgArr
+        }, 10);
     };
-    const setBannerImagesFun = (arr) => {
-        const combined = [...bannerPreviews, ...arr];
-        setBannerPreviews([]); setTimeout(() => { setBannerPreviews(combined); formFields.bannerimages = combined; }, 10);
+    const setBannerImagesFun = (previewsArr) => {
+        const imgArr = bannerPreviews;
+        for (let i = 0; i < previewsArr.length; i++) {
+            imgArr.push(previewsArr[i])
+        }
+
+        setBannerPreviews([])
+        setTimeout(() => {
+            setBannerPreviews(imgArr)
+            formFields.bannerimages = imgArr
+        }, 10);
     };
     const removeImg = (image, index) => {
-        deleteImages(`/api/category/deteleImage?img=${image}`).then(() => {
-            const arr = previews.filter((_, i) => i !== index);
-            setPreviews([]); setTimeout(() => { setPreviews(arr); formFields.images = arr; }, 100);
-        });
+        var imageArr = [];
+        imageArr = previews;
+        deleteImages(`/api/category/deteleImage?img=${image}`).then((res) => {
+            imageArr.splice(index, 1);
+
+            setPreviews([]);
+            setTimeout(() => {
+                setPreviews(imageArr);
+                formFields.images = imageArr
+            }, 100);
+
+        })
     };
     const removeBannerImg = (image, index) => {
-        deleteImages(`/api/category/deteleImage?img=${image}`).then(() => {
-            const arr = bannerPreviews.filter((_, i) => i !== index);
-            setBannerPreviews([]); setTimeout(() => { setBannerPreviews(arr); formFields.bannerimages = arr; }, 100);
-        });
+        var imageArr = [];
+        imageArr = bannerPreviews;
+        deleteImages(`/api/category/deteleImage?img=${image}`).then((res) => {
+            imageArr.splice(index, 1);
+
+            setBannerPreviews([]);
+            setTimeout(() => {
+                setBannerPreviews(imageArr);
+                formFields.bannerimages = imageArr
+            }, 100);
+
+        })
     };
 
     const handleSubmitg = (e) => {

@@ -11,6 +11,80 @@ const UploadBox = (props) => {
 
     const context = useContext(MyContext);
 
+    // Image compression function
+    const compressImage = (file, maxSizeKB = 300) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // Calculate new dimensions while maintaining aspect ratio
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_WIDTH = 1920;
+                    const MAX_HEIGHT = 1920;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Start with quality 0.8 and reduce until target size is met
+                    let quality = 0.8;
+                    const tryCompress = () => {
+                        canvas.toBlob(
+                            (blob) => {
+                                if (!blob) {
+                                    reject(new Error('Image compression failed'));
+                                    return;
+                                }
+
+                                const sizeKB = blob.size / 1024;
+                                console.log(`🖼️ Compressed size: ${sizeKB.toFixed(2)}KB at quality ${quality}`);
+
+                                // If size is acceptable or quality is too low, use this version
+                                if (sizeKB <= maxSizeKB || quality <= 0.3) {
+                                    const compressedFile = new File([blob], file.name, {
+                                        type: 'image/jpeg',
+                                        lastModified: Date.now(),
+                                    });
+                                    console.log(`✅ Final compressed size: ${(compressedFile.size / 1024).toFixed(2)}KB`);
+                                    resolve(compressedFile);
+                                } else {
+                                    // Reduce quality and try again
+                                    quality -= 0.1;
+                                    tryCompress();
+                                }
+                            },
+                            'image/jpeg',
+                            quality
+                        );
+                    };
+
+                    tryCompress();
+                };
+                img.onerror = () => reject(new Error('Failed to load image'));
+            };
+            reader.onerror = () => reject(new Error('Failed to read file'));
+        });
+    };
+
     const onChangeFile = async (e, apiEndPoint) => {
 
         try {
@@ -29,7 +103,18 @@ const UploadBox = (props) => {
                 ) {
 
                     const file = files[i];
-                    formdata.append('images', file);
+                    const originalSizeKB = (file.size / 1024).toFixed(2);
+                    console.log(`📁 Original size: ${originalSizeKB}KB`);
+
+                    // Compress image before uploading
+                    try {
+                        const compressedFile = await compressImage(file, 300); // Target 300KB max
+                        formdata.append('images', compressedFile);
+                        console.log(`✅ Image ${i + 1} compressed and added to upload`);
+                    } catch (compressionError) {
+                        console.error('❌ Compression failed, using original:', compressionError);
+                        formdata.append('images', file); // Fallback to original if compression fails
+                    }
 
 
                 } else {
