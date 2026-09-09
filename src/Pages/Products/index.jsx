@@ -283,6 +283,23 @@ export const Products = () => {
         });
     };
 
+    const quickToggleFeatured = (product) => {
+        if (context?.userData?.role !== 'ADMIN' && !isSellerRole(context?.userData?.role)) {
+            context.alertBox('error', 'Only admin or seller can change featured status');
+            return;
+        }
+        const nextFeatured = !product.isFeatured;
+        patchData(`/api/product/${product._id}`, { isFeatured: nextFeatured }).then((res) => {
+            const body = res?.data || res;
+            if (body?.success || body?.error === false) {
+                context.alertBox('success', nextFeatured ? 'Product marked as featured' : 'Removed from featured');
+                getProducts(page, rowsPerPage);
+            } else {
+                context.alertBox('error', body?.message || 'Could not update featured status');
+            }
+        });
+    };
+
     return (
         <>
             {/* ── Page Header ── */}
@@ -451,10 +468,27 @@ export const Products = () => {
                                                             </div>
                                                         </Link>
                                                         {!isSpecialtySeller && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{product?.brand}</div>}
-                                                        {!isSpecialtySeller && product?.isFeatured && (
-                                                            <span style={{ fontSize: 10, fontWeight: 700, background: '#fef3c7', color: '#92400e', padding: '2px 7px', borderRadius: 10, display: 'inline-block', marginTop: 3 }}>
-                                                                ★ Featured
-                                                            </span>
+                                                        {!isSpecialtySeller && (
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={() => quickToggleFeatured(product)}
+                                                                style={{ 
+                                                                    fontSize: 10, 
+                                                                    fontWeight: 700, 
+                                                                    background: product?.isFeatured ? '#fef3c7' : '#f3f4f6', 
+                                                                    color: product?.isFeatured ? '#92400e' : '#6b7280', 
+                                                                    padding: '2px 7px', 
+                                                                    borderRadius: 10, 
+                                                                    display: 'inline-block', 
+                                                                    marginTop: 3,
+                                                                    border: 'none',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.2s'
+                                                                }}
+                                                                title={product?.isFeatured ? 'Click to remove from featured' : 'Click to mark as featured'}
+                                                            >
+                                                                {product?.isFeatured ? '★ Featured' : '☆ Feature'}
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </div>
