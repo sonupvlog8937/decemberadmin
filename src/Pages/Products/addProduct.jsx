@@ -3,7 +3,6 @@ import GroceryAddProduct from './GroceryAddProduct';
 import RestaurantAddProduct from './RestaurantAddProduct';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import Rating from '@mui/material/Rating';
 import UploadBox from '../../Components/UploadBox';
 import { IoMdClose } from 'react-icons/io';
 import { Button, Switch, Tooltip, Chip } from '@mui/material';
@@ -71,7 +70,7 @@ const MarketplaceAddProduct = () => {
         name: '', description: '', images: [], brand: '', keywords: '',
         price: '', oldPrice: '', category: '', catName: '', catId: '',
         subCatId: '', subCat: '', thirdsubCat: '', thirdsubCatId: '',
-        countInStock: '', rating: '', isFeatured: false, discount: '', sale: 0,
+        countInStock: '', isFeatured: false, discount: '', sale: 0,
         productRam: [], size: [], productWeight: [],
         colorOptions: [{ name: '', code: '', images: '' }],
         specifications: [{ key: '', value: '' }],
@@ -177,7 +176,6 @@ const MarketplaceAddProduct = () => {
         return updated;
     });
 };
-    const onChangeRating = (e) => { setFormFields((p) => ({ ...p, rating: e.target.value })); };
     const handleChangeSwitch = (e) => { setCheckedSwitch(e.target.checked); formFields.isDisplayOnHomeBanner = e.target.checked; };
 
     const handleColorOptionChange = (i, field, value) => {
@@ -267,7 +265,6 @@ const MarketplaceAddProduct = () => {
                 [!formFields.countInStock, 'Please enter product stock'],
                 [!formFields.brand, 'Please enter product brand'],
                 [!formFields.discount, 'Please enter product discount'],
-                [!formFields.rating, 'Please enter product rating'],
                 [previews.length === 0, 'Please add product images'],
             ];
         for (const [cond, msg] of checks) { if (cond) { context.alertBox('error', msg); return false; } }
@@ -472,9 +469,6 @@ const MarketplaceAddProduct = () => {
                                     </Select>
                                 </Field>
                             )}
-                            <Field label="Product Rating *">
-                                <div style={{ paddingTop: 6 }}><Rating name="rating" defaultValue={1} onChange={onChangeRating} /></div>
-                            </Field>
                         </div>
                     </SectionCard>
 

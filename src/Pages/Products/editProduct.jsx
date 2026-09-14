@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import Rating from '@mui/material/Rating';
 import UploadBox from '../../Components/UploadBox';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
@@ -40,7 +39,6 @@ const EditProduct = () => {
         thirdsubCat: "",
         thirdsubCatId: "",
         countInStock: "",
-        rating: "",
         isFeatured: false,
         discount: "",
         productRam: [],
@@ -126,7 +124,6 @@ const EditProduct = () => {
                 thirdsubCat: res?.product?.thirdsubCat,
                 thirdsubCatId: res?.product?.thirdsubCatId,
                 countInStock: res?.product?.countInStock,
-                rating: res?.product?.rating,
                 isFeatured: res?.product?.isFeatured,
                 discount: res?.product?.discount,
                 sale: res?.product?.sale || 0,
@@ -262,15 +259,6 @@ const EditProduct = () => {
 
             return updated;
         })
-    }
-
-    const onChangeRating = (e) => {
-        setFormFields((formFields) => (
-            {
-                ...formFields,
-                rating: e.target.value
-            }
-        ))
     }
 
     const handleColorOptionChange = (index, field, value) => {
@@ -439,13 +427,6 @@ const EditProduct = () => {
 
 
 
-
-        if (formFields?.rating === "") {
-            context.alertBox("error", "Please enter  product rating");
-            return false;
-        }
-
-
         if (previews?.length === 0) {
             context.alertBox("error", "Please select product images");
             return false;
@@ -453,6 +434,7 @@ const EditProduct = () => {
 
         const payload = {
             ...formFields,
+            rating: undefined,
             colorOptions: (formFields.colorOptions || []).map((item) => ({
                 ...item,
                 images: item.images ? item.images.split(",").map((img) => img.trim()).filter(Boolean) : []
@@ -767,18 +749,6 @@ const EditProduct = () => {
                     </div>
 
 
-
-
-                    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-3 gap-4'>
-
-
-                        <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1  text-black'>Product Rating </h3>
-                            <Rating name="rating" value={formFields.rating} onChange={onChangeRating} />
-                        </div>
-
-
-                    </div>
 
 
                     <div className='col w-full p-5 px-0'>
