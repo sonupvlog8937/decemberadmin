@@ -13,6 +13,7 @@ import { MyContext } from '../../App';
 import { deleteImages, fetchDataFromApi, postData } from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
 import CircularProgress from '@mui/material/CircularProgress';
+import ProductOptionsEditor, { normalizeProductOptionsForSubmit } from '../../Components/ProductOptionsEditor';
 
 const switchLabel = { inputProps: { 'aria-label': 'Switch demo' } };
 
@@ -76,6 +77,7 @@ const MarketplaceAddProduct = () => {
         specifications: [{ key: '', value: '' }],
         bannerTitleName: '', bannerimages: [], isDisplayOnHomeBanner: false,
         tags: '', searchKeywords: '', seoDescription: '', attributes: '', title: '', productType: '',
+        productOptions: [],
     });
 
     const [productCat, setProductCat] = useState('');
@@ -285,6 +287,7 @@ const MarketplaceAddProduct = () => {
             attributes: formFields.attributes || '',
             title: formFields.title || formFields.name,
             productType: formFields.productType || '',
+            productOptions: normalizeProductOptionsForSubmit(formFields.productOptions || []),
         };
         setIsLoading(true);
         postData('/api/product/create', payload).then((res) => {
@@ -587,6 +590,17 @@ const MarketplaceAddProduct = () => {
                             </button>
                         </div>
                     </SectionCard>
+
+                    {/* ── Product Options ── */}
+                    {!isGoMarketSeller && (
+                        <SectionCard icon={<MdSell size={15} />} iconBg="#fef3c7" iconColor="#92400e" title="Product Options" subtitle="Add product variants with different prices (e.g., Size: M ₹500, L ₹600)">
+                            <ProductOptionsEditor 
+                                value={formFields.productOptions} 
+                                onChange={(value) => setFormFields((p) => ({ ...p, productOptions: value }))}
+                                accent="#92400e"
+                            />
+                        </SectionCard>
+                    )}
 
                     {/* ── Product Images ── */}
                     <SectionCard icon={<MdImage size={15} />} iconBg="#fff7ed" iconColor="#c2410c" title="Product Images *" subtitle="Upload high-quality product photos">
