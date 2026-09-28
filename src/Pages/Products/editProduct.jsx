@@ -16,7 +16,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Switch from '@mui/material/Switch';
 import GroceryEditProduct from './GroceryEditProduct';
 import RestaurantEditProduct from './RestaurantEditProduct';
-import ProductOptionsEditor, { normalizeProductOptionsForSubmit } from '../../Components/ProductOptionsEditor';
 
 const label = { inputProps: { 'aria-label': 'Switch demo' } };
 
@@ -56,8 +55,7 @@ const EditProduct = () => {
         seoDescription: "",
         attributes: "",
         title: "",
-        productType: "",
-        productOptions: []
+        productType: ""
     })
 
 
@@ -142,8 +140,7 @@ const EditProduct = () => {
                 seoDescription: res?.product?.seoDescription || '',
                 attributes: res?.product?.attributes || '',
                 title: res?.product?.title || '',
-                productType: res?.product?.productType || '',
-                productOptions: res?.product?.productOptions || []
+                productType: res?.product?.productType || ''
             })
 
 
@@ -453,8 +450,7 @@ const EditProduct = () => {
             seoDescription: formFields.seoDescription || '',
             attributes: formFields.attributes || '',
             title: formFields.title || formFields.name,
-            productType: formFields.productType || '',
-            productOptions: normalizeProductOptionsForSubmit(formFields.productOptions || []),
+            productType: formFields.productType || ''
         };
 
         setIsLoading(true);
@@ -841,17 +837,6 @@ const EditProduct = () => {
                                 </div>
                             ))}
                         </div>
-                    </div>
-
-                    <div className='col w-full p-5 px-0'>
-                        <div className='flex items-center justify-between mb-3'>
-                            <h3 className="font-[700] text-[18px]">Product Options</h3>
-                        </div>
-                        <ProductOptionsEditor 
-                            value={formFields.productOptions} 
-                            onChange={(value) => setFormFields((prev) => ({ ...prev, productOptions: value }))}
-                            accent="#111827"
-                        />
                     </div>
 
                     <div className='col w-full p-5 px-0'>
