@@ -4,6 +4,7 @@ import RestaurantAddProduct from './RestaurantAddProduct';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import UploadBox from '../../Components/UploadBox';
+import ProductOptionsWithPrice from '../../Components/ProductOptionsWithPrice';
 import { IoMdClose } from 'react-icons/io';
 import { Button, Switch, Tooltip, Chip } from '@mui/material';
 import { FaCloudUploadAlt } from 'react-icons/fa';
@@ -73,6 +74,7 @@ const MarketplaceAddProduct = () => {
         countInStock: '', isFeatured: false, discount: '', sale: 0,
         productRam: [], size: [], productWeight: [],
         colorOptions: [{ name: '', code: '', images: '' }],
+        productOptions: [],
         specifications: [{ key: '', value: '' }],
         bannerTitleName: '', bannerimages: [], isDisplayOnHomeBanner: false,
         tags: '', searchKeywords: '', seoDescription: '', attributes: '', title: '', productType: '',
@@ -277,6 +279,16 @@ const MarketplaceAddProduct = () => {
             colorOptions: (formFields.colorOptions || [])
                 .map((item) => ({ ...item, images: item.images ? item.images.split(',').map((s) => s.trim()).filter(Boolean) : [] }))
                 .filter((item) => item.name),
+            productOptions: (formFields.productOptions || [])
+                .filter((opt) => opt.name && opt.values && opt.values.length > 0)
+                .map((opt) => ({
+                    name: opt.name,
+                    values: opt.values.filter((v) => v.value && v.price).map((v) => ({
+                        value: v.value,
+                        price: Number(v.price),
+                        mrp: Number(v.mrp) || 0,
+                    })),
+                })),
             specifications: (formFields.specifications || []).filter((item) => item.key && item.value),
             keywords: formFields.keywords ? formFields.keywords.split(',').map((s) => s.trim()).filter(Boolean) : [],
             tags: formFields.tags ? formFields.tags.split(',').map((s) => s.trim()).filter(Boolean) : [],
@@ -587,6 +599,12 @@ const MarketplaceAddProduct = () => {
                             </button>
                         </div>
                     </SectionCard>
+
+                    {/* ── Product Options with Prices ── */}
+                    <ProductOptionsWithPrice
+                        value={formFields.productOptions}
+                        onChange={(options) => setFormFields((p) => ({ ...p, productOptions: options }))}
+                    />
 
                     {/* ── Product Images ── */}
                     <SectionCard icon={<MdImage size={15} />} iconBg="#fff7ed" iconColor="#c2410c" title="Product Images *" subtitle="Upload high-quality product photos">

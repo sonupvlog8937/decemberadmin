@@ -16,6 +16,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Switch from '@mui/material/Switch';
 import GroceryEditProduct from './GroceryEditProduct';
 import RestaurantEditProduct from './RestaurantEditProduct';
+import ProductOptionsWithPrice from '../../Components/ProductOptionsWithPrice';
 
 const label = { inputProps: { 'aria-label': 'Switch demo' } };
 
@@ -47,6 +48,7 @@ const EditProduct = () => {
         productWeight: [],
         colorOptions: [{ name: '', code: '', images: '' }],
         specifications: [{ key: '', value: '' }],
+        productOptions: [],
         bannerTitleName: '',
         bannerimages: [],
         isDisplayOnHomeBanner: false,
@@ -132,6 +134,7 @@ const EditProduct = () => {
                 productWeight: res?.product?.productWeight,
                 colorOptions: (res?.product?.colorOptions || []).length !== 0 ? res?.product?.colorOptions?.map((item) => ({ ...item, images: (item.images || []).join(', ') })) : [{ name: '', code: '', images: '' }],
                 specifications: (res?.product?.specifications || []).length !== 0 ? res?.product?.specifications : [{ key: '', value: '' }],
+                productOptions: (res?.product?.productOptions || []).length !== 0 ? res?.product?.productOptions : [],
                 bannerTitleName: res?.product?.bannerTitleName,
                 bannerimages: res?.product?.bannerimages,
                 isDisplayOnHomeBanner: res?.product?.isDisplayOnHomeBanner,
@@ -440,6 +443,16 @@ const EditProduct = () => {
                 images: item.images ? item.images.split(",").map((img) => img.trim()).filter(Boolean) : []
             })).filter((item) => item.name),
             specifications: (formFields.specifications || []).filter((item) => item.key && item.value),
+            productOptions: (formFields.productOptions || [])
+                .filter((opt) => opt.name && opt.values && opt.values.length > 0)
+                .map((opt) => ({
+                    name: opt.name,
+                    values: opt.values.filter((v) => v.value && v.price).map((v) => ({
+                        value: v.value,
+                        price: Number(v.price),
+                        mrp: Number(v.mrp) || 0
+                    }))
+                })),
             keywords: formFields.keywords
                 ? formFields.keywords.split(',').map((item) => item.trim()).filter(Boolean)
                 : [],
@@ -837,6 +850,18 @@ const EditProduct = () => {
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    <div className='col w-full p-5 px-0'>
+                        <ProductOptionsWithPrice 
+                            value={formFields.productOptions}
+                            onChange={(updatedOptions) => {
+                                setFormFields((prev) => ({
+                                    ...prev,
+                                    productOptions: updatedOptions
+                                }));
+                            }}
+                        />
                     </div>
 
                     <div className='col w-full p-5 px-0'>

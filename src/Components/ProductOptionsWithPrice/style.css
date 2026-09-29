@@ -1,0 +1,207 @@
+.product-options-with-price {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.options-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.options-header h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.options-description {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.btn-add-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f97316;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-add-option:hover {
+  background: #ea580c;
+}
+
+.option-group {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.option-header-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.option-name-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.option-name-input:focus {
+  border-color: #f97316;
+}
+
+.btn-remove-option {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.2s;
+}
+
+.btn-remove-option:hover {
+  background: #fecaca;
+}
+
+.option-values {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.value-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.5fr 40px;
+  gap: 8px;
+  align-items: center;
+}
+
+.value-input,
+.price-input,
+.mrp-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.value-input:focus,
+.price-input:focus,
+.mrp-input:focus {
+  border-color: #f97316;
+}
+
+.value-input {
+  font-weight: 500;
+}
+
+.price-input,
+.mrp-input {
+  text-align: right;
+}
+
+.btn-remove-value {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.btn-remove-value:hover {
+  background: #fecaca;
+}
+
+.btn-add-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  color: #f97316;
+  border: 1px dashed #f97316;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-add-value:hover {
+  background: #fff7ed;
+  border-style: solid;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .value-row {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-remove-value {
+    justify-self: flex-end;
+  }
+
+  .options-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-add-option {
+    width: 100%;
+    justify-content: center;
+  }
+}
