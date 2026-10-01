@@ -693,14 +693,8 @@ const ProductModal = ({ item, onClose }) => {
     item.brand     && { label: "Brand",    value: item.brand },
   ].filter(Boolean);
 
-  // Add selected options to attrs if they exist
-  if (item.selectedOptions && typeof item.selectedOptions === 'object') {
-    Object.entries(item.selectedOptions).forEach(([key, value]) => {
-      if (value) {
-        attrs.push({ label: key.charAt(0).toUpperCase() + key.slice(1), value: String(value) });
-      }
-    });
-  }
+  // Add selected options to attrs if they exist (but we'll show them separately below)
+  const hasSelectedOptions = item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0;
 
   return (
     <div className="ao-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -751,6 +745,67 @@ const ProductModal = ({ item, onClose }) => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </>
+          )}
+
+          {/* Selected Product Options with Price */}
+          {hasSelectedOptions && (
+            <>
+              <div className="ao-modal-divider" />
+              <div style={{ 
+                background: '#fef3c7', 
+                border: '1px solid #fde68a', 
+                borderRadius: 10, 
+                padding: '12px 14px',
+                marginBottom: 8
+              }}>
+                <div style={{ 
+                  fontSize: 10, 
+                  fontWeight: 700, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.08em', 
+                  color: '#92400e', 
+                  marginBottom: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}>
+                  🎯 Selected Options
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {Object.entries(item.selectedOptions).map(([key, value]) => (
+                    <div 
+                      key={key}
+                      style={{
+                        background: '#fff',
+                        border: '1.5px solid #f59e0b',
+                        borderRadius: 8,
+                        padding: '6px 12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6
+                      }}
+                    >
+                      <span style={{ 
+                        fontSize: 10, 
+                        fontWeight: 700, 
+                        color: '#92400e',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
+                      }}>
+                        {key}:
+                      </span>
+                      <span style={{ 
+                        fontSize: 12, 
+                        fontWeight: 700, 
+                        color: '#b45309'
+                      }}>
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </>
           )}
@@ -1255,11 +1310,14 @@ const ReceiptModal = ({ order, onClose }) => {
                 {products.map((item, i) => {
                   const attrParts = [item.color, item.size, item.weight, item.ram].filter(Boolean);
                   
+                  // Check if selectedOptions exist
+                  const hasSelectedOptions = item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0;
+                  
                   // Add selected options if they exist
-                  if (item.selectedOptions && typeof item.selectedOptions === 'object') {
+                  if (hasSelectedOptions) {
                     Object.entries(item.selectedOptions).forEach(([key, value]) => {
                       if (value) {
-                        attrParts.push(`${key}: ${value}`);
+                        attrParts.push(`🎯 ${key}: ${value}`);
                       }
                     });
                   }
@@ -1304,6 +1362,24 @@ const ReceiptModal = ({ order, onClose }) => {
                             <div>
                               <div className="ao-rcpt-prod-name">{item.productTitle || "—"}</div>
                               {attrs && <div className="ao-rcpt-prod-attr">{attrs}</div>}
+                              {hasSelectedOptions && (
+                                <div style={{ 
+                                  marginTop: 4, 
+                                  padding: '3px 8px', 
+                                  background: '#fef3c7', 
+                                  border: '1px solid #fde68a',
+                                  borderRadius: 4,
+                                  display: 'inline-block',
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  color: '#92400e'
+                                }}>
+                                  {Object.entries(item.selectedOptions)
+                                    .filter(([_, value]) => value)
+                                    .map(([key, value]) => `${key}: ${value}`)
+                                    .join(' • ')}
+                                </div>
+                              )}
                               <div className="ao-rcpt-prod-attr" style={{ marginTop:2 }}>{fmt(item.price)} / unit</div>
                             </div>
                           </div>
@@ -2623,19 +2699,30 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                         </div>
                                       )}
                                       <div className="ao-prod-tags">
-                                        {/* Show selectedOptions if available, else show weight/size/color/ram */}
+                                        {/* Show selectedOptions with highlighted badge if available, else show weight/size/color/ram */}
                                         {item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0 ? (
-                                          Object.entries(item.selectedOptions).map(([key, value]) => {
-                                            // Convert value to string, handle objects safely
-                                            const displayValue = typeof value === 'object' && value !== null 
-                                              ? JSON.stringify(value) 
-                                              : String(value || '');
-                                            return displayValue ? (
-                                              <span key={key} className="ao-prod-tag">
-                                                ✓ {key.charAt(0).toUpperCase() + key.slice(1)}: {displayValue}
-                                              </span>
-                                            ) : null;
-                                          })
+                                          <>
+                                            {Object.entries(item.selectedOptions).map(([key, value]) => {
+                                              // Convert value to string, handle objects safely
+                                              const displayValue = typeof value === 'object' && value !== null 
+                                                ? JSON.stringify(value) 
+                                                : String(value || '');
+                                              return displayValue ? (
+                                                <span 
+                                                  key={key} 
+                                                  className="ao-prod-tag"
+                                                  style={{
+                                                    background: '#fef3c7',
+                                                    color: '#92400e',
+                                                    border: '1px solid #fde68a',
+                                                    fontWeight: 700
+                                                  }}
+                                                >
+                                                  🎯 {key}: {displayValue}
+                                                </span>
+                                              ) : null;
+                                            })}
+                                          </>
                                         ) : (
                                           <>
                                             {item.weight && <span className="ao-prod-tag">📦 {String(item.weight)}</span>}
