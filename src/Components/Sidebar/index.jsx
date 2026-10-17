@@ -1,11 +1,11 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { RiProductHuntLine } from "react-icons/ri";
 import { TbCategory } from "react-icons/tb";
 import { IoBagCheckOutline, IoStorefrontOutline, IoWalletOutline, IoImageOutline } from "react-icons/io5";
 import { IoMdLogOut } from "react-icons/io";
-import { FiUsers, FiChevronDown } from "react-icons/fi";
+import { FiUsers, FiChevronDown, FiX } from "react-icons/fi";
 import { MdOutlineRateReview, MdOutlineViewCarousel, MdOutlinePermMedia, MdOutlineArticle, MdLocalOffer } from "react-icons/md";
 import { MyContext } from "../../App";
 import { fetchDataFromApi } from "../../utils/api";
@@ -33,6 +33,16 @@ const roleLabels = {
 
 const GO_MARKET_SHOP_SELLERS = ["GROCERY_SELLER", "FASHION_SELLER", "ELECTRONICS_SELLER", "MEDICAL_SELLER", "BEAUTY_SELLER", "HOME_KITCHEN_SELLER", "GIFTS_TOYS_SELLER", "BOOKS_STATIONERY_SELLER", "JEWELLERY_SELLER", "HARDWARE_SELLER", "AUTOMOBILE_SELLER"];
 
+// Jis route pe jo group khulna chahiye
+const GROUP_ROUTES = {
+  catalog: ["/category", "/subCategory"],
+  banners: ["/banners", "/bannerlist2"],
+  media: ["/homeSlider", "/slider"],
+  goMarket: ["/go-market", "/commerce-settings"],
+};
+
+const MOBILE_BREAKPOINT = 992;
+
 // ─── Colors ──────────────────────────────────────────────────────────────────
 const K = {
   blue: "#3B82F6", orange: "#FF6B2B", green: "#10B981", amber: "#F59E0B", violet: "#8B5CF6",
@@ -41,22 +51,28 @@ const K = {
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
-const stagger = Array.from({ length: 24 }, (_, i) => `.sb-nav > li:nth-child(${i + 1}){animation-delay:${i * 22}ms}`).join("");
+const stagger = (sel, base, step) =>
+  Array.from({ length: 24 }, (_, i) => `${sel}:nth-child(${i + 1}){animation-delay:${base + i * step}ms}`).join("");
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
-.sb, .sb * { box-sizing: border-box; font-family: 'Outfit', system-ui, sans-serif; }
+.sb, .sb * { box-sizing: border-box; font-family: 'Outfit', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+
+/* ── Desktop: fixed sidebar, width collapse ── */
 .sb { position: fixed; top: 0; left: 0; z-index: 52; height: 100%; display: flex; flex-direction: column; overflow: hidden;
   background: linear-gradient(180deg, #FFFFFF 0%, #FAF8FF 60%, #F4F9FF 100%); border-right: 1px solid #EEF0F6;
   box-shadow: 4px 0 24px rgba(99,102,241,.06); transition: width .35s cubic-bezier(.65,0,.25,1); }
-.sb-inner { min-width: 232px; height: 100%; display: flex; flex-direction: column; }
+.sb-inner { min-width: 200px; height: 100%; display: flex; flex-direction: column; }
 
-@keyframes sb-in { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+@keyframes sb-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
 @keyframes sb-grad { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-@keyframes sb-fade { from { opacity: 0; } to { opacity: 1; } }
 
-.sb-logo { padding: 12px 16px; border-bottom: 1px solid #F1F5F9; flex-shrink: 0; }
-.sb-logo img { width: 150px; transition: transform .3s; }
-.sb-logo:hover img { transform: scale(1.03); }
+.sb-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #F1F5F9; flex-shrink: 0; }
+.sb-top img { width: 150px; max-width: 100%; transition: transform .3s; }
+.sb-top a:hover img { transform: scale(1.03); }
+.sb-close { display: none; width: 34px; height: 34px; border: 0; border-radius: 10px; background: #F1F5F9; color: #64748B; cursor: pointer;
+  place-items: center; flex-shrink: 0; transition: background .25s, color .25s, transform .35s; }
+.sb-close:hover { background: #FEE2E2; color: #EF4444; transform: rotate(90deg); }
 
 .sb-role { display: block; margin: 10px 12px 4px; padding: 10px 12px; border-radius: 14px; text-decoration: none; flex-shrink: 0; color: #fff;
   background: linear-gradient(120deg, #6366F1, #8B5CF6, #EC4899, #FF6B2B); background-size: 250% 250%; animation: sb-grad 9s ease infinite;
@@ -65,11 +81,11 @@ const CSS = `
 .sb-role small { display: block; font-size: 9.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
 .sb-role b { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 700; }
 
-.sb-nav { flex: 1; overflow-y: auto; overflow-x: hidden; list-style: none; margin: 0; padding: 4px 10px 8px; }
+.sb-nav { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; list-style: none; margin: 0; padding: 4px 10px 8px; }
 .sb-nav::-webkit-scrollbar { width: 4px; }
 .sb-nav::-webkit-scrollbar-thumb { background: #DDD6FE; border-radius: 4px; }
 .sb-nav > li { animation: sb-in .45s cubic-bezier(.2,.8,.2,1) both; }
-${stagger}
+${stagger(".sb-nav > li", 0, 22)}
 
 .sb-label { padding: 14px 10px 4px; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #A1A1C0; user-select: none; }
 
@@ -77,6 +93,7 @@ ${stagger}
   font-size: 12.5px; font-weight: 500; color: #475569; cursor: pointer; text-decoration: none;
   transition: background .25s, color .25s, transform .25s, box-shadow .25s; }
 .sb-item:hover { background: color-mix(in srgb, var(--c) 9%, white); color: #1E293B; transform: translateX(3px); }
+.sb-item:active { transform: scale(.98); }
 .sb-chip { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; font-size: 15px; color: var(--c);
   background: color-mix(in srgb, var(--c) 14%, white); transition: transform .3s, background .3s, color .3s; }
 .sb-item:hover .sb-chip { transform: rotate(-8deg) scale(1.1); }
@@ -97,6 +114,7 @@ ${stagger}
 .sb-subitem { --c: ${K.blue}; display: flex; align-items: center; gap: 8px; margin: 1px 0; padding: 6px 10px; border-radius: 9px; font-size: 11.5px; font-weight: 500;
   color: #64748B; text-decoration: none; transition: background .2s, color .2s, transform .2s; }
 .sb-subitem:hover { color: var(--c); background: color-mix(in srgb, var(--c) 8%, white); transform: translateX(3px); }
+.sb-subitem:active { transform: scale(.98); }
 .sb-subitem i { width: 6px; height: 6px; border-radius: 50%; background: #CBD5E1; flex-shrink: 0; transition: background .2s, transform .2s; }
 .sb-subitem:hover i { background: var(--c); transform: scale(1.3); }
 .sb-subitem.on { color: var(--c); background: color-mix(in srgb, var(--c) 12%, white); font-weight: 600; }
@@ -107,8 +125,36 @@ ${stagger}
   color: #EF4444; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background .25s, color .25s, transform .2s, box-shadow .25s; }
 .sb-logout:hover { background: linear-gradient(135deg, #F43F5E, #FF6B2B); color: #fff; box-shadow: 0 8px 16px rgba(244,63,94,.3); transform: translateY(-1px); }
 .sb-logout:active { transform: scale(.98); }
-.sb-overlay { position: fixed; inset: 0; z-index: 51; background: rgba(15,23,42,.4); backdrop-filter: blur(2px); animation: sb-fade .3s ease both; }
-@media (prefers-reduced-motion: reduce) { .sb, .sb * { animation: none !important; transition: none !important; } }
+
+/* Overlay: hamesha DOM mein, sirf opacity se fade hota hai */
+.sb-overlay { position: fixed; inset: 0; z-index: 51; background: rgba(15,23,42,.45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+.sb-overlay.show { opacity: 1; pointer-events: auto; }
+
+/* ── Mobile / tablet: slide-in drawer ── */
+.sb.mobile { width: min(84vw, 300px); height: 100vh; height: 100dvh; border-right: 0; border-radius: 0 22px 22px 0;
+  transform: translateX(-102%); visibility: hidden; box-shadow: none;
+  transition: transform .42s cubic-bezier(.32,.72,0,1), visibility 0s linear .42s, box-shadow .42s; }
+.sb.mobile.open { transform: translateX(0); visibility: visible; box-shadow: 14px 0 44px rgba(15,23,42,.28);
+  transition: transform .42s cubic-bezier(.32,.72,0,1), visibility 0s, box-shadow .42s; }
+.sb.mobile.drag { transition: none; }
+.sb.mobile .sb-inner { min-width: 0; }
+.sb.mobile .sb-close { display: grid; }
+.sb.mobile .sb-top { padding-top: calc(12px + env(safe-area-inset-top)); }
+.sb.mobile .sb-foot { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+.sb.mobile .sb-item { padding: 9px 10px; }
+.sb.mobile .sb-subitem { padding: 8px 10px; }
+
+/* Drawer khulte hi items dobara stagger se aate hain */
+.sb.mobile:not(.open) .sb-nav > li, .sb.mobile:not(.open) .sb-role { animation: none; opacity: 0; }
+.sb.mobile.open .sb-nav > li { animation: sb-in .45s cubic-bezier(.2,.8,.2,1) both; }
+.sb.mobile.open .sb-role { animation: sb-in .45s cubic-bezier(.2,.8,.2,1) .08s both, sb-grad 9s ease infinite; }
+${stagger(".sb.mobile.open .sb-nav > li", 140, 24)}
+
+@media (hover: none) {
+  .sb-item:hover, .sb-subitem:hover, .sb-role:hover, .sb-logout:hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .sb, .sb *, .sb-overlay { animation: none !important; transition: none !important; } .sb.mobile:not(.open) .sb-nav > li { opacity: 1; } }
 `;
 
 // ─── Small components (bahar define kiye, taaki har render pe remount na ho) ──
@@ -127,7 +173,7 @@ const NavItem = ({ to, icon: Icon, label, color = K.blue, badge, active, onNav }
 
 const CollapseGroup = ({ icon: Icon, label, color = K.indigo, open, onToggle, children }) => (
   <li>
-    <div onClick={onToggle} className={`sb-item${open ? " open" : ""}`} style={{ "--c": color }}>
+    <div onClick={onToggle} className={`sb-item${open ? " open" : ""}`} style={{ "--c": color }} role="button" aria-expanded={open}>
       {Icon && <span className="sb-chip"><Icon /></span>}
       <span className="sb-txt">{label}</span>
       <FiChevronDown size={13} className="sb-chev" />
@@ -159,11 +205,71 @@ const Sidebar = () => {
   const isDeliveryRider = userRole === "DELIVERY_RIDER";
   const isGoMarketSeller = GO_MARKET_SHOP_SELLERS.includes(userRole) || isRestaurantSeller;
 
+  const isMobile = context?.windowWidth < MOBILE_BREAKPOINT;
+  const isOpen = context?.isSidebarOpen === true;
+
   const [openGroups, setOpenGroups] = useState({ catalog: false, media: false, banners: false, goMarket: false });
   const toggleGroup = (key) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  // Current route wala group khud khul jaye
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      const next = { ...prev };
+      Object.entries(GROUP_ROUTES).forEach(([key, paths]) => {
+        if (paths.some((p) => location.pathname.startsWith(p))) next[key] = true;
+      });
+      return next;
+    });
+  }, [location.pathname]);
+
   const closeSidebar = () => {
-    if (context?.windowWidth < 992) context?.setisSidebarOpen(false);
+    if (isMobile) context?.setisSidebarOpen(false);
+  };
+
+  // Mobile pe drawer khula ho to page scroll lock + Esc se band
+  useEffect(() => {
+    if (!(isMobile && isOpen)) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => e.key === "Escape" && context?.setisSidebarOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [isMobile, isOpen]);
+
+  // Swipe-left se drawer band
+  const touch = useRef({ x: 0, y: 0, active: false, locked: false });
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+
+  const onTouchStart = (e) => {
+    if (!isMobile) return;
+    const t = e.touches[0];
+    touch.current = { x: t.clientX, y: t.clientY, active: true, locked: false };
+  };
+  const onTouchMove = (e) => {
+    const s = touch.current;
+    if (!isMobile || !s.active) return;
+    const t = e.touches[0];
+    const dx = t.clientX - s.x;
+    const dy = t.clientY - s.y;
+    if (!s.locked) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dy) > Math.abs(dx)) { s.active = false; return; } // vertical scroll hai
+      s.locked = true;
+      setDragging(true);
+    }
+    setDragX(Math.min(0, dx));
+  };
+  const onTouchEnd = () => {
+    const s = touch.current;
+    s.active = false;
+    if (!s.locked) return;
+    setDragging(false);
+    if (dragX < -70) closeSidebar();
+    setDragX(0);
   };
 
   const logout = () => {
@@ -185,19 +291,37 @@ const Sidebar = () => {
   );
   const sub = (to, label, color) => <SubItem key={to} to={to} label={label} color={color} active={isActive(to)} onNav={closeSidebar} />;
 
+  const sidebarClass = `sb${isMobile ? " mobile" : ""}${isMobile && isOpen ? " open" : ""}${dragging ? " drag" : ""}`;
+  const sidebarStyle = isMobile
+    ? dragging ? { transform: `translateX(${dragX}px)` } : undefined
+    : { width: isOpen ? "20%" : "0px" };
+
   return (
     <>
       <style>{CSS}</style>
-      <div className="sb" style={{ width: context.isSidebarOpen === true ? "20%" : "0px" }}>
+
+      {/* Overlay sirf mobile pe; hamesha render hota hai taaki fade in/out smooth rahe */}
+      {isMobile && <div className={`sb-overlay${isOpen ? " show" : ""}`} onClick={closeSidebar} aria-hidden="true" />}
+
+      <aside
+        className={sidebarClass}
+        style={sidebarStyle}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
+        aria-hidden={isMobile && !isOpen}
+      >
         <div className="sb-inner">
 
-          {/* Logo */}
-          <div className="sb-logo" onClick={closeSidebar}>
-            <Link to="/"><img src={localStorage.getItem("logo")} className="md:min-w-[170px]" alt="logo" /></Link>
+          {/* Logo + close (mobile) */}
+          <div className="sb-top">
+            <Link to="/" onClick={closeSidebar}><img src={localStorage.getItem("logo")} className="md:min-w-[170px]" alt="logo" /></Link>
+            <button type="button" className="sb-close" onClick={closeSidebar} aria-label="Close menu"><FiX size={17} /></button>
           </div>
 
           {/* Role Badge */}
-          <Link to="/profile" className="sb-role">
+          <Link to="/profile" className="sb-role" onClick={closeSidebar}>
             <small>Signed in as</small>
             <b>{roleLabels[userRole] || "👤 Control Panel"}</b>
           </Link>
@@ -308,11 +432,7 @@ const Sidebar = () => {
             </button>
           </div>
         </div>
-      </div>
-
-      {context?.windowWidth < 920 && context?.isSidebarOpen === true && (
-        <div className="sb-overlay" onClick={closeSidebar} />
-      )}
+      </aside>
     </>
   );
 };
