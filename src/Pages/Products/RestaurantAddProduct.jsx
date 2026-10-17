@@ -1,20 +1,18 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import CircularProgress from '@mui/material/CircularProgress';
-import { IoMdClose } from 'react-icons/io';
 import {
-  FaUtensils, FaStore, FaImage, FaRupeeSign,
-  FaCloudUploadAlt, FaCheckCircle, FaExclamationCircle,
-  FaStar, FaRegStar, FaArrowLeft, FaTag,
+  FaUtensils, FaStore, FaImage, FaRupeeSign, FaCloudUploadAlt, FaExclamationCircle, FaArrowLeft, FaTag,
 } from 'react-icons/fa';
-import { MdCategory, MdInfo, MdRestaurantMenu } from 'react-icons/md';
+import { MdCategory, MdInfo, MdRestaurantMenu, MdSearch } from 'react-icons/md';
 import { MyContext } from '../../App';
-import { deleteImages, fetchDataFromApi, postData } from '../../utils/api';
+import { fetchDataFromApi, postData } from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
-import UploadBox from '../../Components/UploadBox';
 import ProductSpecsEditor from '../../Components/ProductSpecsEditor';
 import ProductOptionsEditor, { normalizeProductOptionsForSubmit } from '../../Components/ProductOptionsEditor';
+import {
+  FormShell, Card, Field, Input, TextArea, Pick, ShopBanner, SeoFields, seoFilled, CategoryFields,
+  PhotoGrid, PreviewCard, ActionBar, FormSkeleton, EmptyState,
+} from '../../Components/ProductFormKit';
 
 const FOOD_TYPES = [
   { value: '', label: 'Not specified' },
@@ -24,20 +22,21 @@ const FOOD_TYPES = [
 ];
 
 const DESCRIPTION_LIMIT = 500;
-const SEO_DESCRIPTION_LIMIT = 160;
 const MAX_IMAGES = 8;
+
+const SEO_PH = {
+  searchKeywords: 'butter chicken, chicken curry, mughlai (comma separated)',
+  tags: 'spicy, authentic, north indian',
+  keywords: 'restaurant, food, delivery',
+  seoDescription: 'Short description for search engines (150-160 characters)',
+  attributes: 'cuisine: North Indian, spice level: Medium, serves: 2',
+};
 
 const RestaurantAddProduct = () => {
   const context = useContext(MyContext);
   const history = useNavigate();
-  const formRef = useRef(null);
-  const fieldRefs = {
-    name: useRef(null),
-    description: useRef(null),
-    category: useRef(null),
-    price: useRef(null),
-    photos: useRef(null),
-  };
+  const refs = useRef({});
+  const reg = (k) => (el) => { refs.current[k] = el; };
 
   const [restaurant, setRestaurant] = useState(null);
   const [menus, setMenus] = useState([]);
@@ -53,27 +52,16 @@ const RestaurantAddProduct = () => {
   const [loadingMeta, setLoadingMeta] = useState(true);
   const [errors, setErrors] = useState({});
   const [isDirty, setIsDirty] = useState(false);
-  const [dragIndex, setDragIndex] = useState(null);
-  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [seoOpen, setSeoOpen] = useState(false);
 
   const [form, setForm] = useState({
-    name: '',
-    title: '',
-    description: '',
-    isFeatured: 'no',
-    price: '',
-    oldPrice: '',
-    foodType: '',
-    keywords: '',
-    tags: '',
-    searchKeywords: '',
-    seoDescription: '',
-    attributes: '',
-    productType: '',
+    name: '', title: '', description: '', isFeatured: 'no', price: '', oldPrice: '', foodType: '',
+    keywords: '', tags: '', searchKeywords: '', seoDescription: '', attributes: '', productType: '',
   });
   const [specifications, setSpecifications] = useState([{ key: '', value: '' }]);
   const [productOptions, setProductOptions] = useState([{ name: '', label: '', values: [] }]);
 
+  /* ---------- load ---------- */
   useEffect(() => {
     Promise.all([
       fetchDataFromApi('/api/go-market/restaurants?limit=1'),
@@ -92,40 +80,24 @@ const RestaurantAddProduct = () => {
       } else {
         setLoadingMeta(false);
       }
-    });
+    }).catch(() => setLoadingMeta(false));
   }, []);
 
   useEffect(() => {
     if (!categoryId) {
-      setSubCategories([]);
-      setSubCategoryId('');
-      setSubSubCategories([]);
-      setSubSubCategoryId('');
+      setSubCategories([]); setSubCategoryId(''); setSubSubCategories([]); setSubSubCategoryId('');
       return;
     }
-    fetchDataFromApi(`/api/go-market/subcategories?parentId=${categoryId}&limit=100&status=active`).then((res) => {
-      setSubCategories(res?.data || []);
-    });
+    fetchDataFromApi(`/api/go-market/subcategories?parentId=${categoryId}&limit=100&status=active`).then((res) => setSubCategories(res?.data || []));
   }, [categoryId]);
 
   useEffect(() => {
-    if (!subCategoryId) {
-      setSubSubCategories([]);
-      setSubSubCategoryId('');
-      return;
-    }
-    fetchDataFromApi(`/api/go-market/subcategories?parentId=${subCategoryId}&limit=100&status=active`).then((res) => {
-      setSubSubCategories(res?.data || []);
-    });
+    if (!subCategoryId) { setSubSubCategories([]); setSubSubCategoryId(''); return; }
+    fetchDataFromApi(`/api/go-market/subcategories?parentId=${subCategoryId}&limit=100&status=active`).then((res) => setSubSubCategories(res?.data || []));
   }, [subCategoryId]);
 
-  // Warn before leaving with unsaved changes
   useEffect(() => {
-    const handler = (e) => {
-      if (!isDirty) return;
-      e.preventDefault();
-      e.returnValue = '';
-    };
+    const handler = (e) => { if (!isDirty) return; e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
@@ -134,62 +106,35 @@ const RestaurantAddProduct = () => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setIsDirty(true);
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: false }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const setPreviewsFun = (arr) => {
-    setPreviews((prev) => [...prev, ...arr].slice(0, MAX_IMAGES));
+  const photosChanged = () => {
     setIsDirty(true);
-    if (errors.photos) setErrors((prev) => ({ ...prev, photos: false }));
+    setErrors((p) => (p.photos ? { ...p, photos: undefined } : p));
   };
 
-  const removeImg = (image, index) => {
-    deleteImages(`/api/category/deteleImage?img=${image}`).then(() => {
-      setPreviews((prev) => prev.filter((_, i) => i !== index));
-      setIsDirty(true);
-    });
-  };
+  /* ---------- derived ---------- */
+  const discountPercent = useMemo(() => {
+    const mrp = Number(form.price);
+    const offer = Number(form.oldPrice);
+    if (!mrp || !offer || offer >= mrp) return null;
+    return Math.round((1 - offer / mrp) * 100);
+  }, [form.price, form.oldPrice]);
 
-  const makeCover = (index) => {
-    if (index === 0) return;
-    setPreviews((prev) => {
-      const arr = [...prev];
-      const [moved] = arr.splice(index, 1);
-      arr.unshift(moved);
-      return arr;
-    });
-    setIsDirty(true);
-  };
+  const checklist = useMemo(() => ([
+    { done: !!form.name.trim(), label: 'Name entered' },
+    { done: !!form.description.trim(), label: 'Description added' },
+    { done: !!categoryId, label: 'Category selected' },
+    { done: !!form.price, label: 'Price set' },
+    { done: previews.length > 0, label: 'Photo added' },
+  ]), [form.name, form.description, categoryId, form.price, previews.length]);
 
-  const handleDragStart = (index) => setDragIndex(index);
-  const handleDragOver = (e, index) => {
-    e.preventDefault();
-    if (index !== dragOverIndex) setDragOverIndex(index);
-  };
-  const handleDragEnd = () => {
-    setDragIndex(null);
-    setDragOverIndex(null);
-  };
-  const handleDrop = (index) => {
-    if (dragIndex === null || dragIndex === index) {
-      handleDragEnd();
-      return;
-    }
-    setPreviews((prev) => {
-      const arr = [...prev];
-      const [moved] = arr.splice(dragIndex, 1);
-      arr.splice(index, 0, moved);
-      return arr;
-    });
-    setIsDirty(true);
-    handleDragEnd();
-  };
+  const percent = Math.round((checklist.filter((c) => c.done).length / checklist.length) * 100);
+  const seoCount = seoFilled(form);
+  const scrollTo = (k) => refs.current[k]?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
 
-  const scrollToField = (key) => {
-    const node = fieldRefs[key]?.current;
-    if (node) node.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-
+  /* ---------- submit ---------- */
   const handleSubmit = (e) => {
     e.preventDefault();
     const checks = [
@@ -200,24 +145,18 @@ const RestaurantAddProduct = () => {
       [!form.price, 'Enter price', 'price'],
       [previews.length === 0, 'Upload at least one food image', 'photos'],
     ];
-
-    const newErrors = {};
-    let firstFailKey = null;
-    let firstFailMsg = null;
-    for (const [fail, msg, key] of checks) {
-      if (fail) {
-        if (key) newErrors[key] = true;
-        if (!firstFailKey) {
-          firstFailKey = key;
-          firstFailMsg = msg;
-        }
-      }
-    }
-
-    if (firstFailMsg) {
-      setErrors(newErrors);
-      context.alertBox('error', firstFailMsg);
-      if (firstFailKey) scrollToField(firstFailKey);
+    const next = {};
+    let firstKey = null;
+    let firstMsg = null;
+    checks.forEach(([fail, msg, key]) => {
+      if (!fail) return;
+      if (key) next[key] = msg;
+      if (!firstMsg) { firstMsg = msg; firstKey = key; }
+    });
+    if (firstMsg) {
+      setErrors(next);
+      context.alertBox('error', firstMsg);
+      if (firstKey) scrollTo(firstKey);
       return;
     }
 
@@ -267,779 +206,138 @@ const RestaurantAddProduct = () => {
       });
   };
 
-  const discountPercent = useMemo(() => {
-    const mrp = Number(form.price);
-    const offer = Number(form.oldPrice);
-    if (!mrp || !offer || offer >= mrp) return null;
-    return Math.round((1 - offer / mrp) * 100);
-  }, [form.price, form.oldPrice]);
-
-  const completion = useMemo(() => {
-    const checklist = [
-      { done: !!form.name.trim(), label: 'Name entered' },
-      { done: !!form.description.trim(), label: 'Description added' },
-      { done: !!categoryId, label: 'Category selected' },
-      { done: !!form.price, label: 'Price set' },
-      { done: previews.length > 0, label: 'Photo added' },
-    ];
-    const doneCount = checklist.filter((c) => c.done).length;
-    return { checklist, percent: Math.round((doneCount / checklist.length) * 100) };
-  }, [form.name, form.description, categoryId, form.price, previews.length]);
-
-  const selectSx = (hasError) => ({
-    width: '97%',
-    fontSize: 13,
-    background: '#fff',
-    borderRadius: '10px',
-    transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '10px',
-      minHeight: 44,
-      '& fieldset': hasError ? { borderColor: '#ef4444' } : undefined,
-    },
-  });
-
-  const inputStyle = (hasError) => ({
-    width: '97%',
-    height: 44,
-    border: `1px solid ${hasError ? '#ef4444' : '#fed7aa'}`,
-    borderRadius: 10,
-    padding: '0 14px',
-    fontSize: 14,
-    color: '#7c2d12',
-    outline: 'none',
-    background: '#fff',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit',
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease',
-  });
-
-  const labelStyle = {
-    display: 'block',
-    fontSize: 11,
-    fontWeight: 700,
-    color: '#c2410c',
-    marginBottom: 6,
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
+  const handleCancel = () => {
+    if (isDirty && !window.confirm('Discard unsaved changes?')) return;
+    context.setIsOpenFullScreenPanel({ open: false });
+    history('/products');
   };
 
+  const showForm = !loadingMeta && restaurant;
+
   return (
-    <section className="restaurant-add-product">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-
-        .restaurant-add-product,
-        .restaurant-add-product *,
-        .restaurant-add-product *::before,
-        .restaurant-add-product *::after {
-          box-sizing: border-box;
-        }
-        .restaurant-add-product {
-          min-height: 100vh;
-          width: 100%;
-          max-width: 100vw;
-          overflow-x: hidden;
-          background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 40%, #f8fafc 100%);
-          font-family: 'DM Sans', sans-serif;
-          padding: 24px;
-          padding-bottom: 24px;
-        }
-        .restaurant-add-product input,
-        .restaurant-add-product textarea,
-        .restaurant-add-product select,
-        .restaurant-add-product .MuiInputBase-root {
-          max-width: 100%;
-        }
-        .restaurant-card { max-width: 100%; }
-
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(14px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -400px 0; }
-          100% { background-position: 400px 0; }
-        }
-        @keyframes shakeError {
-          10%, 90% { transform: translateX(-1px); }
-          20%, 80% { transform: translateX(2px); }
-          30%, 50%, 70% { transform: translateX(-4px); }
-          40%, 60% { transform: translateX(4px); }
-        }
-        @keyframes pulseRing {
-          0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.35); }
-          100% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
-        }
-        @keyframes progressFill {
-          from { width: 0; }
-        }
-        @keyframes popIn {
-          from { opacity: 0; transform: scale(0.85); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes spinSlow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        .restaurant-add-product input:focus,
-        .restaurant-add-product textarea:focus {
-          border-color: #f97316 !important;
-          box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
-          transform: translateY(-1px);
-        }
-        .restaurant-add-product button:focus-visible,
-        .restaurant-add-product input:focus-visible,
-        .restaurant-add-product textarea:focus-visible {
-          outline: 2px solid #ea580c;
-          outline-offset: 2px;
-        }
-
-        .restaurant-card {
-          background: #fff;
-          border: 1px solid #fed7aa;
-          border-radius: 16px;
-          box-shadow: 0 4px 24px rgba(249, 115, 22, 0.1);
-          animation: fadeInUp 0.45s ease both;
-          transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
-        }
-        .restaurant-card.hoverable:hover {
-          box-shadow: 0 10px 32px rgba(249, 115, 22, 0.18);
-          transform: translateY(-2px);
-          border-color: #fdba74;
-        }
-        .restaurant-card.field-error-card {
-          border-color: #fca5a5;
-          animation: shakeError 0.5s ease;
-        }
-
-        .field-error-text {
-          font-size: 11px;
-          color: #dc2626;
-          margin-top: 4px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          animation: fadeInUp 0.2s ease both;
-        }
-
-        .restaurant-preview-card { position: sticky; top: 24px; }
-
-        .progress-track {
-          width: 100%;
-          height: 8px;
-          background: #ffedd5;
-          border-radius: 999px;
-          overflow: hidden;
-        }
-        .progress-fill {
-          height: 100%;
-          border-radius: 999px;
-          background: linear-gradient(90deg, #fb923c, #ea580c);
-          transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .img-tile {
-          position: relative;
-          border-radius: 12px;
-          overflow: hidden;
-          height: 110px;
-          border: 2px solid #fed7aa;
-          cursor: grab;
-          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-        }
-        .img-tile:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 18px rgba(0,0,0,0.12); }
-        .img-tile.dragging { opacity: 0.4; }
-        .img-tile.drag-over { border-color: #ea580c; transform: scale(1.03); }
-        .img-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .img-cover-badge {
-          position: absolute; top: 6px; left: 6px; z-index: 2;
-          background: #16a34a; color: #fff; font-size: 9px; font-weight: 800;
-          padding: 3px 7px; border-radius: 6px; letter-spacing: 0.04em;
-          display: flex; align-items: center; gap: 3px;
-          animation: popIn 0.25s ease both;
-        }
-        .img-remove-btn {
-          position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%;
-          background: #dc2626; border: 2px solid #fff; color: #fff; cursor: pointer; z-index: 3;
-          display: flex; align-items: center; justify-content: center;
-          transition: transform 0.15s ease, background 0.15s ease;
-        }
-        .img-remove-btn:hover { transform: scale(1.15); background: #b91c1c; }
-        .img-cover-btn {
-          position: absolute; bottom: 6px; left: 6px; right: 6px; z-index: 2;
-          background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 6px;
-          font-size: 10px; font-weight: 700; padding: 4px 0; cursor: pointer;
-          opacity: 0; transition: opacity 0.2s ease;
-        }
-        .img-tile:hover .img-cover-btn { opacity: 1; }
-
-        .submit-btn {
-          width: 100%; height: 52px; border: none; border-radius: 12px; cursor: pointer;
-          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-          color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center;
-          justify-content: center; gap: 10px; box-shadow: 0 8px 24px rgba(249, 115, 22, 0.35);
-          transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-        }
-        .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(249, 115, 22, 0.42); }
-        .submit-btn:active:not(:disabled) { transform: translateY(0); }
-        .submit-btn:disabled { cursor: not-allowed; }
-
-        .cancel-btn {
-          height: 44px; padding: 0 20px; border-radius: 12px; border: 1px solid #fed7aa;
-          background: #fff; color: #7c2d12; font-size: 13px; font-weight: 700; cursor: pointer;
-          display: flex; align-items: center; gap: 8px; transition: background 0.2s ease, transform 0.15s ease;
-        }
-        .cancel-btn:hover { background: #fff7ed; transform: translateY(-1px); }
-
-        .discount-badge {
-          display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #166534;
-          font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
-          animation: popIn 0.3s ease both;
-        }
-
-        .char-counter { font-size: 11px; color: #9ca3af; margin-top: 4px; text-align: right; }
-        .char-counter.over { color: #dc2626; font-weight: 700; }
-
-        .skeleton-block {
-          border-radius: 10px; background: linear-gradient(90deg, #ffedd5 0px, #fff7ed 40px, #ffedd5 80px);
-          background-size: 600px 100%;
-          animation: shimmer 1.4s ease-in-out infinite;
-        }
-
-        .mobile-sticky-bar { display: none; }
-
-        .completion-chip {
-          display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700;
-          padding: 5px 12px; border-radius: 999px; transition: background 0.3s ease, color 0.3s ease;
-        }
-
-        .unsaved-dot {
-          width: 7px; height: 7px; border-radius: 50%; background: #f59e0b;
-          animation: pulseRing 1.6s ease-out infinite; display: inline-block;
-        }
-
-        @media (max-width: 960px) {
-          .restaurant-layout { grid-template-columns: 1fr !important; }
-          .restaurant-preview-card { position: static; }
-        }
-
-        @media (max-width: 640px) {
-          .restaurant-add-product { padding: 14px; padding-bottom: 96px; }
-          .restaurant-card { border-radius: 14px !important; padding: 18px !important; }
-          .restaurant-hero-title { font-size: 21px !important; }
-          .desktop-submit-btn { display: none !important; }
-          .price-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-          .mobile-sticky-bar {
-            display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
-            background: #fff; border-top: 1px solid #fed7aa; padding: 10px 14px;
-            padding-bottom: max(10px, env(safe-area-inset-bottom));
-            align-items: center; gap: 12px; box-shadow: 0 -6px 20px rgba(0,0,0,0.08);
-            animation: fadeInUp 0.3s ease both;
-          }
-        }
-
-        @media (max-width: 420px) {
-          .restaurant-add-product { padding: 12px; }
-          .restaurant-card { padding: 14px !important; }
-          .price-grid { grid-template-columns: 1fr !important; }
-          .category-grid { grid-template-columns: 1fr !important; }
-          .restaurant-add-product input,
-          .restaurant-add-product textarea,
-          .restaurant-add-product .MuiOutlinedInput-root {
-            width: 92% !important;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .restaurant-add-product input,
-          .restaurant-add-product textarea,
-          .restaurant-add-product .MuiOutlinedInput-root {
-            width: 94% !important;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .restaurant-card, .img-tile, .submit-btn, .cancel-btn, .discount-badge,
-          .img-cover-badge, .skeleton-block, .unsaved-dot, .mobile-sticky-bar {
-            animation: none !important;
-            transition: none !important;
-          }
-        }
-      `}</style>
-
-      <div style={{ marginBottom: 18, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <div>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px',
-            background: '#ffedd5', color: '#c2410c', borderRadius: 999, fontSize: 11, fontWeight: 700,
-            marginBottom: 8,
-          }}>
-            <FaUtensils size={10} /> RESTAURANT SELLER
-          </span>
-          <h1 className="restaurant-hero-title" style={{ fontSize: 26, fontWeight: 800, color: '#7c2d12', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
-            Add Menu Item
-          </h1>
-          <p style={{ fontSize: 14, color: '#6b7280', margin: 0, maxWidth: 560 }}>
-            Dish will appear on your Go Market restaurant menu for customers to order.
-          </p>
-        </div>
-
-        {!loadingMeta && restaurant && (
-          <div style={{ minWidth: 180 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#9a3412', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Progress
-              </span>
-              <span
-                className="completion-chip"
-                style={{
-                  background: completion.percent === 100 ? '#dcfce7' : '#ffedd5',
-                  color: completion.percent === 100 ? '#166534' : '#c2410c',
-                }}
-              >
-                {completion.percent === 100 ? <FaCheckCircle size={11} /> : null}
-                {completion.percent}%
-              </span>
-            </div>
-            <div className="progress-track">
-              <div className="progress-fill" style={{ width: `${completion.percent}%` }} />
-            </div>
-            {isDirty && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 11, color: '#b45309' }}>
-                <span className="unsaved-dot" /> Unsaved changes
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {loadingMeta ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="skeleton-block" style={{ height: 78, borderRadius: 16 }} />
-          <div className="skeleton-block" style={{ height: 220, borderRadius: 16 }} />
-          <div className="skeleton-block" style={{ height: 140, borderRadius: 16 }} />
-        </div>
-      ) : !restaurant ? (
-        <div className="restaurant-card" style={{ padding: 32, textAlign: 'center' }}>
-          <FaExclamationCircle size={40} color="#f59e0b" style={{ marginBottom: 12 }} />
-          <h3 style={{ color: '#111827', margin: '0 0 8px' }}>Restaurant not found</h3>
-          <p style={{ color: '#6b7280', fontSize: 14 }}>Complete seller registration with a market to create your restaurant first.</p>
-        </div>
+    <FormShell
+      theme="orange"
+      badgeIcon={<FaUtensils size={10} />}
+      badge="Restaurant seller"
+      title="Add menu item"
+      subtitle="This dish will appear on your Go Market restaurant menu for customers to order."
+      percent={showForm ? percent : undefined}
+      extra={isDirty && <span className="pf-dirty"><i /> Unsaved changes</span>}
+    >
+      {loadingMeta ? <FormSkeleton /> : !restaurant ? (
+        <EmptyState icon={<FaExclamationCircle size={38} />} title="Restaurant not found" text="Complete seller registration with a market to create your restaurant first." />
       ) : (
-        <div className="restaurant-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
-          <form ref={formRef} onSubmit={handleSubmit}>
-            <div className="restaurant-card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14, animationDelay: '0.02s' }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, #f97316, #ea580c)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 22, flexShrink: 0,
-              }}>
-                <FaStore />
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase' }}>Your restaurant</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {restaurant.restaurantName || 'My Restaurant'}
-                </div>
-                <div style={{ fontSize: 12, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {restaurant.address || 'Go Market'}
-                </div>
-              </div>
-            </div>
+        <div className="pf-layout">
+          <form className="pf-main" onSubmit={handleSubmit} noValidate>
+            <ShopBanner icon={<FaStore />} eyebrow="Your restaurant" name={restaurant.restaurantName || 'My Restaurant'} address={restaurant.address || 'Go Market'} />
 
-            <div
-              ref={fieldRefs.name}
-              className={`restaurant-card hoverable ${errors.name || errors.description ? 'field-error-card' : ''}`}
-              style={{ padding: 24, marginBottom: 20, animationDelay: '0.06s' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ffedd5', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <MdInfo size={18} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Item details</div>
-                  <div style={{ fontSize: 12, color: '#6b7280' }}>Name, description & food type</div>
-                </div>
+            <Card icon={<MdInfo size={17} />} title="Item details" sub="Name, description & food type" error={errors.name || errors.description}>
+              <div className="pf-row2" style={{ marginBottom: 14 }}>
+                <Field label="Dish name *" error={errors.name} innerRef={reg('name')}>
+                  <Input name="name" value={form.name} onChange={onChange} error={errors.name} maxLength={120} placeholder="e.g. Butter Chicken, Margherita Pizza" />
+                </Field>
+                <Field label="Display title" hint="Blank = dish name">
+                  <Input name="title" value={form.title} onChange={onChange} placeholder="Shown on product page" />
+                </Field>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>Dish name *</label>
-                  <input
-                    style={inputStyle(errors.name)}
-                    name="name"
-                    value={form.name}
-                    onChange={onChange}
-                    placeholder="e.g. Butter Chicken, Margherita Pizza"
-                    maxLength={120}
-                  />
-                  {errors.name && <div className="field-error-text"><FaExclamationCircle size={11} /> Dish name is required</div>}
-                </div>
-                <div>
-                  <label style={labelStyle}>Display title (product page)</label>
-                  <input style={inputStyle(false)} name="title" value={form.title} onChange={onChange} placeholder="Leave blank to use dish name" />
-                </div>
-                <div>
-                  <label style={labelStyle}>Featured dish</label>
-                  <Select size="small" sx={selectSx(false)} name="isFeatured" value={form.isFeatured} onChange={onChange}>
+              <Field label="Description *" error={errors.description} count={form.description.length} limit={DESCRIPTION_LIMIT} innerRef={reg('description')}>
+                <TextArea name="description" value={form.description} onChange={onChange} error={errors.description} maxLength={DESCRIPTION_LIMIT} placeholder="Ingredients, spice level, serving size…" />
+              </Field>
+              <div className="pf-row3" style={{ marginBottom: 14 }}>
+                <Field label="Food type">
+                  <Pick name="foodType" value={form.foodType} onChange={onChange}>
+                    {FOOD_TYPES.map((t) => <MenuItem key={t.value || 'none'} value={t.value}>{t.label}</MenuItem>)}
+                  </Pick>
+                </Field>
+                <Field label="Featured dish">
+                  <Pick name="isFeatured" value={form.isFeatured} onChange={onChange}>
                     <MenuItem value="no">No</MenuItem>
                     <MenuItem value="yes">Yes</MenuItem>
-                  </Select>
-                </div>
-                <div ref={fieldRefs.description}>
-                  <label style={labelStyle}>Description *</label>
-                  <textarea
-                    name="description"
-                    value={form.description}
-                    onChange={onChange}
-                    placeholder="Ingredients, spice level, serving size…"
-                    maxLength={DESCRIPTION_LIMIT}
-                    style={{ ...inputStyle(errors.description), height: 100, padding: '12px 14px', resize: 'vertical' }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {errors.description ? (
-                      <div className="field-error-text"><FaExclamationCircle size={11} /> Description is required</div>
-                    ) : <span />}
-                    <span className={`char-counter ${form.description.length > DESCRIPTION_LIMIT - 20 ? 'over' : ''}`}>
-                      {form.description.length}/{DESCRIPTION_LIMIT}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label style={labelStyle}>Food type</label>
-                  <Select size="small" sx={selectSx(false)} name="foodType" value={form.foodType} onChange={onChange}>
-                    {FOOD_TYPES.map((t) => (
-                      <MenuItem key={t.value || 'none'} value={t.value}>{t.label}</MenuItem>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label style={labelStyle}>Product type</label>
-                  <input
-                    style={inputStyle(false)}
-                    name="productType"
-                    value={form.productType}
-                    onChange={onChange}
-                    placeholder="e.g. Main Course, Appetizer, Dessert"
-                  />
-                </div>
-                <ProductSpecsEditor value={specifications} onChange={setSpecifications} accent="#ea580c" />
-                <div style={{ marginTop: 16 }}>
-                  <ProductOptionsEditor value={productOptions} onChange={setProductOptions} accent="#ea580c" />
-                </div>
+                  </Pick>
+                </Field>
+                <Field label="Product type">
+                  <Input name="productType" value={form.productType} onChange={onChange} placeholder="Main Course, Dessert…" />
+                </Field>
               </div>
-            </div>
+              <ProductSpecsEditor value={specifications} onChange={(v) => { setSpecifications(v); setIsDirty(true); }} accent="#ea580c" />
+              <div style={{ marginTop: 16 }}>
+                <ProductOptionsEditor value={productOptions} onChange={(v) => { setProductOptions(v); setIsDirty(true); }} accent="#ea580c" />
+              </div>
+            </Card>
 
-            <div className="restaurant-card hoverable" style={{ padding: 24, marginBottom: 20, animationDelay: '0.1s' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fef3c7', color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <MdInfo size={18} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>SEO & Search Optimization</div>
-                  <div style={{ fontSize: 12, color: '#6b7280' }}>Help customers find your dish easily</div>
-                </div>
-              </div>
+            <Card
+              icon={<MdSearch size={18} />} title="SEO & search" sub="Help customers find your dish"
+              collapsible open={seoOpen} onToggle={() => setSeoOpen((v) => !v)}
+              right={seoCount > 0 && <span className="pf-pill">{seoCount}/5 filled</span>}
+            >
+              <SeoFields form={form} onChange={onChange} ph={SEO_PH} />
+            </Card>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>Search keywords</label>
-                  <input
-                    style={inputStyle(false)}
-                    name="searchKeywords"
-                    value={form.searchKeywords}
-                    onChange={onChange}
-                    placeholder="e.g. butter chicken, chicken curry, mughlai (comma separated)"
-                  />
-                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
-                    Words users might search for to find this dish
-                  </div>
-                </div>
-                <div>
-                  <label style={labelStyle}>Product tags</label>
-                  <input
-                    style={inputStyle(false)}
-                    name="tags"
-                    value={form.tags}
-                    onChange={onChange}
-                    placeholder="e.g. spicy, authentic, north indian (comma separated)"
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>SEO keywords</label>
-                  <input
-                    style={inputStyle(false)}
-                    name="keywords"
-                    value={form.keywords}
-                    onChange={onChange}
-                    placeholder="e.g. restaurant, food, delivery (comma separated)"
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>SEO description</label>
-                  <textarea
-                    name="seoDescription"
-                    value={form.seoDescription}
-                    onChange={onChange}
-                    placeholder="Short description for search engines (150-160 characters recommended)"
-                    style={{ ...inputStyle(false), height: 80, padding: '12px 14px', resize: 'vertical' }}
-                  />
-                  <div className={`char-counter ${form.seoDescription.length > SEO_DESCRIPTION_LIMIT ? 'over' : ''}`}>
-                    {form.seoDescription.length}/{SEO_DESCRIPTION_LIMIT} recommended
-                  </div>
-                </div>
-                <div>
-                  <label style={labelStyle}>Product attributes</label>
-                  <textarea
-                    name="attributes"
-                    value={form.attributes}
-                    onChange={onChange}
-                    placeholder="e.g. cuisine: North Indian, spice level: Medium, serves: 2 (key: value format, one per line)"
-                    style={{ ...inputStyle(false), height: 80, padding: '12px 14px', resize: 'vertical' }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="restaurant-card hoverable" style={{ padding: 24, marginBottom: 20, animationDelay: '0.14s' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fef3c7', color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <MdRestaurantMenu size={18} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Menu</div>
-                  <div style={{ fontSize: 12, color: '#6b7280' }}>Which menu this item belongs to</div>
-                </div>
-              </div>
+            <Card icon={<MdRestaurantMenu size={18} />} title="Menu" sub="Which menu this item belongs to">
               {menus.length === 0 ? (
-                <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>
-                  No menu yet — a default &quot;Main Menu&quot; will be created automatically when you save.
-                </p>
+                <p style={{ margin: 0, color: '#6b7280' }}>No menu yet — a default “Main Menu” will be created automatically when you save.</p>
               ) : (
-                <div>
-                  <label style={labelStyle}>Select menu</label>
-                  <Select size="small" sx={selectSx(false)} value={menuId} displayEmpty onChange={(e) => { setMenuId(e.target.value); setIsDirty(true); }}>
+                <Field label="Select menu">
+                  <Pick value={menuId} onChange={(e) => { setMenuId(e.target.value); setIsDirty(true); }}>
                     <MenuItem value="" disabled>Select menu</MenuItem>
-                    {menus.map((m) => (
-                      <MenuItem key={m._id} value={m._id}>{m.menuName}</MenuItem>
-                    ))}
-                  </Select>
-                </div>
+                    {menus.map((m) => <MenuItem key={m._id} value={m._id}>{m.menuName}</MenuItem>)}
+                  </Pick>
+                </Field>
               )}
-            </div>
+            </Card>
 
-            <div ref={fieldRefs.category} className={`restaurant-card hoverable ${errors.category ? 'field-error-card' : ''}`} style={{ padding: 24, marginBottom: 20, animationDelay: '0.18s' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#e0f2fe', color: '#0369a1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <MdCategory size={18} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Category</div>
-                  <div style={{ fontSize: 12, color: '#6b7280' }}>Admin-created restaurant categories</div>
-                </div>
-              </div>
-              {categories.length === 0 ? (
-                <div style={{ padding: 16, background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, fontSize: 13, color: '#92400e' }}>
-                  No categories yet. Ask <strong>admin</strong> to add restaurant categories first.
-                </div>
-              ) : (
-                <div className="category-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  <div>
-                    <label style={labelStyle}>Category *</label>
-                    <Select size="small" sx={selectSx(errors.category)} value={categoryId} displayEmpty
-                      onChange={(e) => { setCategoryId(e.target.value); setSubCategoryId(''); setSubSubCategoryId(''); setIsDirty(true); if (errors.category) setErrors((p) => ({ ...p, category: false })); }}>
-                      <MenuItem value="" disabled>Select category</MenuItem>
-                      {categories.map((c) => <MenuItem key={c._id} value={c._id}>{c.name}</MenuItem>)}
-                    </Select>
-                    {errors.category && <div className="field-error-text"><FaExclamationCircle size={11} /> Category is required</div>}
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Sub category</label>
-                    <Select size="small" sx={selectSx(false)} value={subCategoryId} displayEmpty disabled={!categoryId}
-                      onChange={(e) => { setSubCategoryId(e.target.value); setIsDirty(true); }}>
-                      <MenuItem value="">Optional</MenuItem>
-                      {subCategories.map((sc) => <MenuItem key={sc._id} value={sc._id}>{sc.name}</MenuItem>)}
-                    </Select>
-                  </div>
-                </div>
-              )}
-              {subCategories.length > 0 && (
-                <div style={{ marginTop: 14 }}>
-                  <label style={labelStyle}>Sub-sub category</label>
-                  <Select size="small" sx={selectSx(false)} value={subSubCategoryId} displayEmpty disabled={!subCategoryId}
-                    onChange={(e) => { setSubSubCategoryId(e.target.value); setIsDirty(true); }}>
-                    <MenuItem value="">Optional</MenuItem>
-                    {subSubCategories.map((ssc) => <MenuItem key={ssc._id} value={ssc._id}>{ssc.name}</MenuItem>)}
-                  </Select>
-                </div>
-              )}
-            </div>
+            <Card icon={<MdCategory size={18} />} title="Category" sub="Admin-created restaurant categories" error={errors.category}>
+              <CategoryFields
+                categories={categories} subCategories={subCategories} subSubCategories={subSubCategories}
+                categoryId={categoryId} subCategoryId={subCategoryId} subSubCategoryId={subSubCategoryId}
+                onCategory={(v) => { setCategoryId(v); setSubCategoryId(''); setSubSubCategoryId(''); setIsDirty(true); if (errors.category) setErrors((p) => ({ ...p, category: undefined })); }}
+                onSub={(v) => { setSubCategoryId(v); setIsDirty(true); }}
+                onSubSub={(v) => { setSubSubCategoryId(v); setIsDirty(true); }}
+                error={errors.category} innerRef={reg('category')}
+                emptyText={<>No categories yet. Ask <strong>admin</strong> to add restaurant categories first.</>}
+              />
+            </Card>
 
-            <div ref={fieldRefs.price} className={`restaurant-card hoverable ${errors.price ? 'field-error-card' : ''}`} style={{ padding: 24, marginBottom: 20, animationDelay: '0.22s' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <FaRupeeSign size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Price</div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Selling price for this dish</div>
-                  </div>
-                </div>
-                {discountPercent !== null && (
-                  <span className="discount-badge"><FaTag size={10} /> Save {discountPercent}% off</span>
-                )}
+            <Card
+              icon={<FaRupeeSign size={15} />} title="Price" sub="Selling price for this dish" error={errors.price}
+              right={discountPercent !== null && <span className="pf-pill"><FaTag size={9} /> Save {discountPercent}%</span>}
+            >
+              <div className="pf-row2">
+                <Field label="MRP / base price (₹) *" error={errors.price} innerRef={reg('price')}>
+                  <Input type="number" min="0" name="price" value={form.price} onChange={onChange} error={errors.price} placeholder="199" />
+                </Field>
+                <Field label="Offer price (₹)">
+                  <Input type="number" min="0" name="oldPrice" value={form.oldPrice} onChange={onChange} placeholder="Optional discount price" />
+                </Field>
               </div>
-              <div className="price-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(140px, 220px))', gap: 14 }}>
-                <div>
-                  <label style={labelStyle}>MRP / Base price (₹) *</label>
-                  <input style={inputStyle(errors.price)} type="number" name="price" value={form.price} onChange={onChange} placeholder="199" min="0" />
-                  {errors.price && <div className="field-error-text"><FaExclamationCircle size={11} /> Price is required</div>}
-                </div>
-                <div>
-                  <label style={labelStyle}>Offer price (₹)</label>
-                  <input style={inputStyle(false)} type="number" name="oldPrice" value={form.oldPrice} onChange={onChange} placeholder="Optional discount price" min="0" />
-                </div>
-              </div>
-            </div>
+            </Card>
 
-            <div ref={fieldRefs.photos} className={`restaurant-card hoverable ${errors.photos ? 'field-error-card' : ''}`} style={{ padding: 24, marginBottom: 24, animationDelay: '0.26s' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fce7f3', color: '#be185d', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <FaImage size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Food photo *</div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Appetizing image increases orders</div>
-                  </div>
-                </div>
-                <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>{previews.length}/{MAX_IMAGES} photos</span>
-              </div>
-              {errors.photos && <div className="field-error-text" style={{ marginBottom: 10 }}><FaExclamationCircle size={11} /> Upload at least one photo</div>}
-              {previews.length > 0 && (
-                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>
-                  Drag to reorder, or hover a photo to make it the cover image.
-                </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 12 }}>
-                {previews.map((image, index) => (
-                  <div
-                    key={image + index}
-                    className={`img-tile ${dragIndex === index ? 'dragging' : ''} ${dragOverIndex === index && dragIndex !== null && dragIndex !== index ? 'drag-over' : ''}`}
-                    draggable
-                    onDragStart={() => handleDragStart(index)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDrop={() => handleDrop(index)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    {index === 0 && (
-                      <span className="img-cover-badge"><FaStar size={8} /> COVER</span>
-                    )}
-                    <button type="button" className="img-remove-btn" onClick={() => removeImg(image, index)}>
-                      <IoMdClose size={14} />
-                    </button>
-                    <img src={image} alt="" />
-                    {index !== 0 && (
-                      <button type="button" className="img-cover-btn" onClick={() => makeCover(index)}>
-                        <FaRegStar size={10} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                        Make cover
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {previews.length < MAX_IMAGES && (
-                  <UploadBox multiple name="images" url="/api/product/uploadImages" setPreviewsFun={setPreviewsFun} />
-                )}
-              </div>
-            </div>
+            <Card
+              icon={<FaImage size={15} />} title="Food photos *" sub="Appetizing images increase orders"
+              error={errors.photos} innerRef={reg('photos')}
+              right={<span className="pf-pill">{previews.length}/{MAX_IMAGES}</span>}
+            >
+              <PhotoGrid previews={previews} setPreviews={setPreviews} max={MAX_IMAGES} error={errors.photos} onChanged={photosChanged} />
+            </Card>
 
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                type="button"
-                className="cancel-btn"
-                onClick={() => {
-                  if (isDirty && !window.confirm('Discard unsaved changes?')) return;
-                  context.setIsOpenFullScreenPanel({ open: false });
-                  history('/products');
-                }}
-              >
-                <FaArrowLeft size={12} /> Cancel
-              </button>
-              <button type="submit" disabled={isLoading} className="submit-btn desktop-submit-btn">
-                {isLoading ? <CircularProgress size={22} sx={{ color: '#fff' }} /> : (
-                  <><FaCloudUploadAlt size={18} /> Publish to my restaurant menu</>
-                )}
-              </button>
-            </div>
+            <ActionBar
+              percent={percent} saving={isLoading} label="Publish to my menu" icon={<FaCloudUploadAlt size={16} />}
+              onCancel={handleCancel} cancelIcon={<FaArrowLeft size={11} />}
+            />
           </form>
 
-          <aside className="restaurant-preview-card">
-            <div className="restaurant-card hoverable" style={{ padding: 20, animationDelay: '0.1s' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 14 }}>Live preview</div>
-              <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
-                <div style={{
-                  height: 180,
-                  background: previews[0] ? `url(${previews[0]}) center/cover` : 'linear-gradient(135deg, #ffedd5, #fdba74)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background 0.3s ease',
-                }}>
-                  {!previews[0] && <FaUtensils size={48} color="#fb923c" style={{ opacity: 0.6 }} />}
-                </div>
-                <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 6 }}>
-                    {form.name || 'Dish name'}
-                    {form.foodType && (
-                      <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: form.foodType === 'Veg' ? '#dcfce7' : '#fee2e2', color: form.foodType === 'Veg' ? '#166534' : '#991b1b' }}>
-                        {form.foodType}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12, lineHeight: 1.5 }}>
-                    {form.description ? `${form.description.slice(0, 80)}${form.description.length > 80 ? '…' : ''}` : 'Description'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: '#ea580c' }}>
-                      ₹{discountPercent !== null ? form.oldPrice : (form.price || '—')}
-                    </div>
-                    {discountPercent !== null && (
-                      <div style={{ fontSize: 13, color: '#9ca3af', textDecoration: 'line-through' }}>₹{form.price}</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '16px 0 0', fontSize: 13, color: '#4b5563' }}>
-                {completion.checklist.map(({ done, label }, i) => (
-                  <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: done ? '#16a34a' : '#9ca3af', transition: 'color 0.3s ease' }}>
-                    <FaCheckCircle size={14} /> {label}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
+          <PreviewCard
+            image={previews[0]} fallbackIcon={<FaUtensils />}
+            title={form.name || 'Dish name'}
+            tag={form.foodType || null} tagTone={form.foodType === 'Veg' ? 'veg' : ''}
+            desc={form.description ? `${form.description.slice(0, 80)}${form.description.length > 80 ? '…' : ''}` : 'Description'}
+            price={`₹${discountPercent !== null ? form.oldPrice : (form.price || '—')}`}
+            strike={discountPercent !== null ? `₹${form.price}` : null}
+            checklist={checklist}
+          />
         </div>
       )}
-
-      {!loadingMeta && restaurant && (
-        <div className="mobile-sticky-bar">
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase' }}>Price</div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#ea580c' }}>₹{form.price || '—'}</div>
-          </div>
-          <button
-            type="button"
-            className="submit-btn"
-            style={{ flex: 1 }}
-            disabled={isLoading}
-            onClick={() => formRef.current?.requestSubmit()}
-          >
-            {isLoading ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : (
-              <><FaCloudUploadAlt size={16} /> Publish</>
-            )}
-          </button>
-        </div>
-      )}
-    </section>
+    </FormShell>
   );
 };
 

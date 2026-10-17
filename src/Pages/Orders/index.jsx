@@ -11,644 +11,12 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import { MyContext } from "../../App.jsx";
+import { STYLES } from "./OrdersStyles.js";
 
 /* ─────────────────────────────────────────────────────────
    STYLES
 ───────────────────────────────────────────────────────── */
-const STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
 
-/* ── Root ── */
-.ao { font-family: 'DM Sans', sans-serif; color: #111; }
-.ao *, .ao *::before, .ao *::after { box-sizing: border-box; }
-
-/* ── Page card ── */
-.ao-page {
-  background: #fff;
-  border-radius: 20px;
-  border: 1px solid #eaebf2;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.06);
-  overflow: hidden;
-  margin: 12px 0;
-}
-
-/* ── Top bar ── */
-.ao-topbar {
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid #f0f0f7;
-}
-.ao-topbar-left { flex: 1; min-width: 0; }
-.ao-topbar-title {
-  font-family: 'Sora', sans-serif;
-  font-size: 17px; font-weight: 800;
-  color: #0c0c14; letter-spacing: -0.025em;
-  margin: 0 0 2px;
-}
-.ao-topbar-sub { font-size: 12px; color: #9ca3af; font-weight: 500; margin: 0; }
-.ao-search-wrap { flex: 1; max-width: 320px; min-width: 200px; }
-.ao-refresh-btn {
-  background: #f0f0f7;
-  border: 1px solid #e0e0e7;
-  border-radius: 10px;
-  padding: 10px 18px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #4b5563;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.ao-refresh-btn:hover {
-  background: #e8e8ef;
-  border-color: #d0d0d7;
-  transform: translateY(-1px);
-}
-.ao-refresh-btn:active {
-  transform: translateY(0);
-}
-.ao-refresh-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-.ao-refresh-icon {
-  font-size: 16px;
-  display: inline-flex;
-}
-.ao-refresh-icon.spinning {
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Pulse animation for live location indicator */
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.2); }
-}
-
-/* ─────────────────────────────────────────
-   RIDER FILTER TABS (Available / My Orders)
-───────────────────────────────────────── */
-.ao-rider-tabs {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: #f0f0f7;
-  border: 1px solid #e6e6f0;
-  border-radius: 13px;
-  padding: 4px;
-  margin-top: 12px;
-}
-.ao-rider-tab-btn {
-  position: relative;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: #6b7280;
-  padding: 9px 18px;
-  border-radius: 10px;
-  transition: color 0.25s ease, background 0.25s ease, transform 0.15s ease;
-  white-space: nowrap;
-}
-.ao-rider-tab-btn:hover:not(.active) {
-  color: #111827;
-  background: rgba(255,255,255,0.6);
-}
-.ao-rider-tab-btn:active { transform: scale(0.97); }
-.ao-rider-tab-btn.active {
-  color: #fff;
-  background: linear-gradient(135deg, #111827 0%, #312e81 130%);
-  box-shadow: 0 4px 14px rgba(17,24,39,0.28);
-  animation: tabPop 0.28s cubic-bezier(0.34,1.4,0.64,1);
-}
-@keyframes tabPop {
-  from { transform: scale(0.92); opacity: 0.6; }
-  to   { transform: scale(1);    opacity: 1; }
-}
-
-/* ── Stats strip ── */
-.ao-stats {
-  display: flex; gap: 1px;
-  background: #f0f0f7;
-  border-bottom: 1px solid #f0f0f7;
-}
-.ao-stat {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; padding: 12px 8px; background: #fafafa;
-}
-.ao-stat-n { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; line-height: 1; }
-.ao-stat-l { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; }
-
-/* ── Table ── */
-.ao-scroll { overflow-x: auto; transition: opacity 0.25s ease; }
-.ao-scroll.ao-loading { opacity: 0.45; pointer-events: none; }
-.ao-tbl { width: 100%; border-collapse: collapse; }
-.ao-tbl thead tr { background: #f7f7fb; }
-.ao-tbl th {
-  padding: 10px 14px; text-align: left;
-  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; color: #6b7280;
-  white-space: nowrap; border-bottom: 2px solid #eeeff8;
-}
-.ao-tbl td {
-  padding: 12px 14px;
-  border-bottom: 1px solid #f4f4f9;
-  vertical-align: middle;
-  font-size: 13px;
-}
-.ao-tbl tbody tr.ao-main-row {
-  transition: background 0.12s;
-  animation: rowFadeIn 0.36s cubic-bezier(0.22,1,0.36,1) both;
-}
-.ao-tbl tbody tr.ao-main-row:hover > td { background: #fafafd; }
-.ao-tbl tbody tr.ao-main-row.expanded > td { background: #f7f7fb; }
-@keyframes rowFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Expand btn */
-.ao-xbtn {
-  width: 28px; height: 28px; border-radius: 8px;
-  border: none; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: #f0f0f7; color: #6b7280;
-  transition: all 0.15s; flex-shrink: 0;
-}
-.ao-xbtn:hover { background: #e4e4ef; transform: translateY(-1px); }
-.ao-xbtn.open { background: #111; color: #fff; transform: rotate(0deg); }
-
-/* ID */
-.ao-oid { font-size: 11px; font-weight: 700; color: #6366f1; font-family: 'Sora', sans-serif; display: block; }
-.ao-oid-full { font-size: 10px; color: #bbb; display: block; margin-top: 1px; white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
-
-/* Payment badges */
-.ao-badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px;
-  white-space: nowrap; letter-spacing: 0.03em;
-}
-.ao-badge-cod    { background: #fef3c7; color: #92400e; }
-.ao-badge-online { background: #d1fae5; color: #065f46; }
-.ao-badge-pid    { font-size: 10px; color: #9ca3af; display: block; margin-top: 2px; }
-
-/* Customer cell */
-.ao-cust-name  { font-weight: 600; color: #111; font-size: 13px; white-space: nowrap; }
-.ao-cust-email { font-size: 11px; color: #9ca3af; margin-top: 1px; }
-.ao-cust-phone { font-size: 11px; color: #6b7280; margin-top: 1px; }
-
-/* Address cell */
-.ao-addr-type { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; padding: 2px 6px; border-radius: 3px; background: #f0f0f7; color: #374151; margin-bottom: 3px; }
-.ao-addr-text { font-size: 12px; color: #374151; max-width: 160px; line-height: 1.4; }
-.ao-addr-pin  { font-size: 11px; color: #9ca3af; margin-top: 1px; }
-
-/* Tap chip (map / gps links) */
-.ao-tap-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 600; text-decoration: none;
-  padding: 4px 10px; border-radius: 6px; border: 1px solid;
-  transition: all 0.15s ease;
-}
-.ao-tap-chip:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.08); filter: brightness(0.97); }
-
-/* Amount */
-.ao-amt { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 800; color: #0c0c14; }
-
-/* Delete btn */
-.ao-del {
-  display: inline-flex; align-items: center; gap: 4px;
-  background: #fff0f0; color: #dc2626; border: 1px solid #fecaca;
-  font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 7px;
-  cursor: pointer; font-family: 'DM Sans', sans-serif;
-  transition: all 0.15s; white-space: nowrap;
-}
-.ao-del:hover { background: #fee2e2; border-color: #fca5a5; transform: translateY(-1px); }
-
-/* ── Expanded products panel ── */
-.ao-panel-row > td {
-  padding: 0 !important;
-  border-bottom: 2px solid #e8e8f2 !important;
-}
-.ao-panel {
-  background: #f7f7fb;
-  padding: 16px 20px 20px 24px;
-  animation: panelOpen 0.2s ease both;
-}
-@keyframes panelOpen {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.ao-panel-hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 8px;
-}
-.ao-panel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #374151; }
-.ao-panel-count { font-size: 10px; font-weight: 700; background: #e4e4ef; color: #374151; padding: 2px 8px; border-radius: 20px; }
-.ao-panel-hint  { font-size: 11px; color: #aaa; margin-bottom: 12px; }
-
-/* Product cards */
-.ao-prod-list { display: flex; flex-direction: column; gap: 7px; }
-.ao-prod-card {
-  display: flex; align-items: center; gap: 12px;
-  background: #fff; border: 1.5px solid #eaebf2; border-radius: 12px;
-  padding: 10px 14px; cursor: pointer;
-  transition: all 0.18s ease;
-  position: relative;
-}
-.ao-prod-card:hover {
-  border-color: #6366f1;
-  box-shadow: 0 4px 18px rgba(99,102,241,0.1);
-  transform: translateX(4px);
-}
-.ao-prod-card::after {
-  content: '↗';
-  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
-  font-size: 13px; color: #c7c7d6;
-  transition: color 0.15s;
-}
-.ao-prod-card:hover::after { color: #6366f1; }
-.ao-prod-img {
-  width: 52px; height: 52px; border-radius: 10px;
-  object-fit: cover; flex-shrink: 0;
-  border: 1px solid #eaebf2;
-}
-.ao-prod-noimg {
-  width: 52px; height: 52px; border-radius: 10px; flex-shrink: 0;
-  background: #f0f0f7; display: flex; align-items: center; justify-content: center;
-  color: #bbb; font-size: 20px;
-}
-.ao-prod-info { flex: 1; min-width: 0; }
-.ao-prod-name { font-size: 13px; font-weight: 600; color: #111; margin-bottom: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 260px; }
-.ao-prod-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-.ao-prod-tag  { font-size: 10px; font-weight: 600; background: #f0f0f7; color: #6b7280; padding: 2px 7px; border-radius: 4px; }
-.ao-prod-right { text-align: right; flex-shrink: 0; margin-right: 20px; }
-.ao-prod-subtotal { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 800; color: #111; }
-.ao-prod-unit     { font-size: 10px; color: #9ca3af; margin-top: 1px; }
-
-/* Order total row inside panel */
-.ao-panel-total {
-  display: flex; align-items: center; justify-content: flex-end; gap: 12px;
-  padding-top: 12px; border-top: 2px solid #e8e8f2; margin-top: 10px;
-}
-.ao-panel-total-lbl { font-size: 12px; font-weight: 600; color: #6b7280; }
-.ao-panel-total-amt { font-family: 'Sora', sans-serif; font-size: 17px; font-weight: 800; color: #0c0c14; }
-
-/* ─────────────────────────────────────────
-   PRODUCT DETAIL MODAL
-───────────────────────────────────────── */
-.ao-overlay {
-  position: fixed; inset: 0; z-index: 9999;
-  background: rgba(8, 8, 20, 0.55);
-  backdrop-filter: blur(6px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-  animation: overlayIn 0.18s ease both;
-}
-@keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
-
-.ao-modal {
-  background: #fff; border-radius: 24px;
-  width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.22);
-  animation: modalIn 0.28s cubic-bezier(0.34, 1.4, 0.64, 1) both;
-  outline: none;
-}
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.85) translateY(24px); }
-  to   { opacity: 1; transform: scale(1)    translateY(0); }
-}
-
-/* Modal image area */
-.ao-modal-imgbox {
-  position: relative; height: 230px;
-  background: #f0f0f7; border-radius: 24px 24px 0 0; overflow: hidden;
-}
-.ao-modal-imgbox img {
-  width: 100%; height: 100%; object-fit: cover;
-  transition: transform 0.4s ease;
-}
-.ao-modal-imgbox:hover img { transform: scale(1.04); }
-.ao-modal-noimg {
-  width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 56px; color: #ddd;
-}
-.ao-modal-close {
-  position: absolute; top: 12px; right: 12px;
-  width: 34px; height: 34px; border-radius: 50%;
-  background: rgba(0,0,0,0.45); border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 16px;
-  transition: background 0.15s;
-}
-.ao-modal-close:hover { background: rgba(0,0,0,0.7); }
-
-/* Subtotal chip over image */
-.ao-modal-chip {
-  position: absolute; bottom: 12px; left: 12px;
-  background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
-  color: #fff; font-family: 'Sora', sans-serif;
-  font-size: 15px; font-weight: 800;
-  padding: 6px 14px; border-radius: 20px;
-}
-
-/* Modal body */
-.ao-modal-body { padding: 22px 24px 28px; }
-.ao-modal-name {
-  font-family: 'Sora', sans-serif;
-  font-size: 18px; font-weight: 800; color: #0c0c14;
-  letter-spacing: -0.025em; margin: 0 0 4px; line-height: 1.3;
-}
-.ao-modal-pid { font-size: 11px; color: #9ca3af; font-weight: 500; margin: 0 0 18px; font-family: 'DM Sans', sans-serif; }
-
-/* Price row */
-.ao-modal-pricerow { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
-.ao-modal-price { font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 800; color: #0c0c14; }
-.ao-modal-per   { font-size: 12px; color: #9ca3af; }
-
-/* Qty × price math */
-.ao-modal-math {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
-  padding: 5px 12px; margin-bottom: 20px;
-  font-size: 12px; font-weight: 600; color: #065f46;
-}
-
-.ao-modal-divider { height: 1px; background: #f0f0f7; margin: 18px 0; }
-
-/* Attributes grid */
-.ao-modal-attrs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-.ao-modal-attr { background: #f7f7fb; border-radius: 10px; padding: 10px 14px; }
-.ao-modal-attr-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; margin-bottom: 4px; }
-.ao-modal-attr-val { font-size: 13px; font-weight: 600; color: #111; display: flex; align-items: center; gap: 6px; }
-.ao-modal-color-dot { width: 13px; height: 13px; border-radius: 50%; border: 1px solid #e5e7eb; flex-shrink: 0; }
-
-/* Footer buttons */
-.ao-modal-footer { display: flex; gap: 8px; }
-.ao-modal-btn-p {
-  flex: 1; height: 44px; border-radius: 12px;
-  background: #0c0c14; color: #fff; border: none; cursor: pointer;
-  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  text-decoration: none; transition: all 0.18s;
-}
-.ao-modal-btn-p:hover { background: #1f1f2e; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(12,12,20,0.2); }
-.ao-modal-btn-s {
-  height: 44px; padding: 0 18px; border-radius: 12px;
-  background: #f0f0f7; color: #374151; border: none; cursor: pointer;
-  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
-  transition: all 0.15s;
-}
-.ao-modal-btn-s:hover { background: #e4e4ef; }
-
-/* ── Empty state ── */
-.ao-empty {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 56px 24px; gap: 8px; text-align: center;
-  animation: rowFadeIn 0.4s ease both;
-}
-.ao-empty-icon { font-size: 44px; margin-bottom: 4px; }
-.ao-empty h3 { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; color: #374151; margin: 0; }
-.ao-empty p  { font-size: 12px; color: #9ca3af; margin: 0; }
-
-/* ── Pagination ── */
-.ao-page-footer { display: flex; justify-content: center; padding: 18px 24px 20px; }
-
-
-/* ── Receipt button ── */
-.ao-receipt-btn {
-  display: inline-flex; align-items: center; gap: 4px;
-  background: #f0f7ff; color: #2563eb; border: 1px solid #bfdbfe;
-  font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 7px;
-  cursor: pointer; font-family: 'DM Sans', sans-serif;
-  transition: all 0.15s; white-space: nowrap;
-}
-.ao-receipt-btn:hover { background: #dbeafe; border-color: #93c5fd; transform: translateY(-1px); }
-.ao-receipt-btn:active { transform: translateY(0) scale(0.98); }
-.ao-receipt-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-/* ─────────────────────────────────────────
-   RIDER ACTION GROUP (per-order button cluster)
-───────────────────────────────────────── */
-.ao-rider-actions {
-  display: flex; flex-direction: column; gap: 6px;
-  background: #fafbff;
-  border: 1px solid #eef0fb;
-  border-radius: 12px;
-  padding: 8px;
-  animation: rowFadeIn 0.3s ease both;
-}
-.ao-rider-actions .ao-receipt-btn {
-  justify-content: center;
-  width: 100%;
-}
-.ao-rider-status-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 10px; font-weight: 700; letter-spacing: 0.02em;
-  padding: 5px 10px; border-radius: 20px;
-  background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff;
-}
-.ao-rider-status-dot {
-  width: 6px; height: 6px; border-radius: 50%; background: #6366f1;
-  animation: pulse 1.8s ease-in-out infinite;
-}
-
-/* ═══════════════════════════════════
-   RECEIPT MODAL
-═══════════════════════════════════ */
-.ao-rcpt-overlay {
-  position: fixed; inset: 0; z-index: 9998;
-  background: rgba(4,6,15,0.65);
-  backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 16px;
-  animation: overlayIn 0.2s ease both;
-}
-.ao-rcpt-sheet {
-  background: #fff;
-  border-radius: 20px;
-  width: 100%; max-width: 640px; max-height: 92vh;
-  overflow-y: auto; overflow-x: hidden;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.05);
-  animation: modalIn 0.3s cubic-bezier(0.34,1.4,0.64,1) both;
-  position: relative;
-}
-
-/* header gradient */
-.ao-rcpt-head {
-  background: linear-gradient(135deg, #0c0c14 0%, #1e1b4b 60%, #312e81 100%);
-  padding: 28px 28px 22px;
-  position: relative; overflow: hidden;
-}
-.ao-rcpt-head::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse at top right, rgba(99,102,241,0.3) 0%, transparent 60%);
-}
-.ao-rcpt-head-top {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
-  position: relative; z-index: 1;
-}
-.ao-rcpt-brand { display: flex; align-items: center; gap: 10px; }
-.ao-rcpt-brand-icon {
-  width: 40px; height: 40px; background: rgba(255,255,255,0.12);
-  border-radius: 10px; border: 1px solid rgba(255,255,255,0.18);
-  display: flex; align-items: center; justify-content: center; font-size: 20px;
-}
-.ao-rcpt-brand-name { font-family:'Sora',sans-serif; font-size:15px; font-weight:800; color:#fff; letter-spacing:-0.02em; }
-.ao-rcpt-brand-sub  { font-size:10px; color:rgba(255,255,255,0.5); margin-top:1px; }
-.ao-rcpt-close-btn {
-  width:32px; height:32px; border-radius:50%;
-  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15);
-  cursor:pointer; color:#fff; font-size:15px;
-  display:flex; align-items:center; justify-content:center;
-  transition:background .15s; flex-shrink:0;
-}
-.ao-rcpt-close-btn:hover { background:rgba(255,255,255,0.22); }
-
-.ao-rcpt-head-mid {
-  margin-top: 22px; position: relative; z-index: 1;
-}
-.ao-rcpt-title { font-family:'Sora',sans-serif; font-size:22px; font-weight:800; color:#fff; letter-spacing:-0.03em; margin:0 0 6px; }
-.ao-rcpt-meta-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; }
-.ao-rcpt-meta-chip {
-  display:inline-flex; align-items:center; gap:5px;
-  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15);
-  border-radius:99px; padding:4px 10px; font-size:11px; color:rgba(255,255,255,0.8); font-weight:600;
-}
-.ao-rcpt-status-chip {
-  display:inline-flex; align-items:center; gap:5px;
-  border-radius:99px; padding:4px 12px; font-size:11px; font-weight:700;
-}
-
-/* tear edge */
-.ao-rcpt-tear {
-  width:100%; height:14px; background:#fff; position:relative; overflow:hidden;
-}
-.ao-rcpt-tear::before {
-  content:''; position:absolute; top:-14px; left:0; right:0; height:28px;
-  background: radial-gradient(circle at 50% 0%, #fff 10px, transparent 10px);
-  background-size: 28px 28px; background-repeat: repeat-x;
-}
-
-/* body */
-.ao-rcpt-body { padding: 20px 28px 28px; }
-
-/* section labels */
-.ao-rcpt-sec-lbl {
-  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
-  color: #9ca3af; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
-}
-.ao-rcpt-sec-lbl::after { content:''; flex:1; height:1px; background:#f0f0f7; }
-
-/* customer + address cards */
-.ao-rcpt-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-@media(max-width:500px){ .ao-rcpt-2col { grid-template-columns:1fr; } }
-
-.ao-rcpt-info-card {
-  background: #f8fafc; border: 1px solid #e8e8f2; border-radius: 12px; padding: 14px 16px;
-}
-.ao-rcpt-info-title {
-  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-  color: #9ca3af; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
-}
-.ao-rcpt-info-name { font-size: 14px; font-weight: 700; color: #0c0c14; margin-bottom: 3px; }
-.ao-rcpt-info-line { font-size: 12px; color: #4b5563; margin-bottom: 2px; line-height: 1.5; }
-.ao-rcpt-info-muted { font-size: 11px; color: #9ca3af; }
-
-/* products table */
-.ao-rcpt-prod-table { width:100%; border-collapse:collapse; margin-bottom:0; }
-.ao-rcpt-prod-table th {
-  padding: 8px 10px; font-size:10px; font-weight:700; letter-spacing:0.08em;
-  text-transform:uppercase; color:#9ca3af; border-bottom:2px solid #f0f0f7;
-  text-align:left;
-}
-.ao-rcpt-prod-table th:last-child { text-align:right; }
-.ao-rcpt-prod-table td { padding:11px 10px; border-bottom:1px solid #f7f7fb; vertical-align:middle; }
-.ao-rcpt-prod-table tr:last-child td { border-bottom:none; }
-.ao-rcpt-prod-table tr:hover td { background:#fafafd; }
-
-.ao-rcpt-prod-img {
-  width:42px; height:42px; border-radius:8px; object-fit:cover; border:1px solid #e8e8f2; flex-shrink:0;
-}
-.ao-rcpt-prod-noimg {
-  width:42px; height:42px; border-radius:8px; background:#f0f0f7;
-  display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;
-}
-.ao-rcpt-prod-name { font-size:13px; font-weight:600; color:#111; margin-bottom:3px; }
-.ao-rcpt-prod-attr { font-size:10px; color:#9ca3af; }
-.ao-rcpt-prod-amt  { font-family:'Sora',sans-serif; font-size:13px; font-weight:800; color:#0c0c14; text-align:right; white-space:nowrap; }
-.ao-rcpt-prod-unit { font-size:10px; color:#9ca3af; text-align:right; white-space:nowrap; }
-
-/* totals */
-.ao-rcpt-totals {
-  background:#f8fafc; border:1px solid #e8e8f2; border-radius:12px; padding:14px 16px; margin-top:14px;
-}
-.ao-rcpt-total-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:13px; }
-.ao-rcpt-total-row.sub { color:#6b7280; }
-.ao-rcpt-total-row.grand { border-top:2px solid #e8e8f2; margin-top:8px; padding-top:10px; }
-.ao-rcpt-total-row.grand .ao-rcpt-total-lbl { font-family:'Sora',sans-serif; font-size:14px; font-weight:800; color:#0c0c14; }
-.ao-rcpt-total-row.grand .ao-rcpt-total-val { font-family:'Sora',sans-serif; font-size:18px; font-weight:800; color:#0c0c14; }
-
-/* payment info */
-.ao-rcpt-pay-row {
-  display:flex; align-items:center; gap:8px; padding:12px 14px;
-  background:#f8fafc; border:1px solid #e8e8f2; border-radius:10px; margin-top:14px;
-}
-.ao-rcpt-pay-icon { font-size:18px; }
-.ao-rcpt-pay-label { font-size:12px; font-weight:600; color:#374151; }
-.ao-rcpt-pay-sub   { font-size:10px; color:#9ca3af; }
-
-/* footer */
-.ao-rcpt-footer {
-  display:flex; gap:8px; padding:16px 28px 24px; border-top:1px solid #f0f0f7; flex-wrap:wrap;
-}
-.ao-rcpt-btn-print {
-  flex:1; min-width:120px; height:44px; border-radius:12px;
-  background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff;
-  border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700;
-  display:flex; align-items:center; justify-content:center; gap:7px;
-  transition:all .18s; box-shadow:0 4px 14px rgba(37,99,235,.3);
-}
-.ao-rcpt-btn-print:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(37,99,235,.4); }
-.ao-rcpt-btn-close {
-  height:44px; padding:0 20px; border-radius:12px;
-  background:#f0f0f7; color:#374151; border:none; cursor:pointer;
-  font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; transition:all .15s;
-}
-.ao-rcpt-btn-close:hover { background:#e4e4ef; }
-
-/* ── PRINT STYLES ── */
-@media print {
-  body * { visibility: hidden !important; }
-  .ao-rcpt-printable, .ao-rcpt-printable * { visibility: visible !important; }
-  .ao-rcpt-printable {
-    position: fixed !important; inset: 0 !important; z-index: 99999 !important;
-    background: #fff !important; padding: 24px !important;
-    max-height: none !important; overflow: visible !important;
-    border-radius: 0 !important; box-shadow: none !important;
-  }
-  .ao-rcpt-footer { display: none !important; }
-  .ao-rcpt-close-btn { display: none !important; }
-  .ao-rcpt-head { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  .ao-rcpt-tear { display:none; }
-}
-
-/* ── Status select override ── */
-.ao-status-sel .MuiOutlinedInput-root { border-radius: 8px !important; font-size: 12px !important; font-family: 'DM Sans', sans-serif !important; font-weight: 600 !important; }
-.ao-status-sel .MuiSelect-select { padding: 6px 10px !important; font-size: 12px !important; font-weight: 600 !important; }
-.ao-status-sel fieldset { border-color: #eaebf2 !important; }
-`;
 
 /* ── helpers ── */
 const fmt = (n) =>
@@ -659,14 +27,14 @@ const fmtDate = (d) =>
 
 /* ── Status badge ── */
 const STATUS_COLORS = {
-  pending:    { bg: "#fef3c7", color: "#92400e", dot: "#f59e0b" },
-  confirmed:  { bg: "#dbeafe", color: "#1e40af", dot: "#3b82f6" },
-  confirm:    { bg: "#dbeafe", color: "#1e40af", dot: "#3b82f6" },
+  pending: { bg: "#fef3c7", color: "#92400e", dot: "#f59e0b" },
+  confirmed: { bg: "#dbeafe", color: "#1e40af", dot: "#3b82f6" },
+  confirm: { bg: "#dbeafe", color: "#1e40af", dot: "#3b82f6" },
   processing: { bg: "#ede9fe", color: "#5b21b6", dot: "#8b5cf6" },
-  shipped:    { bg: "#e0f2fe", color: "#0369a1", dot: "#0ea5e9" },
-  delivered:  { bg: "#d1fae5", color: "#065f46", dot: "#16a34a" },
-  cancelled:  { bg: "#fee2e2", color: "#991b1b", dot: "#ef4444" },
-  refunded:   { bg: "#ccfbf1", color: "#0f766e", dot: "#14b8a6" },
+  shipped: { bg: "#e0f2fe", color: "#0369a1", dot: "#0ea5e9" },
+  delivered: { bg: "#d1fae5", color: "#065f46", dot: "#16a34a" },
+  cancelled: { bg: "#fee2e2", color: "#991b1b", dot: "#ef4444" },
+  refunded: { bg: "#ccfbf1", color: "#0f766e", dot: "#14b8a6" },
 };
 const getStatusStyle = (s = "") => STATUS_COLORS[s.toLowerCase()] || { bg: "#f0f0f7", color: "#374151", dot: "#9ca3af" };
 
@@ -685,12 +53,12 @@ const ProductModal = ({ item, onClose }) => {
 
   const subtotal = (item.price || 0) * (item.quantity || 1);
   const attrs = [
-    item.quantity  && { label: "Quantity", value: `× ${item.quantity}` },
-    item.color     && { label: "Color",    value: item.color, isColor: true },
-    item.size      && { label: "Size",     value: item.size },
-    item.weight    && { label: "Weight",   value: item.weight },
-    item.ram       && { label: "RAM",      value: item.ram },
-    item.brand     && { label: "Brand",    value: item.brand },
+    item.quantity && { label: "Quantity", value: `× ${item.quantity}` },
+    item.color && { label: "Color", value: item.color, isColor: true },
+    item.size && { label: "Size", value: item.size },
+    item.weight && { label: "Weight", value: item.weight },
+    item.ram && { label: "RAM", value: item.ram },
+    item.brand && { label: "Brand", value: item.brand },
   ].filter(Boolean);
 
   // Add selected options to attrs if they exist (but we'll show them separately below)
@@ -753,19 +121,19 @@ const ProductModal = ({ item, onClose }) => {
           {hasSelectedOptions && (
             <>
               <div className="ao-modal-divider" />
-              <div style={{ 
-                background: '#fef3c7', 
-                border: '1px solid #fde68a', 
-                borderRadius: 10, 
+              <div style={{
+                background: '#fef3c7',
+                border: '1px solid #fde68a',
+                borderRadius: 10,
                 padding: '12px 14px',
                 marginBottom: 8
               }}>
-                <div style={{ 
-                  fontSize: 10, 
-                  fontWeight: 700, 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.08em', 
-                  color: '#92400e', 
+                <div style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: '#92400e',
                   marginBottom: 8,
                   display: 'flex',
                   alignItems: 'center',
@@ -775,7 +143,7 @@ const ProductModal = ({ item, onClose }) => {
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {Object.entries(item.selectedOptions).map(([key, value]) => (
-                    <div 
+                    <div
                       key={key}
                       style={{
                         background: '#fff',
@@ -787,18 +155,18 @@ const ProductModal = ({ item, onClose }) => {
                         gap: 6
                       }}
                     >
-                      <span style={{ 
-                        fontSize: 10, 
-                        fontWeight: 700, 
+                      <span style={{
+                        fontSize: 10,
+                        fontWeight: 700,
                         color: '#92400e',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em'
                       }}>
                         {key}:
                       </span>
-                      <span style={{ 
-                        fontSize: 12, 
-                        fontWeight: 700, 
+                      <span style={{
+                        fontSize: 12,
+                        fontWeight: 700,
                         color: '#b45309'
                       }}>
                         {value}
@@ -814,20 +182,20 @@ const ProductModal = ({ item, onClose }) => {
           {item.sellerId && (
             <>
               <div className="ao-modal-divider" />
-              <div style={{ 
-                background: '#f8fafc', 
-                border: '1px solid #e2e8f0', 
-                borderRadius: 10, 
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: 10,
                 padding: '12px 14px',
                 marginBottom: 8
               }}>
-                <div style={{ 
-                  fontSize: 10, 
-                  fontWeight: 700, 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.08em', 
-                  color: '#9ca3af', 
-                  marginBottom: 8 
+                <div style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: '#9ca3af',
+                  marginBottom: 8
                 }}>
                   🏪 Seller Information
                 </div>
@@ -870,13 +238,13 @@ const ProductModal = ({ item, onClose }) => {
 const UserCurrentLocationDisplay = ({ order }) => {
   // Get goMarketLocation directly from populated userId
   const location = order?.userId?.goMarketLocation;
-  
+
   // Check if valid location exists
   if (!location?.coordinates ||
-      !Array.isArray(location.coordinates) ||
-      location.coordinates.length !== 2 ||
-      location.coordinates[0] === 0 ||
-      location.coordinates[1] === 0) {
+    !Array.isArray(location.coordinates) ||
+    location.coordinates.length !== 2 ||
+    location.coordinates[0] === 0 ||
+    location.coordinates[1] === 0) {
     return null;
   }
 
@@ -890,17 +258,17 @@ const UserCurrentLocationDisplay = ({ order }) => {
         target="_blank"
         rel="noopener noreferrer"
         className="ao-tap-chip"
-        style={{ 
-          color: '#92400e', 
-          background: '#fef3c7', 
+        style={{
+          color: '#92400e',
+          background: '#fef3c7',
           borderColor: '#fbbf24',
         }}
         title={`Current Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`}
       >
-        <span style={{ 
-          width: 5, 
-          height: 5, 
-          background: '#f59e0b', 
+        <span style={{
+          width: 5,
+          height: 5,
+          background: '#f59e0b',
           borderRadius: '50%',
           display: 'inline-block',
           animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
@@ -940,25 +308,25 @@ const ReceiptModal = ({ order, onClose }) => {
 
   if (!order) return null;
 
-  const addr      = order?.delivery_address || {};
-  const user      = order?.userId || {};
+  const addr = order?.delivery_address || {};
+  const user = order?.userId || {};
   const allProducts = order?.products || [];
-  const isCOD     = !order?.paymentId;
-  const sc        = getStatusStyle(order?.order_status);
+  const isCOD = !order?.paymentId;
+  const sc = getStatusStyle(order?.order_status);
 
   // Filter products for seller view - only show products that belong to this seller
   const isSellerView = SELLER_ROLES.includes(context?.userData?.role);
   const isDeliveryRider = context?.userData?.role === "DELIVERY_RIDER";
   const currentSellerId = context?.userData?._id || context?.userData?.id;
-  
+
   const products = isSellerView && currentSellerId
     ? allProducts.filter((p) => {
-        // Handle different sellerId structures
-        const productSellerId = p.sellerId?._id || p.sellerId;
-        return String(productSellerId) === String(currentSellerId);
-      })
+      // Handle different sellerId structures
+      const productSellerId = p.sellerId?._id || p.sellerId;
+      return String(productSellerId) === String(currentSellerId);
+    })
     : allProducts;
-  
+
   console.log('ReceiptModal Debug:', {
     isSellerView,
     isDeliveryRider,
@@ -971,17 +339,17 @@ const ReceiptModal = ({ order, onClose }) => {
   });
 
   // Subtotal = sum of (price × qty)
-  const subtotal  = products.reduce((s, p) => s + (p.price || 0) * (p.quantity || 1), 0);
+  const subtotal = products.reduce((s, p) => s + (p.price || 0) * (p.quantity || 1), 0);
   const discount = order?.discount_amount || 0;
   const baseAfterDiscount = Math.max(subtotal - discount, 0);
-  
+
   // Use order's fees if available, otherwise use commerce settings
-  const hasOrderFees = (order?.shippingFee !== undefined && order?.shippingFee !== null) || 
-                       (order?.deliveryFee !== undefined && order?.deliveryFee !== null);
-  
+  const hasOrderFees = (order?.shippingFee !== undefined && order?.shippingFee !== null) ||
+    (order?.deliveryFee !== undefined && order?.deliveryFee !== null);
+
   let shippingFee = 0;
   let deliveryFee = 0;
-  
+
   if (hasOrderFees) {
     // Order has fees saved - use them
     shippingFee = order?.shippingFee || 0;
@@ -992,16 +360,16 @@ const ReceiptModal = ({ order, onClose }) => {
     shippingFee = freeByRule ? 0 : Number(commerceSettings.shippingFee || 0);
     deliveryFee = freeByRule ? 0 : Number(commerceSettings.deliveryFee || 0);
   }
-  
+
   // For sellers: show their product subtotal + full order fees
   // For admin: show full order total
-  const total = isSellerView 
-    ? (subtotal + shippingFee + deliveryFee) 
+  const total = isSellerView
+    ? (subtotal + shippingFee + deliveryFee)
     : (order?.totalAmt || (subtotal - discount + shippingFee + deliveryFee));
 
-  const orderId   = order._id?.slice(-10).toUpperCase();
+  const orderId = order._id?.slice(-10).toUpperCase();
   const orderDate = order?.createdAt
-    ? new Date(order.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" })
+    ? new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
     : "—";
 
   const handlePrint = () => {
@@ -1038,7 +406,7 @@ const ReceiptModal = ({ order, onClose }) => {
                 className="ao-rcpt-status-chip"
                 style={{ background: sc.bg, color: sc.color }}
               >
-                <span style={{ width:6, height:6, borderRadius:"50%", background:sc.dot, display:"inline-block" }}></span>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: sc.dot, display: "inline-block" }}></span>
                 {(order?.order_status || "pending").toUpperCase()}
               </span>
             </div>
@@ -1057,7 +425,7 @@ const ReceiptModal = ({ order, onClose }) => {
             {/* Customer */}
             <div className="ao-rcpt-info-card">
               <div className="ao-rcpt-info-title">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>
                 Customer
               </div>
               <div className="ao-rcpt-info-name">{user?.name || "—"}</div>
@@ -1073,16 +441,16 @@ const ReceiptModal = ({ order, onClose }) => {
             {/* Delivery Address */}
             <div className="ao-rcpt-info-card">
               <div className="ao-rcpt-info-title">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" /><circle cx="12" cy="9" r="2.5" /></svg>
                 Delivery Address
               </div>
               {addr?.addressType && (
-                <div style={{ display:"inline-block", fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", background:"#ede9fe", color:"#5b21b6", padding:"2px 7px", borderRadius:4, marginBottom:6 }}>
+                <div style={{ display: "inline-block", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", background: "#ede9fe", color: "#5b21b6", padding: "2px 7px", borderRadius: 4, marginBottom: 6 }}>
                   {addr.addressType}
                 </div>
               )}
-              {addr?.address   && <div className="ao-rcpt-info-line">{addr.address}</div>}
-              {addr?.landmark  && <div className="ao-rcpt-info-line">{addr.landmark}</div>}
+              {addr?.address && <div className="ao-rcpt-info-line">{addr.address}</div>}
+              {addr?.landmark && <div className="ao-rcpt-info-line">{addr.landmark}</div>}
               <div className="ao-rcpt-info-line">
                 {[addr.city, addr.state].filter(Boolean).join(", ")}
                 {addr.pincode && ` – ${addr.pincode}`}
@@ -1121,54 +489,54 @@ const ReceiptModal = ({ order, onClose }) => {
                   </a>
                 </div>
               )}
-              
+
               {/* Current Location - User's Latest Saved goMarketLocation */}
-              {user?.goMarketLocation?.coordinates && 
-               Array.isArray(user.goMarketLocation.coordinates) && 
-               user.goMarketLocation.coordinates.length === 2 &&
-               user.goMarketLocation.coordinates[0] !== 0 && 
-               user.goMarketLocation.coordinates[1] !== 0 && (
-                <div style={{ marginTop: '6px' }}>
-                  <a
-                    href={`https://www.google.com/maps?q=${user.goMarketLocation.coordinates[1]},${user.goMarketLocation.coordinates[0]}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#92400e',
-                      textDecoration: 'none',
-                      padding: '4px 10px',
-                      background: '#fef3c7',
-                      border: '1px solid #fbbf24',
-                      borderRadius: '6px',
-                      transition: 'all 0.15s'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = '#fde68a';
-                      e.currentTarget.style.borderColor = '#f59e0b';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = '#fef3c7';
-                      e.currentTarget.style.borderColor = '#fbbf24';
-                    }}
-                    title={`Current Location: ${user.goMarketLocation.coordinates[1].toFixed(6)}, ${user.goMarketLocation.coordinates[0].toFixed(6)}`}
-                  >
-                    <span style={{ 
-                      width: 5, 
-                      height: 5, 
-                      background: '#f59e0b', 
-                      borderRadius: '50%',
-                      display: 'inline-block',
-                      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
-                    }} />
-                    📍 Current Location
-                  </a>
-                </div>
-              )}
+              {user?.goMarketLocation?.coordinates &&
+                Array.isArray(user.goMarketLocation.coordinates) &&
+                user.goMarketLocation.coordinates.length === 2 &&
+                user.goMarketLocation.coordinates[0] !== 0 &&
+                user.goMarketLocation.coordinates[1] !== 0 && (
+                  <div style={{ marginTop: '6px' }}>
+                    <a
+                      href={`https://www.google.com/maps?q=${user.goMarketLocation.coordinates[1]},${user.goMarketLocation.coordinates[0]}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#92400e',
+                        textDecoration: 'none',
+                        padding: '4px 10px',
+                        background: '#fef3c7',
+                        border: '1px solid #fbbf24',
+                        borderRadius: '6px',
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = '#fde68a';
+                        e.currentTarget.style.borderColor = '#f59e0b';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = '#fef3c7';
+                        e.currentTarget.style.borderColor = '#fbbf24';
+                      }}
+                      title={`Current Location: ${user.goMarketLocation.coordinates[1].toFixed(6)}, ${user.goMarketLocation.coordinates[0].toFixed(6)}`}
+                    >
+                      <span style={{
+                        width: 5,
+                        height: 5,
+                        background: '#f59e0b',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                      }} />
+                      📍 Current Location
+                    </a>
+                  </div>
+                )}
             </div>
           </div>
 
@@ -1178,12 +546,12 @@ const ReceiptModal = ({ order, onClose }) => {
               <div className="ao-rcpt-info-card" style={{ background: '#ecfdf5', border: '1.5px solid #86efac' }}>
                 <div className="ao-rcpt-info-title" style={{ color: '#15803d' }}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <circle cx="12" cy="12" r="10"/>
-                    <circle cx="12" cy="12" r="3"/>
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="12" cy="12" r="3" />
                   </svg>
                   Customer's Current Location (Go Market)
                 </div>
-                <div style={{ 
+                <div style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -1197,10 +565,10 @@ const ReceiptModal = ({ order, onClose }) => {
                   borderRadius: 5,
                   marginBottom: 8
                 }}>
-                  <span style={{ 
-                    width: 6, 
-                    height: 6, 
-                    background: '#10b981', 
+                  <span style={{
+                    width: 6,
+                    height: 6,
+                    background: '#10b981',
                     borderRadius: '50%',
                     display: 'inline-block'
                   }} />
@@ -1285,11 +653,11 @@ const ReceiptModal = ({ order, onClose }) => {
 
           {/* Products */}
           <div className="ao-rcpt-sec-lbl">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /></svg>
             Order Items
           </div>
 
-          <div style={{ border:"1px solid #e8e8f2", borderRadius:12, overflow:"hidden" }}>
+          <div style={{ border: "1px solid #e8e8f2", borderRadius: 12, overflow: "hidden" }}>
             {products.length === 0 ? (
               <div style={{ padding: "40px 20px", textAlign: "center", color: "#9ca3af" }}>
                 <div style={{ fontSize: "32px", marginBottom: "8px" }}>📦</div>
@@ -1299,322 +667,322 @@ const ReceiptModal = ({ order, onClose }) => {
               </div>
             ) : (
               <table className="ao-rcpt-prod-table">
-                <thead style={{ background:"#f8fafc" }}>
+                <thead style={{ background: "#f8fafc" }}>
                   <tr>
-                    <th style={{ paddingLeft:14 }}>Product</th>
-                    <th style={{ textAlign:"center", width:60 }}>Qty</th>
-                    <th style={{ textAlign:"right", paddingRight:14 }}>Amount</th>
+                    <th style={{ paddingLeft: 14 }}>Product</th>
+                    <th style={{ textAlign: "center", width: 60 }}>Qty</th>
+                    <th style={{ textAlign: "right", paddingRight: 14 }}>Amount</th>
                   </tr>
                 </thead>
-              <tbody>
-                {products.map((item, i) => {
-                  const attrParts = [item.color, item.size, item.weight, item.ram].filter(Boolean);
-                  
-                  // Check if selectedOptions exist
-                  const hasSelectedOptions = item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0;
-                  
-                  // Add selected options if they exist
-                  if (hasSelectedOptions) {
-                    Object.entries(item.selectedOptions).forEach(([key, value]) => {
-                      if (value) {
-                        attrParts.push(`🎯 ${key}: ${value}`);
-                      }
+                <tbody>
+                  {products.map((item, i) => {
+                    const attrParts = [item.color, item.size, item.weight, item.ram].filter(Boolean);
+
+                    // Check if selectedOptions exist
+                    const hasSelectedOptions = item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0;
+
+                    // Add selected options if they exist
+                    if (hasSelectedOptions) {
+                      Object.entries(item.selectedOptions).forEach(([key, value]) => {
+                        if (value) {
+                          attrParts.push(`🎯 ${key}: ${value}`);
+                        }
+                      });
+                    }
+
+                    const attrs = attrParts.join(" · ");
+
+                    // Get seller info for this product (for delivery riders and admin)
+                    const seller = item.sellerId;
+                    const storeName = seller?.sellerProfile?.storeName || seller?.storeProfile?.storeName || seller?.name || 'N/A';
+                    const sellerProfile = seller?.sellerProfile || seller?.storeProfile || {};
+                    const storeAddress = sellerProfile?.storeAddress || sellerProfile?.address || '';
+                    const phone = seller?.mobile || seller?.phone || sellerProfile?.mobile || '';
+                    const storeLatitude = sellerProfile?.latitude || sellerProfile?.storeLatitude;
+                    const storeLongitude = sellerProfile?.longitude || sellerProfile?.storeLongitude;
+
+                    // Debug: Log seller info visibility check
+                    console.log('🏪 Receipt Modal - Seller Info Debug:', {
+                      productTitle: item.productTitle,
+                      isDeliveryRider,
+                      userRole: context?.userData?.role,
+                      isAdmin: context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN",
+                      hasSellerData: !!seller,
+                      storeName,
+                      willShowSellerInfo: (isDeliveryRider || context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") && seller && storeName && storeName !== 'N/A'
                     });
-                  }
-                  
-                  const attrs = attrParts.join(" · ");
-                  
-                  // Get seller info for this product (for delivery riders and admin)
-                  const seller = item.sellerId;
-                  const storeName = seller?.sellerProfile?.storeName || seller?.storeProfile?.storeName || seller?.name || 'N/A';
-                  const sellerProfile = seller?.sellerProfile || seller?.storeProfile || {};
-                  const storeAddress = sellerProfile?.storeAddress || sellerProfile?.address || '';
-                  const phone = seller?.mobile || seller?.phone || sellerProfile?.mobile || '';
-                  const storeLatitude = sellerProfile?.latitude || sellerProfile?.storeLatitude;
-                  const storeLongitude = sellerProfile?.longitude || sellerProfile?.storeLongitude;
-                  
-                  // Debug: Log seller info visibility check
-                  console.log('🏪 Receipt Modal - Seller Info Debug:', {
-                    productTitle: item.productTitle,
-                    isDeliveryRider,
-                    userRole: context?.userData?.role,
-                    isAdmin: context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN",
-                    hasSellerData: !!seller,
-                    storeName,
-                    willShowSellerInfo: (isDeliveryRider || context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") && seller && storeName && storeName !== 'N/A'
-                  });
-                  
-                  // Current/live location (if available, different from store address)
-                  const currentLatitude = seller?.currentLatitude || seller?.liveLatitude;
-                  const currentLongitude = seller?.currentLongitude || seller?.liveLongitude;
-                  const hasCurrentLocation = currentLatitude && currentLongitude;
-                  const locationUpdatedAt = seller?.locationUpdatedAt;
-                  
-                  return (
-                    <React.Fragment key={i}>
-                      <tr>
-                        <td style={{ paddingLeft:14 }}>
-                          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                            {item.image
-                              ? <img src={item.image} alt={item.productTitle} className="ao-rcpt-prod-img" />
-                              : <div className="ao-rcpt-prod-noimg">🖼️</div>
-                            }
-                            <div>
-                              <div className="ao-rcpt-prod-name">{item.productTitle || "—"}</div>
-                              {attrs && <div className="ao-rcpt-prod-attr">{attrs}</div>}
-                              {hasSelectedOptions && (
-                                <div style={{ 
-                                  marginTop: 4, 
-                                  padding: '3px 8px', 
-                                  background: '#fef3c7', 
-                                  border: '1px solid #fde68a',
-                                  borderRadius: 4,
-                                  display: 'inline-block',
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  color: '#92400e'
-                                }}>
-                                  {Object.entries(item.selectedOptions)
-                                    .filter(([_, value]) => value)
-                                    .map(([key, value]) => `${key}: ${value}`)
-                                    .join(' • ')}
-                                </div>
-                              )}
-                              <div className="ao-rcpt-prod-attr" style={{ marginTop:2 }}>{fmt(item.price)} / unit</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ textAlign:"center", fontWeight:700, fontSize:13 }}>×{item.quantity || 1}</td>
-                        <td style={{ paddingRight:14 }}>
-                          <div className="ao-rcpt-prod-amt">{fmt((item.price || 0) * (item.quantity || 1))}</div>
-                        </td>
-                      </tr>
-                      
-                      {/* Seller info row - for delivery riders and admin */}
-                      {!isSellerView && seller && storeName && storeName !== 'N/A' && (
+
+                    // Current/live location (if available, different from store address)
+                    const currentLatitude = seller?.currentLatitude || seller?.liveLatitude;
+                    const currentLongitude = seller?.currentLongitude || seller?.liveLongitude;
+                    const hasCurrentLocation = currentLatitude && currentLongitude;
+                    const locationUpdatedAt = seller?.locationUpdatedAt;
+
+                    return (
+                      <React.Fragment key={i}>
                         <tr>
-                          <td colSpan="3" style={{ paddingLeft:14, paddingRight:14, paddingTop:4, paddingBottom:10, background:"#fffbeb", borderBottom:"1px solid #fef3c7" }}>
-                            <div style={{ 
-                              display:"flex", 
-                              alignItems:"center", 
-                              gap:10, 
-                              background:"#fff", 
-                              border:"1px solid #fde68a", 
-                              borderRadius:8, 
-                              padding:"8px 12px"
-                            }}>
-                              {/* Store icon */}
-                              <div style={{ 
-                                width:32, 
-                                height:32, 
-                                background:"#fef3c7", 
-                                borderRadius:6, 
-                                display:"flex", 
-                                alignItems:"center", 
-                                justifyContent:"center", 
-                                fontSize:16,
-                                flexShrink:0
-                              }}>
-                                🏪
-                              </div>
-                              
-                              {/* Seller details */}
-                              <div style={{ flex:1, minWidth:0 }}>
-                                <div style={{ 
-                                  fontSize:12, 
-                                  fontWeight:700, 
-                                  color:"#92400e", 
-                                  marginBottom:3,
-                                  display:"flex",
-                                  alignItems:"center",
-                                  gap:6
-                                }}>
-                                  <span>Pickup from: {storeName}</span>
-                                  {storeLatitude && storeLongitude && (
-                                    <a
-                                      href={`https://www.google.com/maps?q=${storeLatitude},${storeLongitude}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{
-                                        display:"inline-flex",
-                                        alignItems:"center",
-                                        gap:3,
-                                        fontSize:10,
-                                        fontWeight:600,
-                                        color:"#2563eb",
-                                        textDecoration:"none",
-                                        padding:"2px 6px",
-                                        background:"#dbeafe",
-                                        border:"1px solid #93c5fd",
-                                        borderRadius:4,
-                                        transition:"all 0.15s"
-                                      }}
-                                      onMouseOver={(e) => {
-                                        e.currentTarget.style.background = "#bfdbfe";
-                                      }}
-                                      onMouseOut={(e) => {
-                                        e.currentTarget.style.background = "#dbeafe";
-                                      }}
-                                    >
-                                      📍 Navigate
-                                    </a>
-                                  )}
-                                </div>
-                                <div style={{ 
-                                  fontSize:11, 
-                                  color:"#78716c",
-                                  display:"flex",
-                                  flexWrap:"wrap",
-                                  gap:8,
-                                  alignItems:"center"
-                                }}>
-                                  {storeAddress && (
-                                    <span>📍 {storeAddress}</span>
-                                  )}
-                                  {phone && (
-                                    <span>
-                                      📞 <a 
-                                        href={`tel:${phone}`} 
-                                        style={{ 
-                                          color:"#2563eb", 
-                                          textDecoration:"none", 
-                                          fontWeight:600 
-                                        }}
-                                      >
-                                        {phone}
-                                      </a>
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {/* Current Location - Live location of seller */}
-                                {hasCurrentLocation && (
-                                  <div style={{ 
-                                    marginTop: 8,
-                                    padding: "6px 10px",
-                                    background: "#dcfce7",
-                                    border: "1px solid #86efac",
-                                    borderRadius: 6,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                    fontSize: 11
+                          <td style={{ paddingLeft: 14 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              {item.image
+                                ? <img src={item.image} alt={item.productTitle} className="ao-rcpt-prod-img" />
+                                : <div className="ao-rcpt-prod-noimg">🖼️</div>
+                              }
+                              <div>
+                                <div className="ao-rcpt-prod-name">{item.productTitle || "—"}</div>
+                                {attrs && <div className="ao-rcpt-prod-attr">{attrs}</div>}
+                                {hasSelectedOptions && (
+                                  <div style={{
+                                    marginTop: 4,
+                                    padding: '3px 8px',
+                                    background: '#fef3c7',
+                                    border: '1px solid #fde68a',
+                                    borderRadius: 4,
+                                    display: 'inline-block',
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    color: '#92400e'
                                   }}>
-                                    <span style={{ 
-                                      width: 6, 
-                                      height: 6, 
-                                      background: "#16a34a", 
-                                      borderRadius: "50%",
-                                      display: "inline-block",
-                                      animation: "pulse 2s infinite"
-                                    }} />
-                                    <span style={{ fontWeight: 600, color: "#15803d" }}>
-                                      Current Location:
-                                    </span>
-                                    <a
-                                      href={`https://www.google.com/maps?q=${currentLatitude},${currentLongitude}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{
-                                        color: "#15803d",
-                                        textDecoration: "none",
-                                        fontWeight: 600
-                                      }}
-                                    >
-                                      {currentLatitude.toFixed(6)}, {currentLongitude.toFixed(6)}
-                                    </a>
-                                    <a
-                                      href={`https://www.google.com/maps?q=${currentLatitude},${currentLongitude}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{
-                                        display:"inline-flex",
-                                        alignItems:"center",
-                                        gap:3,
-                                        fontSize:10,
-                                        fontWeight:600,
-                                        color:"#15803d",
-                                        textDecoration:"none",
-                                        padding:"2px 6px",
-                                        background:"#bbf7d0",
-                                        border:"1px solid #86efac",
-                                        borderRadius:4,
-                                        transition:"all 0.15s",
-                                        marginLeft: "auto"
-                                      }}
-                                      onMouseOver={(e) => {
-                                        e.currentTarget.style.background = "#a7f3d0";
-                                      }}
-                                      onMouseOut={(e) => {
-                                        e.currentTarget.style.background = "#bbf7d0";
-                                      }}
-                                    >
-                                      🚀 Track Live
-                                    </a>
-                                    {locationUpdatedAt && (
-                                      <span style={{ 
-                                        fontSize: 9, 
-                                        color: "#16a34a",
-                                        marginLeft: 4
-                                      }}>
-                                        {(() => {
-                                          const now = new Date();
-                                          const updated = new Date(locationUpdatedAt);
-                                          const diffMinutes = Math.floor((now - updated) / (1000 * 60));
-                                          if (diffMinutes < 1) return "Just now";
-                                          if (diffMinutes < 60) return `${diffMinutes}m ago`;
-                                          const diffHours = Math.floor(diffMinutes / 60);
-                                          return `${diffHours}h ago`;
-                                        })()}
-                                      </span>
-                                    )}
+                                    {Object.entries(item.selectedOptions)
+                                      .filter(([_, value]) => value)
+                                      .map(([key, value]) => `${key}: ${value}`)
+                                      .join(' • ')}
                                   </div>
                                 )}
+                                <div className="ao-rcpt-prod-attr" style={{ marginTop: 2 }}>{fmt(item.price)} / unit</div>
                               </div>
                             </div>
                           </td>
+                          <td style={{ textAlign: "center", fontWeight: 700, fontSize: 13 }}>×{item.quantity || 1}</td>
+                          <td style={{ paddingRight: 14 }}>
+                            <div className="ao-rcpt-prod-amt">{fmt((item.price || 0) * (item.quantity || 1))}</div>
+                          </td>
                         </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+
+                        {/* Seller info row - for delivery riders and admin */}
+                        {!isSellerView && seller && storeName && storeName !== 'N/A' && (
+                          <tr>
+                            <td colSpan="3" style={{ paddingLeft: 14, paddingRight: 14, paddingTop: 4, paddingBottom: 10, background: "#fffbeb", borderBottom: "1px solid #fef3c7" }}>
+                              <div style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 10,
+                                background: "#fff",
+                                border: "1px solid #fde68a",
+                                borderRadius: 8,
+                                padding: "8px 12px"
+                              }}>
+                                {/* Store icon */}
+                                <div style={{
+                                  width: 32,
+                                  height: 32,
+                                  background: "#fef3c7",
+                                  borderRadius: 6,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: 16,
+                                  flexShrink: 0
+                                }}>
+                                  🏪
+                                </div>
+
+                                {/* Seller details */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    color: "#92400e",
+                                    marginBottom: 3,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6
+                                  }}>
+                                    <span>Pickup from: {storeName}</span>
+                                    {storeLatitude && storeLongitude && (
+                                      <a
+                                        href={`https://www.google.com/maps?q=${storeLatitude},${storeLongitude}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: 3,
+                                          fontSize: 10,
+                                          fontWeight: 600,
+                                          color: "#2563eb",
+                                          textDecoration: "none",
+                                          padding: "2px 6px",
+                                          background: "#dbeafe",
+                                          border: "1px solid #93c5fd",
+                                          borderRadius: 4,
+                                          transition: "all 0.15s"
+                                        }}
+                                        onMouseOver={(e) => {
+                                          e.currentTarget.style.background = "#bfdbfe";
+                                        }}
+                                        onMouseOut={(e) => {
+                                          e.currentTarget.style.background = "#dbeafe";
+                                        }}
+                                      >
+                                        📍 Navigate
+                                      </a>
+                                    )}
+                                  </div>
+                                  <div style={{
+                                    fontSize: 11,
+                                    color: "#78716c",
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 8,
+                                    alignItems: "center"
+                                  }}>
+                                    {storeAddress && (
+                                      <span>📍 {storeAddress}</span>
+                                    )}
+                                    {phone && (
+                                      <span>
+                                        📞 <a
+                                          href={`tel:${phone}`}
+                                          style={{
+                                            color: "#2563eb",
+                                            textDecoration: "none",
+                                            fontWeight: 600
+                                          }}
+                                        >
+                                          {phone}
+                                        </a>
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Current Location - Live location of seller */}
+                                  {hasCurrentLocation && (
+                                    <div style={{
+                                      marginTop: 8,
+                                      padding: "6px 10px",
+                                      background: "#dcfce7",
+                                      border: "1px solid #86efac",
+                                      borderRadius: 6,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 6,
+                                      fontSize: 11
+                                    }}>
+                                      <span style={{
+                                        width: 6,
+                                        height: 6,
+                                        background: "#16a34a",
+                                        borderRadius: "50%",
+                                        display: "inline-block",
+                                        animation: "pulse 2s infinite"
+                                      }} />
+                                      <span style={{ fontWeight: 600, color: "#15803d" }}>
+                                        Current Location:
+                                      </span>
+                                      <a
+                                        href={`https://www.google.com/maps?q=${currentLatitude},${currentLongitude}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          color: "#15803d",
+                                          textDecoration: "none",
+                                          fontWeight: 600
+                                        }}
+                                      >
+                                        {currentLatitude.toFixed(6)}, {currentLongitude.toFixed(6)}
+                                      </a>
+                                      <a
+                                        href={`https://www.google.com/maps?q=${currentLatitude},${currentLongitude}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: 3,
+                                          fontSize: 10,
+                                          fontWeight: 600,
+                                          color: "#15803d",
+                                          textDecoration: "none",
+                                          padding: "2px 6px",
+                                          background: "#bbf7d0",
+                                          border: "1px solid #86efac",
+                                          borderRadius: 4,
+                                          transition: "all 0.15s",
+                                          marginLeft: "auto"
+                                        }}
+                                        onMouseOver={(e) => {
+                                          e.currentTarget.style.background = "#a7f3d0";
+                                        }}
+                                        onMouseOut={(e) => {
+                                          e.currentTarget.style.background = "#bbf7d0";
+                                        }}
+                                      >
+                                        🚀 Track Live
+                                      </a>
+                                      {locationUpdatedAt && (
+                                        <span style={{
+                                          fontSize: 9,
+                                          color: "#16a34a",
+                                          marginLeft: 4
+                                        }}>
+                                          {(() => {
+                                            const now = new Date();
+                                            const updated = new Date(locationUpdatedAt);
+                                            const diffMinutes = Math.floor((now - updated) / (1000 * 60));
+                                            if (diffMinutes < 1) return "Just now";
+                                            if (diffMinutes < 60) return `${diffMinutes}m ago`;
+                                            const diffHours = Math.floor(diffMinutes / 60);
+                                            return `${diffHours}h ago`;
+                                          })()}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
 
           {/* Totals */}
           <div className="ao-rcpt-totals">
             <div className="ao-rcpt-total-row sub">
-              <span style={{ fontWeight:500 }}>Subtotal</span>
-              <span style={{ fontWeight:600 }}>{fmt(subtotal)}</span>
+              <span style={{ fontWeight: 500 }}>Subtotal</span>
+              <span style={{ fontWeight: 600 }}>{fmt(subtotal)}</span>
             </div>
             {!isSellerView && discount > 0 && (
               <div className="ao-rcpt-total-row sub">
-                <span style={{ fontWeight:500, color:"#16a34a" }}>Discount</span>
-                <span style={{ fontWeight:600, color:"#16a34a" }}>-{fmt(discount)}</span>
+                <span style={{ fontWeight: 500, color: "#16a34a" }}>Discount</span>
+                <span style={{ fontWeight: 600, color: "#16a34a" }}>-{fmt(discount)}</span>
               </div>
             )}
             {shippingFee > 0 ? (
               <div className="ao-rcpt-total-row sub">
-                <span style={{ fontWeight:500 }}>Shipping Fee</span>
-                <span style={{ fontWeight:600 }}>{fmt(shippingFee)}</span>
+                <span style={{ fontWeight: 500 }}>Shipping Fee</span>
+                <span style={{ fontWeight: 600 }}>{fmt(shippingFee)}</span>
               </div>
             ) : (
               <div className="ao-rcpt-total-row sub">
-                <span style={{ fontWeight:500 }}>Shipping Fee</span>
-                <span style={{ fontWeight:600, color:"#16a34a" }}>FREE</span>
+                <span style={{ fontWeight: 500 }}>Shipping Fee</span>
+                <span style={{ fontWeight: 600, color: "#16a34a" }}>FREE</span>
               </div>
             )}
             {deliveryFee > 0 ? (
               <div className="ao-rcpt-total-row sub">
-                <span style={{ fontWeight:500 }}>Delivery Fee</span>
-                <span style={{ fontWeight:600 }}>{fmt(deliveryFee)}</span>
+                <span style={{ fontWeight: 500 }}>Delivery Fee</span>
+                <span style={{ fontWeight: 600 }}>{fmt(deliveryFee)}</span>
               </div>
             ) : (
               <div className="ao-rcpt-total-row sub">
-                <span style={{ fontWeight:500 }}>Delivery Fee</span>
-                <span style={{ fontWeight:600, color:"#16a34a" }}>FREE</span>
+                <span style={{ fontWeight: 500 }}>Delivery Fee</span>
+                <span style={{ fontWeight: 600, color: "#16a34a" }}>FREE</span>
               </div>
             )}
             <div className="ao-rcpt-total-row grand">
@@ -1626,26 +994,26 @@ const ReceiptModal = ({ order, onClose }) => {
           {/* Payment Info */}
           <div className="ao-rcpt-pay-row">
             <div className="ao-rcpt-pay-icon">{isCOD ? "💵" : "💳"}</div>
-            <div style={{ flex:1 }}>
+            <div style={{ flex: 1 }}>
               <div className="ao-rcpt-pay-label">{isCOD ? "Cash on Delivery" : "Online Payment"}</div>
               {!isCOD && order?.paymentId && (
                 <div className="ao-rcpt-pay-sub">Txn ID: {order.paymentId}</div>
               )}
             </div>
-            <div style={{ textAlign:"right" }}>
-              <div style={{ fontSize:11, fontWeight:700, color: isCOD ? "#92400e" : "#065f46", background: isCOD ? "#fef3c7" : "#d1fae5", padding:"3px 9px", borderRadius:6 }}>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: isCOD ? "#92400e" : "#065f46", background: isCOD ? "#fef3c7" : "#d1fae5", padding: "3px 9px", borderRadius: 6 }}>
                 {isCOD ? "PAY ON DELIVERY" : "PAID"}
               </div>
             </div>
           </div>
 
           {/* Thank you note */}
-          <div style={{ textAlign:"center", padding:"22px 0 4px" }}>
-            <div style={{ fontSize:20, marginBottom:6 }}>🎉</div>
-            <p style={{ fontFamily:"'Sora',sans-serif", fontSize:13, fontWeight:700, color:"#0c0c14", margin:"0 0 3px" }}>
+          <div style={{ textAlign: "center", padding: "22px 0 4px" }}>
+            <div style={{ fontSize: 20, marginBottom: 6 }}>🎉</div>
+            <p style={{ fontFamily: "'Sora',sans-serif", fontSize: 13, fontWeight: 700, color: "#0c0c14", margin: "0 0 3px" }}>
               Thank you for your order!
             </p>
-            <p style={{ fontSize:11, color:"#9ca3af", margin:0 }}>
+            <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>
               Keep this receipt for your records. For support, contact us with Order ID #{orderId}.
             </p>
           </div>
@@ -1655,8 +1023,8 @@ const ReceiptModal = ({ order, onClose }) => {
         <div className="ao-rcpt-footer">
           <button className="ao-rcpt-btn-print" onClick={handlePrint}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-              <rect x="6" y="14" width="12" height="8"/>
+              <polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
             </svg>
             Print Receipt
           </button>
@@ -1676,20 +1044,20 @@ const SELLER_ROLES = ["SELLER", "GROCERY_SELLER", "RESTAURANT_SELLER", "FASHION_
 const isSellerRole = (role) => SELLER_ROLES.includes(role);
 
 const Orders = () => {
-  const [openOrderId,      setOpenOrderId]       = useState(null);
-  const [orderStatus,      setOrderStatus]        = useState("");
-  const [riderFilter,      setRiderFilter]        = useState("available");
-  const [ordersData,       setOrdersData]         = useState([]);
-  const [orders,           setOrders]             = useState([]);
-  const [pageOrder,        setPageOrder]          = useState(1);
-  const [itemsPerPage,     setItemsPerPage]       = useState(25); // Items per page limit
-  const [searchQuery,      setSearchQuery]        = useState("");
-  const [totalOrdersData,  setTotalOrdersData]    = useState({});
-  const [selectedProduct,  setSelectedProduct]    = useState(null);
-  const [receiptOrder,     setReceiptOrder]       = useState(null);
-  const [riders,           setRiders]             = useState([]);
-  const [assigningOrderId, setAssigningOrderId]   = useState(null);
-  const [isRefreshing,    setIsRefreshing]      = useState(false);
+  const [openOrderId, setOpenOrderId] = useState(null);
+  const [orderStatus, setOrderStatus] = useState("");
+  const [riderFilter, setRiderFilter] = useState("available");
+  const [ordersData, setOrdersData] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [pageOrder, setPageOrder] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25); // Items per page limit
+  const [searchQuery, setSearchQuery] = useState("");
+  const [totalOrdersData, setTotalOrdersData] = useState({});
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [receiptOrder, setReceiptOrder] = useState(null);
+  const [riders, setRiders] = useState([]);
+  const [assigningOrderId, setAssigningOrderId] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [processingOrderId, setProcessingOrderId] = useState(null);
   const [processingAction, setProcessingAction] = useState(null);
   const [mobileView, setMobileView] = useState(typeof window !== "undefined" ? window.innerWidth <= 860 : false);
@@ -1697,31 +1065,31 @@ const Orders = () => {
   const [otpDialog, setOtpDialog] = useState({ open: false, orderId: null, otp: '' });
 
   const context = useContext(MyContext);
-const isSellerView = isSellerRole(context?.userData?.role);
+  const isSellerView = isSellerRole(context?.userData?.role);
   const isDeliveryRider = context?.userData?.role === "DELIVERY_RIDER";
   const isGoMarketShopSeller = GO_MARKET_SHOP_SELLERS.includes(context?.userData?.role);
   const isRestaurantSeller = context?.userData?.role === "RESTAURANT_SELLER";
   const ordersListEndpoint = isDeliveryRider
     ? "/api/order/rider/orders"
-    : isSellerView 
-      ? "/api/order/seller/orders" 
+    : isSellerView
+      ? "/api/order/seller/orders"
       : "/api/order/order-list";
   const ordersTitle = isDeliveryRider
     ? riderFilter === "available"
       ? "Available Orders"
       : "My Assigned Orders"
-     : isGoMarketShopSeller ? "Live Shop Orders" : isRestaurantSeller ? "Live Kitchen Orders" : isSellerView ? "Store Orders" : "Orders";
+    : isGoMarketShopSeller ? "Live Shop Orders" : isRestaurantSeller ? "Live Kitchen Orders" : isSellerView ? "Store Orders" : "Orders";
   const ordersSubtitle = isDeliveryRider
     ? riderFilter === "available"
       ? "Browse open rider orders in your market"
       : "Orders you have accepted or confirmed"
     : isGoMarketShopSeller
-    ? "Accept, pack, and dispatch quick-commerce orders"
-    : isRestaurantSeller
-      ? "Accept and prepare orders for minutes delivery"
-      : isSellerView
-        ? "Track orders for your own products"
-        : "Manage and track all customer orders";
+      ? "Accept, pack, and dispatch quick-commerce orders"
+      : isRestaurantSeller
+        ? "Accept and prepare orders for minutes delivery"
+        : isSellerView
+          ? "Track orders for your own products"
+          : "Manage and track all customer orders";
 
   /* track viewport for mobile card layout */
   useEffect(() => {
@@ -1737,17 +1105,17 @@ const isSellerView = isSellerRole(context?.userData?.role);
   const handleChange = (e, id) => {
     const val = e.target.value;
     console.log('🔄 Status change requested:', { orderId: id, newStatus: val });
-    
+
     // Optimistic update - तुरंत UI में दिखाएं
-    setOrdersData(prevOrders => 
-      prevOrders.map(order => 
-        order._id === id 
-          ? { ...order, order_status: val } 
+    setOrdersData(prevOrders =>
+      prevOrders.map(order =>
+        order._id === id
+          ? { ...order, order_status: val }
           : order
       )
     );
     setOrderStatus(val);
-    
+
     // API call करें (background में)
     editData(`/api/order/order-status/${id}`, { id, order_status: val }).then((res) => {
       if (res?.data?.error === false || res?.data?.success) {
@@ -1758,9 +1126,9 @@ const isSellerView = isSellerRole(context?.userData?.role);
         console.error('❌ Status update failed:', res?.data?.message);
         context.alertBox("error", res?.data?.message || "Could not update order status");
         // Error होने पर revert करें - पुराना status वापस लाएं
-        setOrdersData(prevOrders => 
-          prevOrders.map(order => 
-            order._id === id 
+        setOrdersData(prevOrders =>
+          prevOrders.map(order =>
+            order._id === id
               ? { ...order, order_status: order.order_status } // API से next auto-refresh में सही status आएगा
               : order
           )
@@ -1783,24 +1151,24 @@ const isSellerView = isSellerRole(context?.userData?.role);
     if (!riderId) return;
     console.log('👤 Assigning rider to order:', { orderId, riderId });
     setAssigningOrderId(orderId);
-    
+
     // Optimistic update
-    setOrdersData(prevOrders => 
-      prevOrders.map(order => 
-        order._id === orderId 
-          ? { 
-              ...order, 
-              deliveryAssignment: { 
-                ...order.deliveryAssignment, 
-                riderId,
-                status: 'assigned' 
-              },
-              order_status: 'assigned_to_rider'
-            } 
+    setOrdersData(prevOrders =>
+      prevOrders.map(order =>
+        order._id === orderId
+          ? {
+            ...order,
+            deliveryAssignment: {
+              ...order.deliveryAssignment,
+              riderId,
+              status: 'assigned'
+            },
+            order_status: 'assigned_to_rider'
+          }
           : order
       )
     );
-    
+
     editData(`/api/order/assign-rider/${orderId}`, { riderId }).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         console.log('✅ Rider assigned successfully');
@@ -1816,23 +1184,23 @@ const isSellerView = isSellerRole(context?.userData?.role);
   const broadcastOrder = (orderId) => {
     console.log('📢 Broadcasting order to riders:', orderId);
     setAssigningOrderId(orderId);
-    
+
     // Optimistic update - order status को "broadcast" में update करें
-    setOrdersData(prevOrders => 
-      prevOrders.map(order => 
-        order._id === orderId 
-          ? { 
-              ...order, 
-              deliveryAssignment: { 
-                ...order.deliveryAssignment, 
-                status: 'broadcast' 
-              },
-              order_status: 'assigned_to_rider'
-            } 
+    setOrdersData(prevOrders =>
+      prevOrders.map(order =>
+        order._id === orderId
+          ? {
+            ...order,
+            deliveryAssignment: {
+              ...order.deliveryAssignment,
+              status: 'broadcast'
+            },
+            order_status: 'assigned_to_rider'
+          }
           : order
       )
     );
-    
+
     editData(`/api/order/broadcast-order/${orderId}`, {}).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         console.log('✅ Order broadcast successfully');
@@ -1904,22 +1272,22 @@ const isSellerView = isSellerRole(context?.userData?.role);
   const confirmAssignedOrder = (orderId) => {
     console.log('✅ Confirming assigned order:', orderId);
     startOrderProcessing(orderId, 'confirm');
-    
+
     // Optimistic update
-    setOrdersData(prevOrders => 
-      prevOrders.map(order => 
-        order._id === orderId 
-          ? { 
-              ...order, 
-              deliveryAssignment: { 
-                ...order.deliveryAssignment, 
-                status: 'confirmed' 
-              }
-            } 
+    setOrdersData(prevOrders =>
+      prevOrders.map(order =>
+        order._id === orderId
+          ? {
+            ...order,
+            deliveryAssignment: {
+              ...order.deliveryAssignment,
+              status: 'confirmed'
+            }
+          }
           : order
       )
     );
-    
+
     editData(`/api/order/rider/orders/${orderId}/confirm`, {}).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         console.log('✅ Order confirmed successfully');
@@ -1935,24 +1303,24 @@ const isSellerView = isSellerRole(context?.userData?.role);
 
   const sendOtpAndDeliver = async (orderId) => {
     startOrderProcessing(orderId, 'deliver');
-    
+
     try {
       const sent = await postData(`/api/order/rider/orders/${orderId}/send-otp`, {});
-      
+
       console.log('📤 [OTP Response]:', sent);
-      
+
       if (sent?.error === true) {
         finishOrderProcessing();
         return context.alertBox('error', sent?.message || 'Could not send delivery OTP. Please check if customer mobile number exists.');
       }
-      
+
       if (!sent?.success) {
         finishOrderProcessing();
         return context.alertBox('error', 'Failed to send OTP. Please try again or contact support.');
       }
-      
+
       context.alertBox('success', sent?.message || 'OTP sent to customer mobile number successfully');
-      
+
       // Open modern OTP dialog instead of window.prompt
       setOtpDialog({ open: true, orderId, otp: '' });
     } catch (error) {
@@ -1971,23 +1339,23 @@ const isSellerView = isSellerRole(context?.userData?.role);
     console.log('📦 Delivering order with OTP:', { orderId, otp });
     startOrderProcessing(orderId, 'deliver');
     setOtpDialog({ ...otpDialog, open: false });
-    
+
     // Optimistic update
-    setOrdersData(prevOrders => 
-      prevOrders.map(order => 
-        order._id === orderId 
-          ? { 
-              ...order, 
-              deliveryAssignment: { 
-                ...order.deliveryAssignment, 
-                status: 'delivered' 
-              },
-              order_status: 'delivered'
-            } 
+    setOrdersData(prevOrders =>
+      prevOrders.map(order =>
+        order._id === orderId
+          ? {
+            ...order,
+            deliveryAssignment: {
+              ...order.deliveryAssignment,
+              status: 'delivered'
+            },
+            order_status: 'delivered'
+          }
           : order
       )
     );
-    
+
     editData(`/api/order/rider/orders/${orderId}/deliver`, { otp }).then((res) => {
       if (res?.data?.success || res?.data?.error === false) {
         console.log('✅ Order delivered successfully');
@@ -2065,9 +1433,9 @@ const isSellerView = isSellerRole(context?.userData?.role);
     const intervalId = setInterval(() => {
       console.log('🔄 Auto-refreshing orders...');
       fetchDataFromApi(buildOrdersListUrl()).then((res) => {
-        if (res?.error === false) { 
-          setOrdersData(res?.data); 
-          setOrders(res); 
+        if (res?.error === false) {
+          setOrdersData(res?.data);
+          setOrders(res);
           console.log('✅ Orders auto-refreshed:', res?.data?.length, 'orders');
         }
       });
@@ -2101,11 +1469,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
   }, [searchQuery, riderFilter, pageOrder]);
 
   /* stats */
-  const allOrders   = totalOrdersData?.data || [];
-  const totalCount  = totalOrdersData?.total || allOrders.length; // Use backend total count
-  const pendingCnt  = allOrders.filter((o) => (o.order_status || "").toLowerCase() === "pending").length;
-  const deliveredCnt= allOrders.filter((o) => (o.order_status || "").toLowerCase() === "delivered").length;
-  const cancelledCnt= allOrders.filter((o) => (o.order_status || "").toLowerCase() === "cancelled").length;
+  const allOrders = totalOrdersData?.data || [];
+  const totalCount = totalOrdersData?.total || allOrders.length; // Use backend total count
+  const pendingCnt = allOrders.filter((o) => (o.order_status || "").toLowerCase() === "pending").length;
+  const deliveredCnt = allOrders.filter((o) => (o.order_status || "").toLowerCase() === "delivered").length;
+  const cancelledCnt = allOrders.filter((o) => (o.order_status || "").toLowerCase() === "cancelled").length;
 
   return (
     <div className="ao">
@@ -2126,7 +1494,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
         {/* ── Top bar ── */}
         <div className="ao-topbar">
           <div className="ao-topbar-left">
-           <h2 className="ao-topbar-title">{ordersTitle}</h2>
+            <h2 className="ao-topbar-title">{ordersTitle}</h2>
             <p className="ao-topbar-sub">{ordersSubtitle}</p>
             {isDeliveryRider && (
               <div className="ao-rider-tabs">
@@ -2147,8 +1515,8 @@ const isSellerView = isSellerRole(context?.userData?.role);
               </div>
             )}
           </div>
-          <button 
-            className="ao-refresh-btn" 
+          <button
+            className="ao-refresh-btn"
             onClick={() => refreshOrders(riderFilter)}
             disabled={isRefreshing}
             title="Refresh orders"
@@ -2156,11 +1524,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
             <span className={`ao-refresh-icon${isRefreshing ? ' spinning' : ''}`}>🔄</span>
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </button>
-          <button 
-            className="ao-refresh-btn" 
+          <button
+            className="ao-refresh-btn"
             onClick={() => window.location.href = '/order-analytics'}
             title="View analytics & print reports"
-            style={{ 
+            style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: '#fff',
               border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -2228,23 +1596,23 @@ const isSellerView = isSellerRole(context?.userData?.role);
               <tbody>
                 {ordersData.map((order, orderIdx) => {
                   const isOpen = openOrderId === order._id;
-                  const addr   = order?.delivery_address || {};
-                  const isCOD  = !order?.paymentId;
-                  const sc     = getStatusStyle(order?.order_status);
+                  const addr = order?.delivery_address || {};
+                  const isCOD = !order?.paymentId;
+                  const sc = getStatusStyle(order?.order_status);
 
                   // Calculate seller-specific total
                   const currentSellerId = context?.userData?._id || context?.userData?.id;
                   const allProducts = order?.products || [];
                   const sellerProducts = isSellerView && currentSellerId
                     ? allProducts.filter((p) => {
-                        const productSellerId = p.sellerId?._id || p.sellerId;
-                        return String(productSellerId) === String(currentSellerId);
-                      })
+                      const productSellerId = p.sellerId?._id || p.sellerId;
+                      return String(productSellerId) === String(currentSellerId);
+                    })
                     : allProducts;
-                  
+
                   // Calculate subtotal for seller's products only
                   const sellerSubtotal = sellerProducts.reduce((s, p) => s + (p.price || 0) * (p.quantity || 1), 0);
-                  
+
                   // For sellers, show only their product total; for admin, show full order total
                   const displayAmount = isSellerView ? sellerSubtotal : (order?.totalAmt || 0);
 
@@ -2253,7 +1621,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                       {/* ── Main row ── */}
                       <tr
                         className={`ao-main-row${isOpen ? " expanded" : ""}`}
-                        style={{ animationDelay: `${Math.min(orderIdx, 12) * 0.03}s` }}
+                        style={{ animationDelay: `${Math.min(orderIdx, 12) * 0.03}s`, "--st": sc.dot }}
                       >
 
                         {/* Expand */}
@@ -2299,39 +1667,39 @@ const isSellerView = isSellerRole(context?.userData?.role);
                             {[addr.city, addr.state].filter(Boolean).join(", ")}
                           </div>
                           <div className="ao-addr-pin">PIN {addr.pincode}</div>
-                          
+
                           {/* User's Current Location (Go Market) - Show if coordinates are valid */}
-                          {order?.goMarketData?.userLocation?.coordinates && 
-                           Array.isArray(order.goMarketData.userLocation.coordinates) &&
-                           order.goMarketData.userLocation.coordinates.length >= 2 &&
-                           order.goMarketData.userLocation.coordinates[0] !== 0 && 
-                           order.goMarketData.userLocation.coordinates[1] !== 0 && (
-                            <div style={{ marginTop: '6px' }}>
-                              <a
-                                href={`https://www.google.com/maps?q=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="ao-tap-chip"
-                                style={{
-                                  color: '#059669',
-                                  background: '#d1fae5',
-                                  borderColor: '#86efac',
-                                }}
-                                title={`GPS Location: ${order.goMarketData.userLocation.coordinates[1].toFixed(6)}, ${order.goMarketData.userLocation.coordinates[0].toFixed(6)}`}
-                              >
-                                <span style={{ 
-                                  width: 5, 
-                                  height: 5, 
-                                  background: '#10b981', 
-                                  borderRadius: '50%',
-                                  display: 'inline-block',
-                                  animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
-                                }} />
-                                📍 Live GPS
-                              </a>
-                            </div>
-                          )}
-                          
+                          {order?.goMarketData?.userLocation?.coordinates &&
+                            Array.isArray(order.goMarketData.userLocation.coordinates) &&
+                            order.goMarketData.userLocation.coordinates.length >= 2 &&
+                            order.goMarketData.userLocation.coordinates[0] !== 0 &&
+                            order.goMarketData.userLocation.coordinates[1] !== 0 && (
+                              <div style={{ marginTop: '6px' }}>
+                                <a
+                                  href={`https://www.google.com/maps?q=${order.goMarketData.userLocation.coordinates[1]},${order.goMarketData.userLocation.coordinates[0]}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="ao-tap-chip"
+                                  style={{
+                                    color: '#059669',
+                                    background: '#d1fae5',
+                                    borderColor: '#86efac',
+                                  }}
+                                  title={`GPS Location: ${order.goMarketData.userLocation.coordinates[1].toFixed(6)}, ${order.goMarketData.userLocation.coordinates[0].toFixed(6)}`}
+                                >
+                                  <span style={{
+                                    width: 5,
+                                    height: 5,
+                                    background: '#10b981',
+                                    borderRadius: '50%',
+                                    display: 'inline-block',
+                                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                                  }} />
+                                  📍 Live GPS
+                                </a>
+                              </div>
+                            )}
+
                           {addr?.latitude && addr?.longitude && (
                             <div style={{ marginTop: '6px' }}>
                               <a
@@ -2345,7 +1713,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                               </a>
                             </div>
                           )}
-                          
+
                           {/* Current Location from User's goMarketLocation */}
                           <UserCurrentLocationDisplay order={order} />
                         </td>
@@ -2444,7 +1812,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                         {/* Date */}
                         <td data-label="Date" style={{ whiteSpace: "nowrap", fontSize: 12, color: "#6b7280", fontWeight: 500 }}>
                           📅 {fmtDate(order?.createdAt)}
-                           {(order?.returnRequest?.requested || order?.refund?.status === "processed") && (
+                          {(order?.returnRequest?.requested || order?.refund?.status === "processed") && (
                             <div style={{ marginTop: 4, fontSize: 10 }}>
                               ↩ {order?.returnRequest?.status || "requested"} • 💸 {order?.refund?.status || "none"}
                             </div>
@@ -2453,14 +1821,14 @@ const isSellerView = isSellerRole(context?.userData?.role);
 
                         {/* Delete + Receipt */}
                         <td data-label="Action">
-                          <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                             <button
                               className="ao-receipt-btn"
                               onClick={() => setReceiptOrder(order)}
                             >
                               🧾 Receipt
                             </button>
-                             {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") && order?.order_status !== "delivered" && (
+                            {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") && order?.order_status !== "delivered" && (
                               <>
                                 {(isGoMarketShopSeller || isRestaurantSeller || context?.userData?.role === "ADMIN" || context?.userData?.role === "VICE_ADMIN") && (
                                   <button className="ao-receipt-btn" onClick={() => broadcastOrder(order._id)} disabled={assigningOrderId === order._id || order?.deliveryAssignment?.status === 'broadcast'}>
@@ -2561,18 +1929,18 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                 const currentSellerId = context?.userData?._id || context?.userData?.id;
                                 const productsToShow = isSellerView && currentSellerId
                                   ? (order?.products || []).filter((p) => {
-                                      const productSellerId = p.sellerId?._id || p.sellerId;
-                                      return String(productSellerId) === String(currentSellerId);
-                                    })
+                                    const productSellerId = p.sellerId?._id || p.sellerId;
+                                    return String(productSellerId) === String(currentSellerId);
+                                  })
                                   : (order?.products || []);
-                                
+
                                 return (
                                   <>
                                     <div className="ao-panel-hdr">
                                       <span className="ao-panel-title">📦 Products in this order</span>
                                       <span className="ao-panel-count">{productsToShow.length} items</span>
                                     </div>
-                                    
+
                                     {/* Distance Information */}
                                     {(order?.goMarketData?.distanceDisplay || order?.goMarketData?.distanceKm) && (
                                       <div style={{
@@ -2662,96 +2030,96 @@ const isSellerView = isSellerRole(context?.userData?.role);
                                         </div>
                                       </div>
                                     )}
-                                    
+
                                     <p className="ao-panel-hint">
                                       Click any product card to see full details
                                     </p>
                                     <div className="ao-prod-list">
                                       {productsToShow.map((item, i) => (
-                                  <div
-                                    className="ao-prod-card"
-                                    key={i}
-                                    onClick={() => setSelectedProduct(item)}
-                                    title="Click to view product details"
-                                  >
-                                    {/* Image */}
-                                    {item.image
-                                      ? <img src={item.image} alt={item.productTitle} className="ao-prod-img" />
-                                      : <div className="ao-prod-noimg">🖼️</div>
-                                    }
+                                        <div
+                                          className="ao-prod-card"
+                                          key={i}
+                                          onClick={() => setSelectedProduct(item)}
+                                          title="Click to view product details"
+                                        >
+                                          {/* Image */}
+                                          {item.image
+                                            ? <img src={item.image} alt={item.productTitle} className="ao-prod-img" />
+                                            : <div className="ao-prod-noimg">🖼️</div>
+                                          }
 
-                                    {/* Info */}
-                                    <div className="ao-prod-info">
-                                      <div className="ao-prod-name">{String(item.productTitle || 'N/A')}</div>
-                                      {item.sellerId && (
-                                        <div style={{ marginTop: 4, paddingTop: 4, borderTop: '1px solid #f0f0f7' }}>
-                                          <div style={{ fontSize: 11, color: "#6366f1", fontWeight: 600 }}>
-                                            🏪 {(() => {
-                                              const sellerName = item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A';
-                                              return String(sellerName);
-                                            })()}
-                                          </div>
-                                          {(item.sellerId?.mobile || item.sellerId?.storeProfile?.contactNo) && (
-                                            <div style={{ fontSize: 11, color: "#10b981", fontWeight: 600, marginTop: 2 }}>
-                                              📱 {String(item.sellerId?.mobile || item.sellerId?.storeProfile?.contactNo)}
+                                          {/* Info */}
+                                          <div className="ao-prod-info">
+                                            <div className="ao-prod-name">{String(item.productTitle || 'N/A')}</div>
+                                            {item.sellerId && (
+                                              <div style={{ marginTop: 4, paddingTop: 4, borderTop: '1px solid #f0f0f7' }}>
+                                                <div style={{ fontSize: 11, color: "#6366f1", fontWeight: 600 }}>
+                                                  🏪 {(() => {
+                                                    const sellerName = item.sellerId?.storeProfile?.storeName || item.sellerId?.name || 'N/A';
+                                                    return String(sellerName);
+                                                  })()}
+                                                </div>
+                                                {(item.sellerId?.mobile || item.sellerId?.storeProfile?.contactNo) && (
+                                                  <div style={{ fontSize: 11, color: "#10b981", fontWeight: 600, marginTop: 2 }}>
+                                                    📱 {String(item.sellerId?.mobile || item.sellerId?.storeProfile?.contactNo)}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+                                            <div className="ao-prod-tags">
+                                              {/* Show selectedOptions with highlighted badge if available, else show weight/size/color/ram */}
+                                              {item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0 ? (
+                                                <>
+                                                  {Object.entries(item.selectedOptions).map(([key, value]) => {
+                                                    // Convert value to string, handle objects safely
+                                                    const displayValue = typeof value === 'object' && value !== null
+                                                      ? JSON.stringify(value)
+                                                      : String(value || '');
+                                                    return displayValue ? (
+                                                      <span
+                                                        key={key}
+                                                        className="ao-prod-tag"
+                                                        style={{
+                                                          background: '#fef3c7',
+                                                          color: '#92400e',
+                                                          border: '1px solid #fde68a',
+                                                          fontWeight: 700
+                                                        }}
+                                                      >
+                                                        🎯 {key}: {displayValue}
+                                                      </span>
+                                                    ) : null;
+                                                  })}
+                                                </>
+                                              ) : (
+                                                <>
+                                                  {item.weight && <span className="ao-prod-tag">📦 {String(item.weight)}</span>}
+                                                  {item.color && <span className="ao-prod-tag">🎨 {String(item.color)}</span>}
+                                                  {item.size && <span className="ao-prod-tag">📐 {String(item.size)}</span>}
+                                                  {item.ram && <span className="ao-prod-tag">💾 {String(item.ram)}</span>}
+                                                </>
+                                              )}
+                                              <span className="ao-prod-tag">Qty {item.quantity || 0}</span>
                                             </div>
-                                          )}
+                                          </div>
+
+                                          {/* Price */}
+                                          <div className="ao-prod-right">
+                                            <div className="ao-prod-subtotal">{fmt(item.price * item.quantity)}</div>
+                                            <div className="ao-prod-unit">{fmt(item.price)} per</div>
+                                          </div>
                                         </div>
-                                      )}
-                                      <div className="ao-prod-tags">
-                                        {/* Show selectedOptions with highlighted badge if available, else show weight/size/color/ram */}
-                                        {item.selectedOptions && typeof item.selectedOptions === 'object' && Object.keys(item.selectedOptions).length > 0 ? (
-                                          <>
-                                            {Object.entries(item.selectedOptions).map(([key, value]) => {
-                                              // Convert value to string, handle objects safely
-                                              const displayValue = typeof value === 'object' && value !== null 
-                                                ? JSON.stringify(value) 
-                                                : String(value || '');
-                                              return displayValue ? (
-                                                <span 
-                                                  key={key} 
-                                                  className="ao-prod-tag"
-                                                  style={{
-                                                    background: '#fef3c7',
-                                                    color: '#92400e',
-                                                    border: '1px solid #fde68a',
-                                                    fontWeight: 700
-                                                  }}
-                                                >
-                                                  🎯 {key}: {displayValue}
-                                                </span>
-                                              ) : null;
-                                            })}
-                                          </>
-                                        ) : (
-                                          <>
-                                            {item.weight && <span className="ao-prod-tag">📦 {String(item.weight)}</span>}
-                                            {item.color  && <span className="ao-prod-tag">🎨 {String(item.color)}</span>}
-                                            {item.size   && <span className="ao-prod-tag">📐 {String(item.size)}</span>}
-                                            {item.ram    && <span className="ao-prod-tag">💾 {String(item.ram)}</span>}
-                                          </>
-                                        )}
-                                        <span className="ao-prod-tag">Qty {item.quantity || 0}</span>
-                                      </div>
+                                      ))}
                                     </div>
 
-                                    {/* Price */}
-                                    <div className="ao-prod-right">
-                                      <div className="ao-prod-subtotal">{fmt(item.price * item.quantity)}</div>
-                                      <div className="ao-prod-unit">{fmt(item.price)} per</div>
+                                    {/* Total footer */}
+                                    <div className="ao-panel-total">
+                                      <span className="ao-panel-total-lbl">Order Total</span>
+                                      <span className="ao-panel-total-amt">{fmt(displayAmount)}</span>
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
-
-                              {/* Total footer */}
-                              <div className="ao-panel-total">
-                                <span className="ao-panel-total-lbl">Order Total</span>
-                                <span className="ao-panel-total-amt">{fmt(displayAmount)}</span>
-                              </div>
-                            </>
-                          );
-                        })()}
+                                  </>
+                                );
+                              })()}
                             </div>
                           </td>
                         </tr>
@@ -2813,7 +2181,7 @@ const isSellerView = isSellerRole(context?.userData?.role);
                 },
               }}
             />
-            
+
             {/* Total count display */}
             <div style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>
               Showing {((pageOrder - 1) * itemsPerPage) + 1}-{Math.min(pageOrder * itemsPerPage, orders?.totalCount || 0)} of {orders?.totalCount || 0}
@@ -2842,9 +2210,9 @@ const isSellerView = isSellerRole(context?.userData?.role);
         }}
       >
         <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden' }}>
-          <DialogTitle sx={{ 
-            textAlign: 'center', 
-            pb: 1, 
+          <DialogTitle sx={{
+            textAlign: 'center',
+            pb: 1,
             pt: { xs: 2.5, sm: 3 },
             px: { xs: 2, sm: 3 },
           }}>
@@ -2902,11 +2270,11 @@ const isSellerView = isSellerRole(context?.userData?.role);
               autoFocus
               fullWidth
               type="text"
-              inputProps={{ 
+              inputProps={{
                 maxLength: 6,
-                style: { 
-                  textAlign: 'center', 
-                  fontSize: mobileView ? 24 : 28, 
+                style: {
+                  textAlign: 'center',
+                  fontSize: mobileView ? 24 : 28,
                   fontWeight: 700,
                   letterSpacing: mobileView ? '8px' : '12px',
                   fontFamily: "'Courier New', monospace",
@@ -2976,14 +2344,14 @@ const isSellerView = isSellerRole(context?.userData?.role);
               borderRadius: 12,
               border: '1.5px solid #fde68a',
             }}>
-              <span style={{ 
-                fontSize: mobileView ? 18 : 20, 
+              <span style={{
+                fontSize: mobileView ? 18 : 20,
                 flexShrink: 0,
                 marginTop: 2,
               }}>💡</span>
-              <span style={{ 
-                fontSize: mobileView ? 12 : 13, 
-                color: '#92400e', 
+              <span style={{
+                fontSize: mobileView ? 12 : 13,
+                color: '#92400e',
                 fontWeight: 600,
                 lineHeight: 1.5,
                 flex: 1,
@@ -2993,10 +2361,10 @@ const isSellerView = isSellerRole(context?.userData?.role);
             </div>
           </DialogContent>
 
-          <DialogActions sx={{ 
-            px: { xs: 2, sm: 3 }, 
-            pb: { xs: 2.5, sm: 3 }, 
-            pt: 2, 
+          <DialogActions sx={{
+            px: { xs: 2, sm: 3 },
+            pb: { xs: 2.5, sm: 3 },
+            pt: 2,
             gap: { xs: 1.5, sm: 2 },
             flexDirection: { xs: 'column', sm: 'row' },
           }}>

@@ -2,43 +2,55 @@ import React, { useContext, useEffect, useState, useRef } from "react";
 import { MyContext } from "../../App";
 import { editData, fetchDataFromApi, postData } from "../../utils/api";
 import {
-  FiRefreshCw, FiTrendingUp, FiTrendingDown, FiFilter,
-  FiDownload, FiSearch, FiChevronDown, FiInfo, FiClock,
-  FiCheckCircle, FiXCircle, FiAlertCircle, FiArrowUpRight,
-  FiArrowDownLeft, FiActivity, FiUsers, FiDollarSign,
-  FiEye, FiEyeOff, FiCopy, FiCheck
+  FiRefreshCw, FiTrendingUp, FiTrendingDown, FiFilter, FiDownload, FiSearch,
+  FiChevronDown, FiInfo, FiClock, FiCheckCircle, FiXCircle, FiAlertCircle,
+  FiArrowUpRight, FiArrowDownLeft, FiActivity, FiUsers, FiEye, FiEyeOff,
 } from "react-icons/fi";
-import {
-  MdOutlineWallet, MdOutlinePercent, MdSwapHoriz,
-  MdOutlineAccountBalance, MdOutlineShield
-} from "react-icons/md";
-import { RiMoneyRupeeCircleLine, RiVipCrownLine } from "react-icons/ri";
+import { MdOutlineWallet, MdOutlinePercent, MdOutlineAccountBalance, MdOutlineShield } from "react-icons/md";
+import { RiMoneyRupeeCircleLine } from "react-icons/ri";
 import { BsGraphUp, BsLightningCharge } from "react-icons/bs";
 
 const SELLER_ROLES = ["SELLER", "GROCERY_SELLER", "RESTAURANT_SELLER", "FASHION_SELLER", "ELECTRONICS_SELLER", "MEDICAL_SELLER", "BEAUTY_SELLER", "HOME_KITCHEN_SELLER", "GIFTS_TOYS_SELLER", "BOOKS_STATIONERY_SELLER", "JEWELLERY_SELLER", "HARDWARE_SELLER", "AUTOMOBILE_SELLER"];
 const isSellerRole = (role) => SELLER_ROLES.includes(role);
+
+// ─── Palette ──────────────────────────────────────────────────────────────────
+const COLORS = {
+  indigo: "#6366F1", sky: "#0EA5E9", emerald: "#10B981", amber: "#F59E0B",
+  orange: "#F97316", pink: "#EC4899", violet: "#8B5CF6", rose: "#F43F5E",
+};
+const TYPE_META = {
+  DEPOSIT:    { c: COLORS.sky,    label: "Deposit",    icon: <FiArrowDownLeft size={15} /> },
+  WITHDRAW:   { c: COLORS.orange, label: "Withdrawal", icon: <FiArrowUpRight size={15} /> },
+  COMMISSION: { c: COLORS.violet, label: "Commission", icon: <BsGraphUp size={13} /> },
+};
+const STATUS_META = {
+  PENDING:  { c: COLORS.amber,   label: "Pending",  icon: <FiClock size={10} /> },
+  APPROVED: { c: COLORS.emerald, label: "Approved", icon: <FiCheckCircle size={10} /> },
+  REJECTED: { c: COLORS.rose,    label: "Rejected", icon: <FiXCircle size={10} /> },
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (v) => (v || 0).toLocaleString("en-IN");
 const fmtDate = (d) => {
   if (!d) return "—";
   const dt = new Date(d);
-  return dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) +
-    " · " + dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  return (
+    dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) +
+    " · " + dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+  );
 };
 
-// ─── Animated Counter ────────────────────────────────────────────────────────
+// ─── Animated Counter ─────────────────────────────────────────────────────────
 function AnimCounter({ value }) {
   const [display, setDisplay] = useState(0);
   const ref = useRef(null);
   useEffect(() => {
     const target = Number(value) || 0;
-    const dur = 900;
+    const dur = 1000;
     const start = performance.now();
     const tick = (now) => {
       const p = Math.min((now - start) / dur, 1);
-      const ease = 1 - Math.pow(1 - p, 3);
-      setDisplay(Math.floor(ease * target));
+      setDisplay(Math.floor((1 - Math.pow(1 - p, 4)) * target));
       if (p < 1) ref.current = requestAnimationFrame(tick);
     };
     ref.current = requestAnimationFrame(tick);
@@ -47,176 +59,259 @@ function AnimCounter({ value }) {
   return <>{fmt(display)}</>;
 }
 
-// ─── Mini Sparkline ───────────────────────────────────────────────────────────
-function Sparkline({ data = [], color = "#10b981", height = 36 }) {
-  if (!data.length) return null;
+// ─── Sparkline ────────────────────────────────────────────────────────────────
+function Sparkline({ data = [], color = COLORS.emerald, height = 32 }) {
+  if (data.length < 2) return null;
   const max = Math.max(...data, 1);
   const min = Math.min(...data, 0);
   const range = max - min || 1;
-  const w = 80, h = height;
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w;
-    const y = h - ((v - min) / range) * h;
-    return `${x},${y}`;
-  }).join(" ");
-  const areaD = `M0,${h} L${data.map((v, i) =>
-    `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`).join(" L")} L${w},${h} Z`;
+  const w = 76, h = height;
+  const xy = data.map((v, i) => [(i / (data.length - 1)) * w, h - ((v - min) / range) * h]);
+  const pts = xy.map((p) => p.join(",")).join(" ");
+  const areaD = `M0,${h} L${xy.map((p) => p.join(",")).join(" L")} L${w},${h} Z`;
+  const id = `g${color.replace("#", "")}`;
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ overflow: "visible" }}>
       <defs>
-        <linearGradient id={`g${color.replace("#","")}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={areaD} fill={`url(#g${color.replace("#","")})`} />
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" />
+      <path d={areaD} fill={`url(#${id})`} />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="spark-line" />
     </svg>
   );
 }
 
-// ─── Copy Button ─────────────────────────────────────────────────────────────
-function CopyBtn({ text }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
-  };
-  return (
-    <button onClick={copy} style={S.iconBtn} title="Copy">
-      {copied ? <FiCheck size={12} color="#10b981" /> : <FiCopy size={12} color="#94A3B8" />}
-    </button>
-  );
-}
-
-// ─── Status Badge ─────────────────────────────────────────────────────────────
+// ─── Small UI pieces ──────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
-  const cfg = {
-    PENDING:  { bg: "rgba(251,191,36,0.1)",  color: "#D97706", icon: <FiClock size={10} />,       label: "Pending"  },
-    APPROVED: { bg: "rgba(16,185,129,0.1)",  color: "#059669", icon: <FiCheckCircle size={10} />, label: "Approved" },
-    REJECTED: { bg: "rgba(239,68,68,0.1)",   color: "#DC2626", icon: <FiXCircle size={10} />,     label: "Rejected" },
-  };
-  const c = cfg[status] || cfg.PENDING;
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 4,
-      padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-      background: c.bg, color: c.color, fontFamily: "'DM Mono', monospace",
-    }}>{c.icon} {c.label}</span>
-  );
+  const m = STATUS_META[status] || STATUS_META.PENDING;
+  return <span className="badge" style={{ "--c": m.c }}>{m.icon} {m.label}</span>;
 }
 
-// ─── Type Pill ────────────────────────────────────────────────────────────────
 function TypePill({ type }) {
-  const isD = type === "DEPOSIT";
-  const isC = type === "COMMISSION";
-  const c = isC ? { bg: "rgba(139,92,246,0.1)", color: "#7C3AED", icon: <BsGraphUp size={10} /> }
-    : isD ? { bg: "rgba(59,130,246,0.1)", color: "#2563EB", icon: <FiArrowDownLeft size={10} /> }
-    : { bg: "rgba(234,88,12,0.1)", color: "#EA580C", icon: <FiArrowUpRight size={10} /> };
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 4,
-      padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-      background: c.bg, color: c.color
-    }}>{c.icon} {type}</span>
-  );
+  const m = TYPE_META[type] || TYPE_META.WITHDRAW;
+  return <span className="badge" style={{ "--c": m.c }}>{m.icon} {m.label}</span>;
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+function TypeIcon({ type, size = 36 }) {
+  const m = TYPE_META[type] || TYPE_META.WITHDRAW;
+  return <div className="ticon" style={{ "--c": m.c, width: size, height: size }}>{m.icon}</div>;
+}
+
 function StatCard({ icon, label, value, color, sub, trend, sparkData, delay = 0 }) {
   return (
-    <div style={{ ...S.card, animationDelay: `${delay}ms`, animation: "fadeUp 0.5s ease both" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-        <div style={{
-          width: 40, height: 40, borderRadius: 12,
-          background: `${color}15`, display: "flex", alignItems: "center", justifyContent: "center",
-          border: `1px solid ${color}28`, color, flexShrink: 0
-        }}>{icon}</div>
+    <div className="card lift stat" style={{ "--c": color, animationDelay: `${delay}ms` }}>
+      <div className="stat-top">
+        <div className="ticon" style={{ "--c": color, width: 38, height: 38 }}>{icon}</div>
         {sparkData && <Sparkline data={sparkData} color={color} />}
       </div>
-      <div style={{ marginTop: 16 }}>
-        <p style={{ fontSize: 11, color: "#94A3B8", fontFamily: "'DM Mono', monospace",
-          letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6 }}>{label}</p>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <RiMoneyRupeeCircleLine size={16} color="#94A3B8" />
-          <span style={{ fontSize: 26, fontWeight: 800, color: "#0F172A", fontFamily: "'Outfit', sans-serif", lineHeight: 1 }}>
-            <AnimCounter value={value} />
-          </span>
-        </div>
-        {(sub || trend !== undefined) && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-            {trend !== undefined && (
-              <span style={{
-                display: "inline-flex", alignItems: "center", gap: 3,
-                fontSize: 11, fontWeight: 600,
-                color: trend >= 0 ? "#059669" : "#DC2626"
-              }}>
-                {trend >= 0 ? <FiTrendingUp size={11} /> : <FiTrendingDown size={11} />}
-                {Math.abs(trend)}%
-              </span>
-            )}
-            {sub && <span style={{ fontSize: 11, color: "#94A3B8" }}>{sub}</span>}
-          </div>
-        )}
+      <p className="lbl">{label}</p>
+      <div className="stat-val">
+        <RiMoneyRupeeCircleLine size={15} color={color} />
+        <span><AnimCounter value={value} /></span>
       </div>
+      {(sub || trend !== undefined) && (
+        <div className="stat-sub">
+          {trend !== undefined && (
+            <span style={{ color: trend >= 0 ? COLORS.emerald : COLORS.rose, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
+              {trend >= 0 ? <FiTrendingUp size={11} /> : <FiTrendingDown size={11} />}
+              {Math.abs(trend)}%
+            </span>
+          )}
+          {sub && <span>{sub}</span>}
+        </div>
+      )}
+      <span className="stat-glow" />
+    </div>
+  );
+}
+
+function Tabs({ items, value, onChange }) {
+  const idx = Math.max(0, items.findIndex(([k]) => k === value));
+  return (
+    <div className="tabs" style={{ "--n": items.length, "--i": idx }}>
+      <span className="ind" />
+      {items.map(([k, l]) => (
+        <button key={k} onClick={() => onChange(k)} className={value === k ? "on" : ""}>{l}</button>
+      ))}
     </div>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const S = {
-  card: {
-    background: "#FFFFFF",
-    border: "1px solid #E2E8F0",
-    borderRadius: 16, padding: 20,
-    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-  },
-  iconBtn: {
-    width: 28, height: 28, borderRadius: 8,
-    background: "#F1F5F9", border: "1px solid #E2E8F0",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", transition: "all 0.15s", flexShrink: 0
-  },
-  input: {
-    width: "100%", height: 44, background: "#F8FAFC",
-    border: "1px solid #E2E8F0", borderRadius: 10,
-    padding: "0 14px", fontSize: 14, color: "#0F172A", outline: "none",
-    fontFamily: "'Outfit', sans-serif", boxSizing: "border-box", transition: "all 0.2s"
-  },
-  label: {
-    fontSize: 11, fontWeight: 600, color: "#64748B",
-    fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em",
-    textTransform: "uppercase", display: "block", marginBottom: 7
-  },
-  tab: (active) => ({
-    padding: "7px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-    cursor: "pointer", border: "none", transition: "all 0.2s", fontFamily: "'Outfit', sans-serif",
-    background: active ? "#FF6B2B" : "transparent",
-    color: active ? "#fff" : "#64748B",
-  }),
-  filterChip: (active, color = "#2563EB") => ({
-    padding: "5px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: "pointer",
-    border: `1px solid ${active ? color + "50" : "#E2E8F0"}`,
-    background: active ? color + "12" : "#F8FAFC",
-    color: active ? color : "#64748B",
-    transition: "all 0.2s", fontFamily: "'DM Mono', monospace"
-  }),
-  primaryBtn: {
-    height: 44, borderRadius: 10, border: "none", cursor: "pointer",
-    fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700,
-    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-    transition: "all 0.2s",
-  },
-};
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+.wp{--ink:#1E1B4B;--mut:#6B7280;--soft:#9CA3AF;--line:#E7E9F8;
+  min-height:100vh;font-family:'Outfit',sans-serif;font-size:12px;color:var(--ink);
+  background:linear-gradient(160deg,#F5F3FF 0%,#EFF6FF 45%,#FFF1F2 100%);position:relative;overflow:hidden}
+.wp *{box-sizing:border-box;margin:0;padding:0}
+.wp button,.wp input,.wp textarea{font-family:inherit}
+.wp button{cursor:pointer}
+.wp-in{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:22px 16px 56px}
+
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.4;pointer-events:none;animation:float 16s ease-in-out infinite}
+.b1{width:320px;height:320px;background:#C4B5FD;top:-90px;left:-70px}
+.b2{width:280px;height:280px;background:#FBCFE8;top:30%;right:-80px;animation-delay:-5s}
+.b3{width:300px;height:300px;background:#A5F3FC;bottom:-90px;left:25%;animation-delay:-9s}
+
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(24px,-28px) scale(1.08)}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.92) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.45)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes draw{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}
+@keyframes shine{from{transform:translateX(-120%) skewX(-20deg)}to{transform:translateX(320%) skewX(-20deg)}}
+
+.rise{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+.spark-line{stroke-dasharray:200;animation:draw 1.2s ease both}
+.spin{animation:spin 1s linear infinite}
+
+/* header */
+.hd{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.hd-l{display:flex;align-items:center;gap:10px}
+.logo{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,#6366F1,#EC4899);box-shadow:0 6px 16px rgba(99,102,241,.35)}
+.hd h1{font-size:17px;font-weight:700;line-height:1.1}
+.hd small{font-size:11px;color:var(--mut)}
+.hd-r{display:flex;gap:8px}
+
+/* buttons */
+.btn{height:34px;padding:0 13px;border-radius:10px;border:1px solid transparent;font-size:12px;font-weight:600;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform .18s,box-shadow .18s,background .18s}
+.btn:hover:not(:disabled){transform:translateY(-1px)}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.7;cursor:not-allowed}
+.btn-soft{background:#fff;color:var(--mut);border-color:var(--line)}
+.btn-soft:hover{background:#F5F3FF;color:#6366F1;border-color:#C7D2FE}
+.btn-ind{background:#EEF2FF;color:#4F46E5;border-color:#C7D2FE}
+.btn-ind:hover:not(:disabled){box-shadow:0 6px 14px rgba(99,102,241,.2)}
+.btn-ok{background:#ECFDF5;color:#059669;border-color:#A7F3D0}
+.btn-no{background:#FFF1F2;color:#E11D48;border-color:#FECDD3}
+.btn-ok:hover{background:#D1FAE5}.btn-no:hover{background:#FFE4E6}
+.btn-sm{height:28px;padding:0 10px;font-size:11px}
+.btn-big{height:44px;width:100%;font-size:13px;color:#fff;border:none;position:relative;overflow:hidden}
+.btn-big::after{content:"";position:absolute;top:0;bottom:0;width:30%;background:rgba(255,255,255,.35);transform:translateX(-120%) skewX(-20deg)}
+.btn-big:hover:not(:disabled)::after{animation:shine .8s ease}
+
+/* cards */
+.card{background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:16px;padding:16px;
+  box-shadow:0 2px 10px rgba(99,102,241,.06);animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+.lift{transition:transform .25s,box-shadow .25s,border-color .25s}
+.lift:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(99,102,241,.14);border-color:#C7D2FE}
+
+.lbl{font-size:10.5px;font-weight:600;color:var(--mut);letter-spacing:.04em;margin:12px 0 4px}
+.badge{--c:#6366F1;display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:100px;font-size:10.5px;font-weight:600;
+  color:var(--c);background:color-mix(in srgb,var(--c) 12%,white);border:1px solid color-mix(in srgb,var(--c) 22%,white)}
+.ticon{--c:#6366F1;border-radius:11px;display:grid;place-items:center;flex-shrink:0;color:var(--c);
+  background:color-mix(in srgb,var(--c) 13%,white);border:1px solid color-mix(in srgb,var(--c) 22%,white);transition:transform .25s}
+.lift:hover .ticon,.row:hover .ticon{transform:rotate(-8deg) scale(1.08)}
+
+/* hero */
+.hero{border:none;color:#fff;position:relative;overflow:hidden;padding:20px;margin-bottom:16px;
+  background:linear-gradient(120deg,#6366F1,#8B5CF6,#EC4899,#F97316);background-size:300% 300%;animation:rise .5s both,shift 12s ease infinite;
+  box-shadow:0 14px 36px rgba(139,92,246,.35)}
+.hero .c1,.hero .c2{position:absolute;border-radius:50%;background:rgba(255,255,255,.12)}
+.hero .c1{width:190px;height:190px;top:-70px;right:-50px}
+.hero .c2{width:120px;height:120px;bottom:-40px;left:42%;background:rgba(255,255,255,.08)}
+.hero-top{display:flex;justify-content:space-between;align-items:center;position:relative}
+.hero-lbl{font-size:11px;font-weight:500;opacity:.85;letter-spacing:.06em}
+.hero-btn{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;color:#fff;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);transition:background .2s,transform .2s}
+.hero-btn:hover{background:rgba(255,255,255,.32);transform:scale(1.08)}
+.hero-bal{display:flex;align-items:baseline;gap:5px;margin:6px 0 2px;position:relative}
+.hero-bal span{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.25);position:relative}
+.hero-grid small{display:flex;align-items:center;gap:4px;font-size:10.5px;opacity:.8;margin-bottom:2px}
+.hero-grid b{font-size:14px;font-weight:700}
+
+/* stat */
+.stat{position:relative;overflow:hidden}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start}
+.stat-val{display:flex;align-items:center;gap:3px;font-size:21px;font-weight:800}
+.stat-sub{display:flex;gap:6px;align-items:center;margin-top:6px;font-size:10.5px;color:var(--soft)}
+.stat-glow{position:absolute;right:-30px;bottom:-30px;width:90px;height:90px;border-radius:50%;background:var(--c);opacity:.09;transition:transform .4s,opacity .4s}
+.stat:hover .stat-glow{transform:scale(1.8);opacity:.14}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+
+/* tabs */
+.tabs{--n:3;--i:0;position:relative;display:grid;grid-template-columns:repeat(var(--n),1fr);gap:0;padding:4px;margin-bottom:14px;
+  background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:12px;width:fit-content;min-width:min(100%,300px)}
+.tabs button{position:relative;z-index:1;padding:7px 14px;border:none;background:none;border-radius:9px;font-size:12px;font-weight:600;color:var(--mut);transition:color .25s;white-space:nowrap}
+.tabs button.on{color:#fff}
+.tabs .ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/var(--n));border-radius:9px;
+  background:linear-gradient(135deg,#6366F1,#EC4899);box-shadow:0 4px 12px rgba(236,72,153,.3);
+  transform:translateX(calc(var(--i)*100%));transition:transform .35s cubic-bezier(.4,1.3,.5,1)}
+
+/* rows */
+.sec-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-h h3{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+.link{background:none;border:none;color:#6366F1;font-size:11.5px;font-weight:600;transition:transform .2s}
+.link:hover{transform:translateX(3px)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 8px;border-radius:12px;
+  animation:rise .45s cubic-bezier(.2,.8,.2,1) both;transition:background .2s,transform .2s}
+.row:hover{background:linear-gradient(90deg,#F5F3FF,#FFF1F2);transform:translateX(3px)}
+.row+.row{border-top:1px solid #F3F4FB}
+.row-l{display:flex;align-items:center;gap:10px;min-width:0}
+.row-t{font-size:12.5px;font-weight:600}
+.row-s{font-size:10.5px;color:var(--soft);margin-top:2px}
+.row-r{text-align:right;flex-shrink:0}
+.amt{font-size:13px;font-weight:800}
+.empty{text-align:center;padding:32px 0;color:#C4C7E0}
+.empty p{font-size:12px;margin-top:6px}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{--c:#6366F1;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600;color:var(--mut);background:#fff;border:1px solid var(--line);transition:all .2s}
+.chip:hover{border-color:var(--c);color:var(--c);transform:translateY(-1px)}
+.chip.on{color:#fff;background:var(--c);border-color:var(--c);box-shadow:0 4px 10px color-mix(in srgb,var(--c) 40%,transparent)}
+.chip-k{font-size:10px;font-weight:600;color:var(--soft);letter-spacing:.06em}
+
+/* form */
+.field-l{display:block;font-size:10.5px;font-weight:600;color:var(--mut);letter-spacing:.04em;margin-bottom:6px}
+.inp{width:100%;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:#FAFAFF;font-size:13px;color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
+.inp:focus{border-color:#8B5CF6;background:#fff;box-shadow:0 0 0 3px rgba(139,92,246,.15)}
+.inp::placeholder{color:#C7C9E0}
+textarea.inp{height:70px;padding:10px 12px;resize:none;line-height:1.5}
+.amt-in{font-size:18px;font-weight:700;height:48px;padding-left:30px}
+.type-btn{--c:#6366F1;height:48px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--soft);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .25s}
+.type-btn:hover{border-color:var(--c);color:var(--c)}
+.type-btn.on{color:var(--c);border-color:var(--c);background:color-mix(in srgb,var(--c) 9%,white);box-shadow:0 6px 16px color-mix(in srgb,var(--c) 22%,transparent);transform:translateY(-2px)}
+.info{display:flex;gap:9px;padding:10px 12px;border-radius:10px;background:linear-gradient(90deg,#EEF2FF,#FDF2F8);border:1px solid #E0E7FF;margin-bottom:16px}
+.info p{font-size:11px;color:var(--mut);line-height:1.5}
+
+/* admin */
+.seller{padding:0;overflow:hidden}
+.seller-h{width:100%;display:flex;align-items:center;gap:12px;padding:13px 16px;background:none;border:none;text-align:left}
+.avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;transition:transform .25s}
+.seller-h:hover .avatar{transform:rotate(-6deg) scale(1.06)}
+.store{font-size:10.5px;padding:2px 8px;border-radius:100px;color:#DB2777;background:#FDF2F8;border:1px solid #FBCFE8;font-weight:600}
+.pend{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:100px;color:#B45309;background:#FEF3C7;border:1px solid #FDE68A;animation:pulse 2s infinite}
+.exp{border-top:1px solid #F1F2FB;padding:0 16px 14px;animation:rise .35s ease both;background:linear-gradient(180deg,#FAFAFF,#fff)}
+.mini{display:flex;gap:22px;flex-wrap:wrap;padding:12px 0;border-bottom:1px dashed var(--line)}
+.mini small{display:block;font-size:10px;color:var(--soft);font-weight:600;letter-spacing:.05em;margin-bottom:2px}
+.mini b{font-size:13px;font-weight:700}
+.search{position:relative;flex:1 1 220px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%)}
+.search .inp{padding-left:34px}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:rgba(30,27,75,.45);backdrop-filter:blur(6px);animation:fade .2s both}
+.modal{width:90%;max-width:360px;padding:24px;border-radius:20px;background:#fff;box-shadow:0 24px 60px rgba(30,27,75,.3);animation:pop .3s cubic-bezier(.2,1.2,.4,1) both}
+.modal h3{font-size:15px;font-weight:700;margin-bottom:6px}
+.modal p{font-size:12px;color:var(--mut);line-height:1.6;margin-bottom:20px}
+
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#C7D2FE;border-radius:3px}
+@media(max-width:640px){.hero-bal span{font-size:28px}.row-r .amt{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.wp *,.wp *::before,.wp *::after{animation:none!important;transition:none!important}}
+`;
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const WalletPage = () => {
   const context = useContext(MyContext);
   const isAdmin = context?.userData?.role === "ADMIN";
-  const sellerName = context?.userData?.name || "Seller";
   const sellerStore = context?.userData?.storeProfile?.storeName || "";
 
   const [overview, setOverview] = useState({ wallet: {}, transactions: [] });
@@ -234,7 +329,6 @@ const WalletPage = () => {
   const [adminTab, setAdminTab] = useState("pending");
   const [expandedSeller, setExpandedSeller] = useState(null);
   const [confirming, setConfirming] = useState(null);
-  const [copied, setCopied] = useState(false);
 
   const loadData = async () => {
     setIsRefreshing(true);
@@ -256,17 +350,15 @@ const WalletPage = () => {
   useEffect(() => { loadData(); }, [isAdmin]);
 
   const txns = overview?.transactions || [];
-  const totalIn  = txns.filter(t => t.type === "DEPOSIT"  && t.status === "APPROVED").reduce((a, t) => a + t.amount, 0);
-  const totalOut = txns.filter(t => t.type === "WITHDRAW" && t.status === "APPROVED").reduce((a, t) => a + t.amount, 0);
-  const pendingAmt = txns.filter(t => t.status === "PENDING").reduce((a, t) => a + t.amount, 0);
-
-  const sparkDeposit  = txns.filter(t => t.type === "DEPOSIT"  && t.status === "APPROVED").slice(-7).map(t => t.amount);
-  const sparkWithdraw = txns.filter(t => t.type === "WITHDRAW" && t.status === "APPROVED").slice(-7).map(t => t.amount);
+  const totalIn = txns.filter((t) => t.type === "DEPOSIT" && t.status === "APPROVED").reduce((a, t) => a + t.amount, 0);
+  const totalOut = txns.filter((t) => t.type === "WITHDRAW" && t.status === "APPROVED").reduce((a, t) => a + t.amount, 0);
+  const pendingAmt = txns.filter((t) => t.status === "PENDING").reduce((a, t) => a + t.amount, 0);
+  const sparkDeposit = txns.filter((t) => t.type === "DEPOSIT" && t.status === "APPROVED").slice(-7).map((t) => t.amount);
+  const sparkWithdraw = txns.filter((t) => t.type === "WITHDRAW" && t.status === "APPROVED").slice(-7).map((t) => t.amount);
 
   const submitRequest = async (e) => {
     e.preventDefault();
-    if (!amount || Number(amount) <= 0)
-      return context?.alertBox("error", "Enter a valid amount");
+    if (!amount || Number(amount) <= 0) return context?.alertBox("error", "Enter a valid amount");
     if (reqType === "WITHDRAW" && Number(amount) > (overview?.wallet?.availableBalance || 0))
       return context?.alertBox("error", "Amount exceeds available balance");
     setIsSubmitting(true);
@@ -301,429 +393,272 @@ const WalletPage = () => {
     }
   };
 
-  const filteredTxns = txns.filter(t =>
-    (filterStatus === "ALL" || t.status === filterStatus) &&
-    (filterType === "ALL" || t.type === filterType)
+  const filteredTxns = txns.filter(
+    (t) => (filterStatus === "ALL" || t.status === filterStatus) && (filterType === "ALL" || t.type === filterType)
   );
 
-  const pendingCount = allSellers.reduce((a, s) =>
-    a + (s.walletTransactions || []).filter(t => t.status === "PENDING").length, 0);
+  const pendingCount = allSellers.reduce(
+    (a, s) => a + (s.walletTransactions || []).filter((t) => t.status === "PENDING").length, 0);
 
-  const filteredSellers = allSellers.filter(s =>
-    s.name?.toLowerCase().includes(searchSeller.toLowerCase()) ||
-    s.email?.toLowerCase().includes(searchSeller.toLowerCase())
+  const filteredSellers = allSellers.filter(
+    (s) =>
+      s.name?.toLowerCase().includes(searchSeller.toLowerCase()) ||
+      s.email?.toLowerCase().includes(searchSeller.toLowerCase())
   );
 
-  const displayedSellers = adminTab === "pending"
-    ? filteredSellers.filter(s => (s.walletTransactions || []).some(t => t.status === "PENDING"))
-    : filteredSellers;
+  const displayedSellers =
+    adminTab === "pending"
+      ? filteredSellers.filter((s) => (s.walletTransactions || []).some((t) => t.status === "PENDING"))
+      : filteredSellers;
 
   const exportCSV = () => {
+    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const rows = [["Date", "Type", "Amount", "Status", "Note"]];
-    txns.forEach(t => rows.push([fmtDate(t.createdAt), t.type, t.amount, t.status, t.note || ""]));
-    const csv = rows.map(r => r.join(",")).join("\n");
+    txns.forEach((t) => rows.push([fmtDate(t.createdAt), t.type, t.amount, t.status, t.note || ""]));
+    const csv = rows.map((r) => r.map(q).join(",")).join("\n");
     const a = document.createElement("a");
     a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
     a.download = "wallet_transactions.csv";
     a.click();
   };
 
+  const amtColor = (type) => (TYPE_META[type] || TYPE_META.WITHDRAW).c;
+  const sign = (type) => (type === "WITHDRAW" ? "−" : "+");
+  const rowTitle = { DEPOSIT: "Money Deposited", COMMISSION: "Commission", WITHDRAW: "Withdrawal" };
+
+  const adminStats = [
+    { icon: <FiUsers size={16} />, label: "Total Sellers", value: allSellers.length, color: COLORS.indigo, plain: true },
+    { icon: <FiAlertCircle size={16} />, label: "Pending Requests", value: pendingCount, color: COLORS.amber, plain: true },
+    { icon: <MdOutlineAccountBalance size={16} />, label: "Total Balance", color: COLORS.emerald,
+      value: allSellers.reduce((a, s) => a + (s.wallet?.availableBalance || 0), 0) },
+    { icon: <BsLightningCharge size={16} />, label: "Pending Amount", color: COLORS.pink,
+      value: allSellers.reduce((a, s) => a + (s.walletTransactions || []).filter((t) => t.status === "PENDING").reduce((b, t) => b + t.amount, 0), 0) },
+  ];
+
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", fontFamily: "'Outfit', sans-serif", position: "relative" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
-        @keyframes fadeUp { from { opacity:0; transform:translateY(14px);} to {opacity:1;transform:translateY(0);} }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        input::placeholder, textarea::placeholder { color: #CBD5E1; }
-        input:focus, textarea:focus, select:focus { border-color: #FF6B2B !important; box-shadow: 0 0 0 3px rgba(255,107,43,0.1); }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: #F1F5F9; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
-        .card-hover:hover { border-color: #CBD5E1 !important; box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important; }
-        .btn-ghost:hover { background: #F1F5F9 !important; }
-        .seller-row:hover { background: #F8FAFC !important; }
-        .txn-row:hover { background: #F8FAFC !important; }
-        .quick-chip:hover { border-color: #FF6B2B !important; color: #FF6B2B !important; background: rgba(255,107,43,0.06) !important; }
-        .refresh-spin { animation: spin 1s linear infinite; }
-        select option { background: #fff; color: #0F172A; }
-      `}</style>
+    <div className="wp">
+      <style>{CSS}</style>
+      <span className="blob b1" /><span className="blob b2" /><span className="blob b3" />
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: "28px 20px 60px" }}>
-
-        {/* ── Page Header ──────────────────────────────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12, animation: "fadeUp 0.4s ease both" }}>
+      <div className="wp-in">
+        {/* Header */}
+        <div className="hd rise">
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,107,43,0.1)", border: "1px solid rgba(255,107,43,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <MdOutlineWallet size={18} color="#FF6B2B" />
-              </div>
+            <div className="hd-l">
+              <div className="logo"><MdOutlineWallet size={18} /></div>
               <div>
-                <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0F172A", lineHeight: 1.1 }}>
-                  {isAdmin ? "Wallet Management" : "My Wallet"}
-                </h1>
-                {!isAdmin && sellerStore && (
-                  <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>{sellerStore}</p>
+                <h1>{isAdmin ? "Wallet Management" : "My Wallet"}</h1>
+                {!isAdmin && sellerStore && <small>{sellerStore}</small>}
+                {isAdmin && (
+                  <small style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 3 }}>
+                    {allSellers.length} sellers registered
+                    {pendingCount > 0 && <span className="pend">{pendingCount} pending</span>}
+                  </small>
                 )}
               </div>
             </div>
-            {isAdmin && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 12, color: "#94A3B8" }}>{allSellers.length} sellers registered</span>
-                {pendingCount > 0 && (
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 100,
-                    background: "rgba(217,119,6,0.1)", color: "#D97706", border: "1px solid rgba(217,119,6,0.2)",
-                    animation: "pulse 2s ease infinite" }}>
-                    {pendingCount} pending
-                  </span>
-                )}
-              </div>
-            )}
           </div>
-
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div className="hd-r">
             {!isAdmin && (
-              <button onClick={exportCSV} style={{
-                ...S.primaryBtn, padding: "0 16px", background: "#F1F5F9",
-                color: "#64748B", border: "1px solid #E2E8F0", fontSize: 13
-              }} className="btn-ghost">
-                <FiDownload size={14} /> Export
-              </button>
+              <button onClick={exportCSV} className="btn btn-soft"><FiDownload size={13} /> Export</button>
             )}
-            <button onClick={loadData} disabled={isRefreshing} style={{
-              ...S.primaryBtn, padding: "0 16px",
-              background: isRefreshing ? "rgba(255,107,43,0.08)" : "rgba(255,107,43,0.1)",
-              color: "#FF6B2B", border: "1px solid rgba(255,107,43,0.2)", fontSize: 13
-            }}>
-              <FiRefreshCw size={13} className={isRefreshing ? "refresh-spin" : ""} />
+            <button onClick={loadData} disabled={isRefreshing} className="btn btn-ind">
+              <FiRefreshCw size={12} className={isRefreshing ? "spin" : ""} />
               {isRefreshing ? "Syncing…" : "Refresh"}
             </button>
           </div>
         </div>
 
-        {/* ── SELLER VIEW ──────────────────────────────────────────────────── */}
+        {/* ── SELLER VIEW ── */}
         {!isAdmin && (
           <>
-            {/* Balance Hero Card */}
-            <div style={{ ...S.card,
-              background: "linear-gradient(135deg, #FF6B2B 0%, #FF8C55 60%, #FFB347 100%)",
-              border: "none", marginBottom: 20, position: "relative", overflow: "hidden",
-              animation: "fadeUp 0.4s ease both", boxShadow: "0 8px 32px rgba(255,107,43,0.3)" }}>
-              {/* Decorative */}
-              <div style={{ position: "absolute", top: -60, right: -60, width: 200, height: 200,
-                borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
-              <div style={{ position: "absolute", bottom: -40, left: "40%", width: 140, height: 140,
-                borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-
-              <div style={{ position: "relative", zIndex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)",
-                    fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    Available Balance
-                  </span>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => setShowBalance(!showBalance)}
-                      style={{ ...S.iconBtn, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)" }}
-                      className="btn-ghost">
-                      {showBalance
-                        ? <FiEye size={13} color="rgba(255,255,255,0.9)" />
-                        : <FiEyeOff size={13} color="rgba(255,255,255,0.9)" />}
-                    </button>
-                    <div style={{ ...S.iconBtn, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)" }}>
-                      <MdOutlineShield size={13} color="rgba(255,255,255,0.9)" />
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
-                  <RiMoneyRupeeCircleLine size={24} color="rgba(255,255,255,0.85)" />
-                  <span style={{ fontSize: 44, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: "-0.02em" }}>
-                    {showBalance ? <AnimCounter value={overview?.wallet?.availableBalance} /> : "••••••"}
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginTop: 20, paddingTop: 20,
-                  borderTop: "1px solid rgba(255,255,255,0.2)" }}>
-                  {[
-                    { label: "Total Deposited", val: overview?.wallet?.totalDeposited,       color: "rgba(255,255,255,0.9)", icon: <FiArrowDownLeft size={12} /> },
-                    { label: "Total Withdrawn",  val: overview?.wallet?.totalWithdrawn,       color: "rgba(255,255,255,0.9)", icon: <FiArrowUpRight size={12} /> },
-                    { label: "Commission Paid",  val: overview?.wallet?.totalCommissionPaid,  color: "rgba(255,255,255,0.9)", icon: <MdOutlinePercent size={12} /> },
-                    { label: "Pending",          val: pendingAmt,                             color: "rgba(255,255,255,0.9)", icon: <FiClock size={12} /> },
-                  ].map(item => (
-                    <div key={item.label}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
-                        <span style={{ color: "rgba(255,255,255,0.7)" }}>{item.icon}</span>
-                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontFamily: "'DM Mono', monospace" }}>
-                          {item.label}
-                        </span>
-                      </div>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
-                        ₹{showBalance ? fmt(item.val) : "•••"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Stat Cards Row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, marginBottom: 24 }}>
-              <StatCard icon={<FiArrowDownLeft size={18} />} label="Total In" value={totalIn}
-                color="#2563EB" sub="Approved deposits" trend={2.4} sparkData={sparkDeposit} delay={0} />
-              <StatCard icon={<FiArrowUpRight size={18} />} label="Total Out" value={totalOut}
-                color="#EA580C" sub="Approved withdrawals" sparkData={sparkWithdraw} delay={80} />
-              <StatCard icon={<FiClock size={18} />} label="Pending" value={pendingAmt}
-                color="#D97706" sub="Awaiting approval" delay={160} />
-              <StatCard icon={<BsGraphUp size={18} />} label="Commission" value={overview?.wallet?.pendingCommission}
-                color="#7C3AED" sub="Under review" delay={240} />
-            </div>
-
-            {/* Tab Nav */}
-            <div style={{ display: "flex", gap: 4, marginBottom: 18, background: "#F1F5F9",
-              border: "1px solid #E2E8F0", borderRadius: 12, padding: 4, width: "fit-content" }}>
-              {[["overview", "Overview"], ["transactions", "History"], ["request", "New Request"]].map(([k, l]) => (
-                <button key={k} onClick={() => setActiveTab(k)} style={S.tab(activeTab === k)}>{l}</button>
-              ))}
-            </div>
-
-            {/* ── Overview Tab ─────────────────────────────────────────── */}
-            {activeTab === "overview" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, animation: "fadeUp 0.3s ease both" }}>
-                <div style={{ ...S.card, gridColumn: "1 / -1" }} className="card-hover">
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: "#0F172A", display: "flex", alignItems: "center", gap: 8 }}>
-                      <FiActivity size={14} color="#FF6B2B" /> Recent Activity
-                    </h3>
-                    <button onClick={() => setActiveTab("transactions")} style={{
-                      fontSize: 12, color: "#FF6B2B", background: "none", border: "none", cursor: "pointer",
-                      fontFamily: "'Outfit', sans-serif", fontWeight: 600
-                    }}>View All →</button>
-                  </div>
-                  {txns.slice(0, 5).length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "32px 0", color: "#CBD5E1" }}>
-                      <MdOutlineWallet size={36} style={{ marginBottom: 8, opacity: 0.4 }} />
-                      <p style={{ fontSize: 13 }}>No transactions yet</p>
-                    </div>
-                  ) : (
-                    <div>
-                      {txns.slice(0, 5).map((t) => (
-                        <div key={t._id} className="txn-row" style={{
-                          display: "flex", alignItems: "center", justifyContent: "space-between",
-                          padding: "10px 8px", borderRadius: 10, transition: "background 0.15s"
-                        }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <div style={{
-                              width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
-                              background: t.type === "DEPOSIT" ? "rgba(37,99,235,0.08)" : t.type === "COMMISSION" ? "rgba(124,58,237,0.08)" : "rgba(234,88,12,0.08)",
-                            }}>
-                              {t.type === "DEPOSIT" ? <FiArrowDownLeft size={16} color="#2563EB" />
-                                : t.type === "COMMISSION" ? <BsGraphUp size={15} color="#7C3AED" />
-                                : <FiArrowUpRight size={16} color="#EA580C" />}
-                            </div>
-                            <div>
-                              <p style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>
-                                {t.type === "DEPOSIT" ? "Money Deposited" : t.type === "COMMISSION" ? "Commission" : "Withdrawal"}
-                              </p>
-                              <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>
-                                {fmtDate(t.createdAt)}
-                              </p>
-                            </div>
-                          </div>
-                          <div style={{ textAlign: "right" }}>
-                            <p style={{ fontSize: 14, fontWeight: 700,
-                              color: t.type === "WITHDRAW" ? "#EA580C" : t.type === "COMMISSION" ? "#7C3AED" : "#059669" }}>
-                              {t.type === "WITHDRAW" ? "-" : "+"}₹{fmt(t.amount)}
-                            </p>
-                            <div style={{ marginTop: 4 }}><StatusBadge status={t.status} /></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ── Transactions Tab ──────────────────────────────────────── */}
-            {activeTab === "transactions" && (
-              <div style={{ ...S.card, animation: "fadeUp 0.3s ease both" }} className="card-hover">
-                {/* Filters */}
-                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 18 }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-                    <span style={{ fontSize: 11, color: "#94A3B8", fontFamily: "'DM Mono', monospace" }}>STATUS</span>
-                    {["ALL", "PENDING", "APPROVED", "REJECTED"].map(s => (
-                      <button key={s} onClick={() => setFilterStatus(s)}
-                        style={S.filterChip(filterStatus === s, s === "APPROVED" ? "#059669" : s === "REJECTED" ? "#DC2626" : s === "PENDING" ? "#D97706" : "#2563EB")}>
-                        {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-                    <span style={{ fontSize: 11, color: "#94A3B8", fontFamily: "'DM Mono', monospace" }}>TYPE</span>
-                    {["ALL", "DEPOSIT", "WITHDRAW", "COMMISSION"].map(t => (
-                      <button key={t} onClick={() => setFilterType(t)}
-                        style={S.filterChip(filterType === t, t === "DEPOSIT" ? "#2563EB" : t === "WITHDRAW" ? "#EA580C" : "#7C3AED")}>
-                        {t === "ALL" ? "All" : t.charAt(0) + t.slice(1).toLowerCase()}
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={exportCSV} style={{
-                    ...S.primaryBtn, padding: "0 14px", height: 36, fontSize: 12,
-                    background: "#F1F5F9", color: "#64748B", border: "1px solid #E2E8F0"
-                  }} className="btn-ghost">
-                    <FiDownload size={12} /> CSV
+            <div className="card hero">
+              <span className="c1" /><span className="c2" />
+              <div className="hero-top">
+                <span className="hero-lbl">AVAILABLE BALANCE</span>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="hero-btn" onClick={() => setShowBalance(!showBalance)} title="Toggle balance">
+                    {showBalance ? <FiEye size={13} /> : <FiEyeOff size={13} />}
                   </button>
+                  <div className="hero-btn"><MdOutlineShield size={13} /></div>
                 </div>
-
-                <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 12, fontFamily: "'DM Mono', monospace" }}>
-                  {filteredTxns.length} transaction{filteredTxns.length !== 1 ? "s" : ""}
-                </div>
-
-                {filteredTxns.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 0", color: "#CBD5E1" }}>
-                    <FiFilter size={32} style={{ marginBottom: 8 }} />
-                    <p style={{ fontSize: 13 }}>No matching transactions</p>
+              </div>
+              <div className="hero-bal">
+                <RiMoneyRupeeCircleLine size={22} style={{ opacity: 0.85 }} />
+                <span>{showBalance ? <AnimCounter value={overview?.wallet?.availableBalance} /> : "••••••"}</span>
+              </div>
+              <div className="hero-grid">
+                {[
+                  { label: "Total Deposited", val: overview?.wallet?.totalDeposited, icon: <FiArrowDownLeft size={11} /> },
+                  { label: "Total Withdrawn", val: overview?.wallet?.totalWithdrawn, icon: <FiArrowUpRight size={11} /> },
+                  { label: "Commission Paid", val: overview?.wallet?.totalCommissionPaid, icon: <MdOutlinePercent size={11} /> },
+                  { label: "Pending", val: pendingAmt, icon: <FiClock size={11} /> },
+                ].map((it) => (
+                  <div key={it.label}>
+                    <small>{it.icon} {it.label}</small>
+                    <b>₹{showBalance ? fmt(it.val) : "•••"}</b>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="stats">
+              <StatCard icon={<FiArrowDownLeft size={17} />} label="Total In" value={totalIn} color={COLORS.sky} sub="Approved deposits" trend={2.4} sparkData={sparkDeposit} delay={0} />
+              <StatCard icon={<FiArrowUpRight size={17} />} label="Total Out" value={totalOut} color={COLORS.orange} sub="Approved withdrawals" sparkData={sparkWithdraw} delay={70} />
+              <StatCard icon={<FiClock size={17} />} label="Pending" value={pendingAmt} color={COLORS.amber} sub="Awaiting approval" delay={140} />
+              <StatCard icon={<BsGraphUp size={16} />} label="Commission" value={overview?.wallet?.pendingCommission} color={COLORS.violet} sub="Under review" delay={210} />
+            </div>
+
+            <Tabs
+              items={[["overview", "Overview"], ["transactions", "History"], ["request", "New Request"]]}
+              value={activeTab} onChange={setActiveTab}
+            />
+
+            {/* Overview */}
+            {activeTab === "overview" && (
+              <div className="card lift" key="ov">
+                <div className="sec-h">
+                  <h3><FiActivity size={14} color={COLORS.pink} /> Recent Activity</h3>
+                  <button className="link" onClick={() => setActiveTab("transactions")}>View all →</button>
+                </div>
+                {txns.length === 0 ? (
+                  <div className="empty"><MdOutlineWallet size={34} /><p>No transactions yet</p></div>
                 ) : (
-                  <div>
-                    {filteredTxns.map((t, i) => (
-                      <div key={t._id} className="txn-row" style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "12px 10px", borderRadius: 10, transition: "background 0.15s",
-                        borderBottom: i < filteredTxns.length - 1 ? "1px solid #F1F5F9" : "none"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{
-                            width: 38, height: 38, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center",
-                            background: t.type === "DEPOSIT" ? "rgba(37,99,235,0.08)" : t.type === "COMMISSION" ? "rgba(124,58,237,0.08)" : "rgba(234,88,12,0.08)"
-                          }}>
-                            {t.type === "DEPOSIT" ? <FiArrowDownLeft size={17} color="#2563EB" />
-                              : t.type === "COMMISSION" ? <BsGraphUp size={15} color="#7C3AED" />
-                              : <FiArrowUpRight size={17} color="#EA580C" />}
-                          </div>
-                          <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <p style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>
-                                {t.type === "DEPOSIT" ? "Deposit" : t.type === "COMMISSION" ? "Commission Earned" : "Withdrawal"}
-                              </p>
-                              <TypePill type={t.type} />
-                            </div>
-                            <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 3 }}>
-                              {fmtDate(t.createdAt)}{t.note ? ` · ${t.note}` : ""}
-                            </p>
-                          </div>
-                        </div>
-                        <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <p style={{ fontSize: 15, fontWeight: 800,
-                            color: t.type === "WITHDRAW" ? "#EA580C" : t.type === "COMMISSION" ? "#7C3AED" : "#059669" }}>
-                            {t.type === "WITHDRAW" ? "−" : "+"}₹{fmt(t.amount)}
-                          </p>
-                          <div style={{ marginTop: 5 }}><StatusBadge status={t.status} /></div>
+                  txns.slice(0, 5).map((t, i) => (
+                    <div key={t._id} className="row" style={{ animationDelay: `${i * 60}ms` }}>
+                      <div className="row-l">
+                        <TypeIcon type={t.type} />
+                        <div>
+                          <p className="row-t">{rowTitle[t.type] || "Withdrawal"}</p>
+                          <p className="row-s">{fmtDate(t.createdAt)}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="row-r">
+                        <p className="amt" style={{ color: amtColor(t.type) }}>{sign(t.type)}₹{fmt(t.amount)}</p>
+                        <div style={{ marginTop: 3 }}><StatusBadge status={t.status} /></div>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             )}
 
-            {/* ── New Request Tab ───────────────────────────────────────── */}
-            {activeTab === "request" && (
-              <div style={{ maxWidth: 520, animation: "fadeUp 0.3s ease both" }}>
-                <div style={{ ...S.card }} className="card-hover">
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0F172A", marginBottom: 4 }}>
-                    New Wallet Request
-                  </h3>
-                  <p style={{ fontSize: 12, color: "#94A3B8", marginBottom: 24 }}>
-                    Submit a deposit or withdrawal request
-                  </p>
+            {/* History */}
+            {activeTab === "transactions" && (
+              <div className="card" key="hist">
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+                  <div className="chips">
+                    <span className="chip-k">STATUS</span>
+                    {["ALL", "PENDING", "APPROVED", "REJECTED"].map((s) => (
+                      <button key={s} onClick={() => setFilterStatus(s)}
+                        className={`chip ${filterStatus === s ? "on" : ""}`}
+                        style={{ "--c": s === "ALL" ? COLORS.indigo : STATUS_META[s].c }}>
+                        {s === "ALL" ? "All" : STATUS_META[s].label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="chips">
+                    <span className="chip-k">TYPE</span>
+                    {["ALL", "DEPOSIT", "WITHDRAW", "COMMISSION"].map((t) => (
+                      <button key={t} onClick={() => setFilterType(t)}
+                        className={`chip ${filterType === t ? "on" : ""}`}
+                        style={{ "--c": t === "ALL" ? COLORS.indigo : TYPE_META[t].c }}>
+                        {t === "ALL" ? "All" : TYPE_META[t].label}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={exportCSV} className="btn btn-soft btn-sm"><FiDownload size={11} /> CSV</button>
+                </div>
 
-                  {/* Type Toggle */}
-                  <div style={{ marginBottom: 20 }}>
-                    <span style={S.label}>Request Type</span>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      {[
-                        { k: "DEPOSIT",  label: "Deposit",    icon: <FiArrowDownLeft size={16} />, color: "#2563EB" },
-                        { k: "WITHDRAW", label: "Withdrawal", icon: <FiArrowUpRight  size={16} />, color: "#EA580C" },
-                      ].map(({ k, label, icon, color }) => (
-                        <button key={k} type="button" onClick={() => setReqType(k)} style={{
-                          height: 56, borderRadius: 12,
-                          border: `1.5px solid ${reqType === k ? color : "#E2E8F0"}`,
-                          background: reqType === k ? `${color}08` : "#F8FAFC",
-                          color: reqType === k ? color : "#94A3B8",
-                          cursor: "pointer", transition: "all 0.2s", fontFamily: "'Outfit', sans-serif",
-                          fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8
-                        }}>
-                          {icon} {label}
-                        </button>
-                      ))}
+                <p className="row-s" style={{ marginBottom: 8 }}>
+                  {filteredTxns.length} transaction{filteredTxns.length !== 1 ? "s" : ""}
+                </p>
+
+                {filteredTxns.length === 0 ? (
+                  <div className="empty"><FiFilter size={30} /><p>No matching transactions</p></div>
+                ) : (
+                  filteredTxns.map((t, i) => (
+                    <div key={t._id} className="row" style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}>
+                      <div className="row-l">
+                        <TypeIcon type={t.type} size={38} />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                            <p className="row-t">{t.type === "COMMISSION" ? "Commission Earned" : (TYPE_META[t.type] || TYPE_META.WITHDRAW).label}</p>
+                            <TypePill type={t.type} />
+                          </div>
+                          <p className="row-s">{fmtDate(t.createdAt)}{t.note ? ` · ${t.note}` : ""}</p>
+                        </div>
+                      </div>
+                      <div className="row-r">
+                        <p className="amt" style={{ color: amtColor(t.type) }}>{sign(t.type)}₹{fmt(t.amount)}</p>
+                        <div style={{ marginTop: 4 }}><StatusBadge status={t.status} /></div>
+                      </div>
                     </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* New request */}
+            {activeTab === "request" && (
+              <div style={{ maxWidth: 480 }} key="req">
+                <div className="card">
+                  <h3 style={{ fontSize: 14, fontWeight: 700 }}>New Wallet Request</h3>
+                  <p className="row-s" style={{ marginBottom: 18 }}>Submit a deposit or withdrawal request</p>
+
+                  <span className="field-l">REQUEST TYPE</span>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                    {[
+                      { k: "DEPOSIT", label: "Deposit", icon: <FiArrowDownLeft size={15} />, c: COLORS.sky },
+                      { k: "WITHDRAW", label: "Withdrawal", icon: <FiArrowUpRight size={15} />, c: COLORS.orange },
+                    ].map(({ k, label, icon, c }) => (
+                      <button key={k} type="button" onClick={() => setReqType(k)}
+                        className={`type-btn ${reqType === k ? "on" : ""}`} style={{ "--c": c }}>
+                        {icon} {label}
+                      </button>
+                    ))}
                   </div>
 
                   <form onSubmit={submitRequest}>
-                    {/* Amount */}
-                    <div style={{ marginBottom: 16 }}>
-                      <span style={S.label}>Amount (₹)</span>
-                      <div style={{ position: "relative" }}>
-                        <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
-                          color: "#94A3B8", fontSize: 16 }}>₹</span>
-                        <input type="number" min="1" value={amount} onChange={e => setAmount(e.target.value)}
-                          placeholder="0.00" style={{ ...S.input, paddingLeft: 32, fontSize: 20, fontWeight: 700, height: 52 }} />
+                    <span className="field-l">AMOUNT (₹)</span>
+                    <div style={{ position: "relative" }}>
+                      <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: COLORS.violet, fontSize: 16, fontWeight: 700 }}>₹</span>
+                      <input type="number" min="1" className="inp amt-in" value={amount}
+                        onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+                    </div>
+
+                    {reqType === "WITHDRAW" && (
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 7 }}>
+                        <span className="row-s">Available</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: COLORS.emerald }}>₹{fmt(overview?.wallet?.availableBalance)}</span>
                       </div>
+                    )}
 
-                      {reqType === "WITHDRAW" && (
-                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-                          <span style={{ fontSize: 11, color: "#94A3B8" }}>Available</span>
-                          <span style={{ fontSize: 11, fontWeight: 600, color: "#059669" }}>
-                            ₹{fmt(overview?.wallet?.availableBalance)}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Quick amounts */}
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
-                        <span style={{ fontSize: 11, color: "#CBD5E1", alignSelf: "center" }}>Quick:</span>
-                        {[500, 1000, 2000, 5000, 10000, 25000].map(q => (
-                          <button key={q} type="button" className="quick-chip" onClick={() => setAmount(q.toString())} style={{
-                            fontSize: 12, padding: "4px 12px", borderRadius: 100,
-                            border: `1px solid ${amount == q ? "rgba(255,107,43,0.4)" : "#E2E8F0"}`,
-                            background: amount == q ? "rgba(255,107,43,0.08)" : "#F8FAFC",
-                            color: amount == q ? "#FF6B2B" : "#64748B",
-                            cursor: "pointer", transition: "all 0.15s", fontFamily: "'DM Mono', monospace"
-                          }}>₹{q.toLocaleString("en-IN")}</button>
-                        ))}
-                      </div>
+                    <div className="chips" style={{ margin: "10px 0 16px" }}>
+                      <span className="chip-k">QUICK</span>
+                      {[500, 1000, 2000, 5000, 10000, 25000].map((q, i) => (
+                        <button key={q} type="button" onClick={() => setAmount(String(q))}
+                          className={`chip ${Number(amount) === q ? "on" : ""}`}
+                          style={{ "--c": [COLORS.indigo, COLORS.pink, COLORS.sky, COLORS.emerald, COLORS.amber, COLORS.violet][i] }}>
+                          ₹{q.toLocaleString("en-IN")}
+                        </button>
+                      ))}
                     </div>
 
-                    {/* Note */}
-                    <div style={{ marginBottom: 24 }}>
-                      <span style={S.label}>Note (optional)</span>
-                      <textarea value={note} onChange={e => setNote(e.target.value)}
-                        placeholder="Add a note for this request…"
-                        style={{ ...S.input, height: 80, padding: "12px 14px", resize: "none", lineHeight: 1.5 }} />
+                    <span className="field-l">NOTE (OPTIONAL)</span>
+                    <textarea className="inp" value={note} onChange={(e) => setNote(e.target.value)}
+                      placeholder="Add a note for this request…" style={{ marginBottom: 16 }} />
+
+                    <div className="info">
+                      <FiInfo size={13} color={COLORS.indigo} style={{ flexShrink: 0, marginTop: 2 }} />
+                      <p>Requests are reviewed within 24–48 hours. You'll be notified once processed.</p>
                     </div>
 
-                    {/* Info box */}
-                    <div style={{ display: "flex", gap: 10, padding: "12px 14px", borderRadius: 10,
-                      background: "rgba(255,107,43,0.05)", border: "1px solid rgba(255,107,43,0.15)", marginBottom: 20 }}>
-                      <FiInfo size={14} color="#FF6B2B" style={{ flexShrink: 0, marginTop: 2 }} />
-                      <p style={{ fontSize: 12, color: "#64748B", lineHeight: 1.5 }}>
-                        Requests are reviewed within 24–48 hours. You'll be notified once processed.
-                      </p>
-                    </div>
-
-                    <button type="submit" disabled={isSubmitting} style={{
-                      ...S.primaryBtn, width: "100%",
-                      background: isSubmitting
-                        ? "#F1F5F9"
-                        : reqType === "DEPOSIT"
-                          ? "linear-gradient(135deg, #2563EB, #3B82F6)"
-                          : "linear-gradient(135deg, #EA580C, #FB923C)",
-                      color: isSubmitting ? "#94A3B8" : "#fff",
-                      fontSize: 15, height: 50
-                    }}>
+                    <button type="submit" disabled={isSubmitting} className="btn btn-big"
+                      style={{ background: reqType === "DEPOSIT"
+                        ? "linear-gradient(135deg,#0EA5E9,#6366F1)"
+                        : "linear-gradient(135deg,#F97316,#EC4899)" }}>
                       {isSubmitting ? "Submitting…" : reqType === "DEPOSIT" ? "Submit Deposit Request" : "Submit Withdrawal Request"}
                     </button>
                   </form>
@@ -733,166 +668,105 @@ const WalletPage = () => {
           </>
         )}
 
-        {/* ── ADMIN VIEW ───────────────────────────────────────────────────── */}
+        {/* ── ADMIN VIEW ── */}
         {isAdmin && (
           <>
-            {/* Admin stat cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 24 }}>
-              {[
-                { icon: <FiUsers size={18}/>, label: "Total Sellers",      value: allSellers.length,   color: "#2563EB", isCurrency: false },
-                { icon: <FiAlertCircle size={18}/>, label: "Pending Requests", value: pendingCount,    color: "#D97706", isCurrency: false },
-                { icon: <MdOutlineAccountBalance size={18}/>, label: "Total Balance", color: "#059669",
-                  value: allSellers.reduce((a,s) => a + (s.wallet?.availableBalance||0), 0) },
-                { icon: <BsLightningCharge size={18}/>, label: "Pending Amount", color: "#7C3AED",
-                  value: allSellers.reduce((a,s) => a + (s.walletTransactions||[]).filter(t=>t.status==="PENDING").reduce((b,t)=>b+t.amount,0), 0) },
-              ].map((c, i) => (
-                <div key={c.label} style={{ ...S.card, animationDelay: `${i*60}ms`, animation: "fadeUp 0.5s ease both" }}
-                  className="card-hover">
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: `${c.color}12`,
-                    border: `1px solid ${c.color}25`, display: "flex", alignItems: "center", justifyContent: "center",
-                    color: c.color, marginBottom: 14 }}>{c.icon}</div>
-                  <p style={{ fontSize: 11, color: "#94A3B8", fontFamily: "'DM Mono', monospace",
-                    letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>{c.label}</p>
-                  <p style={{ fontSize: 22, fontWeight: 800, color: "#0F172A" }}>
-                    {c.isCurrency === false ? c.value : `₹${fmt(c.value)}`}
+            <div className="stats">
+              {adminStats.map((c, i) => (
+                <div key={c.label} className="card lift stat" style={{ "--c": c.color, animationDelay: `${i * 70}ms` }}>
+                  <div className="ticon" style={{ "--c": c.color, width: 36, height: 36 }}>{c.icon}</div>
+                  <p className="lbl">{c.label}</p>
+                  <p style={{ fontSize: 20, fontWeight: 800 }}>
+                    {c.plain ? <AnimCounter value={c.value} /> : <>₹<AnimCounter value={c.value} /></>}
                   </p>
+                  <span className="stat-glow" />
                 </div>
               ))}
             </div>
 
-            {/* Search + Tabs */}
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginBottom: 16 }}>
-              <div style={{ position: "relative", flex: "1 1 240px" }}>
-                <FiSearch size={14} color="#94A3B8" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
-                <input value={searchSeller} onChange={e => setSearchSeller(e.target.value)}
-                  placeholder="Search sellers…" style={{ ...S.input, paddingLeft: 36 }} />
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginBottom: 14 }}>
+              <div className="search">
+                <FiSearch size={13} color={COLORS.violet} />
+                <input className="inp" value={searchSeller} onChange={(e) => setSearchSeller(e.target.value)} placeholder="Search sellers…" />
               </div>
-              <div style={{ display: "flex", gap: 4, background: "#F1F5F9",
-                border: "1px solid #E2E8F0", borderRadius: 10, padding: 4 }}>
-                {[["pending", "Pending"], ["all", "All Sellers"]].map(([k, l]) => (
-                  <button key={k} onClick={() => setAdminTab(k)} style={S.tab(adminTab === k)}>{l}</button>
-                ))}
+              <div style={{ marginBottom: 0 }}>
+                <Tabs items={[["pending", "Pending"], ["all", "All Sellers"]]} value={adminTab} onChange={setAdminTab} />
               </div>
             </div>
 
-            {/* Sellers List */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "fadeUp 0.4s ease both" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {displayedSellers.length === 0 && (
-                <div style={{ ...S.card, textAlign: "center", padding: "48px 20px" }}>
-                  <FiUsers size={36} color="#CBD5E1" style={{ marginBottom: 12 }} />
-                  <p style={{ fontSize: 14, color: "#94A3B8", fontWeight: 500 }}>
-                    {adminTab === "pending" ? "No pending requests 🎉" : "No sellers found"}
-                  </p>
+                <div className="card empty" style={{ padding: "44px 16px" }}>
+                  <FiUsers size={34} />
+                  <p>{adminTab === "pending" ? "No pending requests 🎉" : "No sellers found"}</p>
                 </div>
               )}
-              {displayedSellers.map(seller => {
-                const pendingTxns = (seller.walletTransactions || []).filter(t => t.status === "PENDING");
-                const allTxns    = seller.walletTransactions || [];
+
+              {displayedSellers.map((seller, si) => {
+                const pendingTxns = (seller.walletTransactions || []).filter((t) => t.status === "PENDING");
+                const allTxns = seller.walletTransactions || [];
                 const isExp = expandedSeller === seller._id;
+                const hue = ((seller.name?.charCodeAt(0) || 65) * 37) % 360;
                 return (
-                  <div key={seller._id} style={{ ...S.card, padding: 0, overflow: "hidden" }} className="card-hover">
-                    {/* Seller Header */}
-                    <button onClick={() => setExpandedSeller(isExp ? null : seller._id)} style={{
-                      width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "16px 20px",
-                      background: "none", border: "none", cursor: "pointer", textAlign: "left"
-                    }}>
-                      <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-                        background: `hsl(${seller.name?.charCodeAt(0) * 15}, 55%, 55%)`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 16, fontWeight: 800, color: "#fff" }}>
+                  <div key={seller._id} className="card lift seller" style={{ animationDelay: `${Math.min(si, 10) * 50}ms` }}>
+                    <button className="seller-h" onClick={() => setExpandedSeller(isExp ? null : seller._id)}>
+                      <div className="avatar" style={{ background: `linear-gradient(135deg,hsl(${hue},75%,58%),hsl(${(hue + 50) % 360},80%,62%))` }}>
                         {seller.name?.[0]?.toUpperCase()}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>{seller.name}</span>
-                          {seller.storeProfile?.storeName && (
-                            <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 100,
-                              background: "rgba(255,107,43,0.08)", color: "#FF6B2B",
-                              fontFamily: "'DM Mono', monospace" }}>
-                              {seller.storeProfile.storeName}
-                            </span>
-                          )}
+                        <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 13, fontWeight: 700 }}>{seller.name}</span>
+                          {seller.storeProfile?.storeName && <span className="store">{seller.storeProfile.storeName}</span>}
                         </div>
-                        <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>{seller.email}</p>
+                        <p className="row-s">{seller.email}</p>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                         <div style={{ textAlign: "right" }}>
-                          <p style={{ fontSize: 13, fontWeight: 700, color: "#059669" }}>
-                            ₹{fmt(seller.wallet?.availableBalance)}
-                          </p>
-                          <p style={{ fontSize: 11, color: "#94A3B8" }}>balance</p>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.emerald }}>₹{fmt(seller.wallet?.availableBalance)}</p>
+                          <p className="row-s" style={{ marginTop: 0 }}>balance</p>
                         </div>
-                        {pendingTxns.length > 0 && (
-                          <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 100,
-                            background: "rgba(217,119,6,0.1)", color: "#D97706",
-                            border: "1px solid rgba(217,119,6,0.2)" }}>
-                            {pendingTxns.length} pending
-                          </span>
-                        )}
-                        <FiChevronDown size={16} color="#CBD5E1"
-                          style={{ transition: "transform 0.2s", transform: isExp ? "rotate(180deg)" : "rotate(0)" }} />
+                        {pendingTxns.length > 0 && <span className="pend">{pendingTxns.length} pending</span>}
+                        <FiChevronDown size={15} color={COLORS.indigo}
+                          style={{ transition: "transform .3s", transform: isExp ? "rotate(180deg)" : "none" }} />
                       </div>
                     </button>
 
-                    {/* Expanded Transactions */}
                     {isExp && (
-                      <div style={{ borderTop: "1px solid #F1F5F9", padding: "0 20px 16px" }}>
-                        {/* Mini stats */}
-                        <div style={{ display: "flex", gap: 24, padding: "14px 0 14px",
-                          borderBottom: "1px solid #F8FAFC", flexWrap: "wrap" }}>
+                      <div className="exp">
+                        <div className="mini">
                           {[
-                            ["Deposited", seller.wallet?.totalDeposited, "#2563EB"],
-                            ["Withdrawn", seller.wallet?.totalWithdrawn, "#EA580C"],
-                            ["Commission", seller.wallet?.totalCommissionPaid, "#7C3AED"],
-                            ["Txns", allTxns.length, "#D97706"],
+                            ["DEPOSITED", seller.wallet?.totalDeposited, COLORS.sky],
+                            ["WITHDRAWN", seller.wallet?.totalWithdrawn, COLORS.orange],
+                            ["COMMISSION", seller.wallet?.totalCommissionPaid, COLORS.violet],
+                            ["TXNS", allTxns.length, COLORS.pink],
                           ].map(([l, v, c]) => (
                             <div key={l}>
-                              <p style={{ fontSize: 10, color: "#94A3B8", fontFamily: "'DM Mono', monospace",
-                                textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>{l}</p>
-                              <p style={{ fontSize: 14, fontWeight: 700, color: c }}>
-                                {l === "Txns" ? v : `₹${fmt(v)}`}
-                              </p>
+                              <small>{l}</small>
+                              <b style={{ color: c }}>{l === "TXNS" ? v : `₹${fmt(v)}`}</b>
                             </div>
                           ))}
                         </div>
 
-                        {/* Transactions */}
                         {allTxns.length === 0 ? (
-                          <p style={{ fontSize: 13, color: "#CBD5E1", textAlign: "center", padding: "20px 0" }}>
-                            No transactions
-                          </p>
+                          <p className="empty" style={{ padding: "18px 0" }}>No transactions</p>
                         ) : (
-                          <div style={{ marginTop: 12 }}>
-                            {allTxns.slice().reverse().map(t => (
-                              <div key={t._id} className="seller-row" style={{
-                                display: "flex", flexWrap: "wrap", alignItems: "center",
-                                justifyContent: "space-between", padding: "10px 8px", borderRadius: 10,
-                                gap: 10, transition: "background 0.15s"
-                              }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ marginTop: 8 }}>
+                            {allTxns.slice().reverse().map((t, i) => (
+                              <div key={t._id} className="row" style={{ flexWrap: "wrap", animationDelay: `${Math.min(i, 10) * 35}ms` }}>
+                                <div className="row-l">
                                   <TypePill type={t.type} />
-                                  <span style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>
-                                    ₹{fmt(t.amount)}
-                                  </span>
-                                  {t.note && <span style={{ fontSize: 12, color: "#94A3B8" }}>— {t.note}</span>}
+                                  <span style={{ fontSize: 13, fontWeight: 700 }}>₹{fmt(t.amount)}</span>
+                                  {t.note && <span className="row-s" style={{ marginTop: 0 }}>— {t.note}</span>}
                                 </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                  <span style={{ fontSize: 11, color: "#94A3B8" }}>{fmtDate(t.createdAt)}</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                  <span className="row-s" style={{ marginTop: 0 }}>{fmtDate(t.createdAt)}</span>
                                   <StatusBadge status={t.status} />
                                   {t.status === "PENDING" && (
                                     <>
-                                      <button onClick={() => confirmAction(seller._id, t._id, "APPROVED")} style={{
-                                        ...S.primaryBtn, height: 30, padding: "0 12px", fontSize: 12,
-                                        background: "rgba(5,150,105,0.08)", color: "#059669",
-                                        border: "1px solid rgba(5,150,105,0.2)"
-                                      }} className="btn-ghost">
+                                      <button onClick={() => confirmAction(seller._id, t._id, "APPROVED")} className="btn btn-ok btn-sm">
                                         <FiCheckCircle size={11} /> Approve
                                       </button>
-                                      <button onClick={() => confirmAction(seller._id, t._id, "REJECTED")} style={{
-                                        ...S.primaryBtn, height: 30, padding: "0 12px", fontSize: 12,
-                                        background: "rgba(220,38,38,0.06)", color: "#DC2626",
-                                        border: "1px solid rgba(220,38,38,0.15)"
-                                      }} className="btn-ghost">
+                                      <button onClick={() => confirmAction(seller._id, t._id, "REJECTED")} className="btn btn-no btn-sm">
                                         <FiXCircle size={11} /> Reject
                                       </button>
                                     </>
@@ -912,44 +786,25 @@ const WalletPage = () => {
         )}
       </div>
 
-      {/* ── Confirm Modal ─────────────────────────────────────────────────── */}
+      {/* Confirm Modal */}
       {confirming && (
-        <div onClick={() => setConfirming(null)} style={{
-          position: "fixed", inset: 0, zIndex: 1000, display: "flex",
-          alignItems: "center", justifyContent: "center",
-          background: "rgba(15,23,42,0.5)", backdropFilter: "blur(6px)"
-        }}>
-          <div onClick={e => e.stopPropagation()} style={{
-            ...S.card, maxWidth: 380, width: "90%", padding: 28,
-            border: `1.5px solid ${confirming.status === "APPROVED" ? "rgba(5,150,105,0.2)" : "rgba(220,38,38,0.2)"}`,
-            boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-            animation: "fadeUp 0.25s ease both"
-          }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center",
-              background: confirming.status === "APPROVED" ? "rgba(5,150,105,0.1)" : "rgba(220,38,38,0.08)",
-              color: confirming.status === "APPROVED" ? "#059669" : "#DC2626" }}>
-              {confirming.status === "APPROVED" ? <FiCheckCircle size={24} /> : <FiXCircle size={24} />}
+        <div className="modal-bg" onClick={() => setConfirming(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ticon" style={{ "--c": confirming.status === "APPROVED" ? COLORS.emerald : COLORS.rose, width: 46, height: 46, marginBottom: 14 }}>
+              {confirming.status === "APPROVED" ? <FiCheckCircle size={22} /> : <FiXCircle size={22} />}
             </div>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0F172A", marginBottom: 8 }}>
-              {confirming.status === "APPROVED" ? "Approve Transaction?" : "Reject Transaction?"}
-            </h3>
-            <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.6, marginBottom: 24 }}>
+            <h3>{confirming.status === "APPROVED" ? "Approve Transaction?" : "Reject Transaction?"}</h3>
+            <p>
               {confirming.status === "APPROVED"
                 ? "This will approve the transaction and update the seller's wallet balance."
                 : "This will reject the transaction. This action cannot be undone."}
             </p>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setConfirming(null)} style={{
-                ...S.primaryBtn, flex: 1, height: 42, fontSize: 13,
-                background: "#F1F5F9", color: "#64748B", border: "1px solid #E2E8F0"
-              }} className="btn-ghost">Cancel</button>
-              <button onClick={executeAction} style={{
-                ...S.primaryBtn, flex: 2, height: 42, fontSize: 13,
+              <button className="btn btn-soft" style={{ flex: 1, height: 40 }} onClick={() => setConfirming(null)}>Cancel</button>
+              <button className="btn" onClick={executeAction} style={{ flex: 2, height: 40, color: "#fff",
                 background: confirming.status === "APPROVED"
-                  ? "linear-gradient(135deg, #059669, #10b981)"
-                  : "linear-gradient(135deg, #DC2626, #EF4444)",
-                color: "#fff"
-              }}>
+                  ? "linear-gradient(135deg,#10B981,#0EA5E9)"
+                  : "linear-gradient(135deg,#F43F5E,#F97316)" }}>
                 {confirming.status === "APPROVED" ? "Yes, Approve" : "Yes, Reject"}
               </button>
             </div>
