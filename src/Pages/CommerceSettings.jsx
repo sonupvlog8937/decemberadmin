@@ -1,6 +1,21 @@
 import { useEffect, useState } from "react";
 import { fetchDataFromApi, editData } from "../utils/api";
 import OrderSoundNotifier from "../Components/OrderSoundNotifier";
+import "../Components/ui-theme.css";
+
+const CUSTOMER_FEES = [
+  { key: "shippingFee",       label: "Shipping Fee (₹)",         ph: "50",  hint: "Fee charged for shipping",      color: "#6366f1" },
+  { key: "deliveryFee",       label: "Delivery Fee (₹)",         ph: "30",  hint: "Fee charged for delivery",      color: "#0ea5e9" },
+  { key: "freeShippingAbove", label: "Free Shipping Above (₹)",  ph: "500", hint: "Min order for FREE shipping",   color: "#10b981" },
+];
+
+const GO_MARKET_FEES = [
+  { key: "goMarketShippingFee",       label: "Go Market Shipping Fee (₹)",       ph: "25", hint: "Flat shipping fee for Go Market orders",              color: "#f59e0b" },
+  { key: "goMarketBaseDeliveryFee",   label: "Go Market Base Delivery Fee (₹)",  ph: "10", hint: "Starting delivery fee (added to distance-based fee)", color: "#f97316" },
+  { key: "goMarketDeliveryFeePerKm",  label: "Go Market Delivery Fee / km (₹)",  ph: "8",  hint: "Per-kilometer delivery fee (Distance × Rate)",        color: "#ec4899" },
+  { key: "goMarketRiderFeePerKm",     label: "Go Market Rider Fee / km (₹)",     ph: "6",  hint: "Per-kilometer rider earning for Go Market deliveries", color: "#8b5cf6" },
+  { key: "goMarketRiderPickupFee",    label: "Go Market Rider Pickup Fee (₹)",   ph: "10", hint: "Flat pickup earning added to rider delivery earning",  color: "#14b8a6" },
+];
 
 const CommerceSettings = () => {
   const [form, setForm] = useState({
@@ -16,6 +31,7 @@ const CommerceSettings = () => {
     collections: [],
   });
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     fetchDataFromApi("/api/settings/commerce").then((res) => {
@@ -43,402 +59,176 @@ const CommerceSettings = () => {
     console.log("💾 Saving commerce settings:", form);
     const result = await editData("/api/settings/commerce", form);
     console.log("✅ Save result:", result);
+    const body = result?.data || result;
+    if (body?.success || body?.error === false) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1800);
+    }
     setSaving(false);
   };
 
-  const inputStyle = {
-    width: "100%",
-    border: "1px solid #e5e7eb",
-    borderRadius: 10,
-    padding: "10px 12px",
-    fontSize: 14,
-    boxSizing: "border-box",
-  };
-
-  const labelStyle = {
-    fontSize: 12,
-    fontWeight: 700,
-    color: "#374151",
-    display: "block",
-    marginBottom: 6,
-  };
-
-  const cardStyle = {
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
-    boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
-  };
+  // plain render helper (not a component) so inputs never lose focus while typing
+  const renderFee = (f, i) => (
+    <div key={f.key} className="cs-field" style={{ "--fc": f.color, "--i": i }}>
+      <label>{f.label}</label>
+      <input
+        type="number"
+        min="0"
+        className="cs-input"
+        value={form[f.key]}
+        onChange={(e) => set(f.key, Number(e.target.value))}
+        placeholder={f.ph}
+      />
+      <p className="cs-hint">{f.hint}</p>
+    </div>
+  );
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ ...cardStyle, padding: 28 }}>
-        <h2 style={{ fontSize: 24, fontWeight: 900, marginBottom: 4 }}>
-          💰 Commerce Settings
-        </h2>
-        <p style={{ color: "#64748b", marginBottom: 24, fontSize: 14 }}>
-          Manage shipping fees, delivery fees, and free shipping threshold for your store.
-        </p>
+    <form className="cs-page dx" onSubmit={save}>
+      <div className="cs-hero">
+        <h2>💰 Commerce Settings</h2>
+        <p>Manage shipping fees, delivery fees, and free shipping threshold for your store.</p>
+      </div>
 
-        <form onSubmit={save}>
-          {/* Shipping & Delivery Fees */}
-          <div style={cardStyle}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>
-              📦 Shipping & Delivery
-            </h3>
+      {/* Shipping & Delivery Fees */}
+      <div className="cs-card" style={{ "--cc": "#6366f1", "--d": "0ms" }}>
+        <div className="cs-card-head">
+          <h3 className="cs-card-title"><span className="cs-chip-icon">📦</span> Shipping & Delivery</h3>
+        </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Shipping Fee (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.shippingFee}
-                  onChange={(e) => set("shippingFee", Number(e.target.value))}
-                  placeholder="50"
-                  style={inputStyle}
-                />
-                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                  Fee charged for shipping
-                </p>
-              </div>
+        <div className="cs-sub">Customer fees</div>
+        <div className="cs-grid">{CUSTOMER_FEES.map(renderFee)}</div>
 
-              <div>
-                <label style={labelStyle}>Delivery Fee (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.deliveryFee}
-                  onChange={(e) => set("deliveryFee", Number(e.target.value))}
-                  placeholder="30"
-                  style={inputStyle}
-                />
-                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                  Fee charged for delivery
-                </p>
-              </div>
+        <div className="cs-sub">Go Market</div>
+        <div className="cs-grid">{GO_MARKET_FEES.map(renderFee)}</div>
 
-              <div>
-                <label style={labelStyle}>Free Shipping Above (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.freeShippingAbove}
-                  onChange={(e) => set("freeShippingAbove", Number(e.target.value))}
-                  placeholder="500"
-                  style={inputStyle}
-                />
-                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                  Min order for FREE shipping
-                </p>
-              </div>
-            </div>
+        <div className="cs-info">
+          💡 <strong>Info:</strong> When order total ≥ "Free Shipping Above" amount, both
+          shipping and delivery fees become FREE automatically.
+        </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginTop: 16 }}>
-              <div>
-                <label style={labelStyle}>Go Market Shipping Fee (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.goMarketShippingFee}
-                  onChange={(e) => set("goMarketShippingFee", Number(e.target.value))}
-                  placeholder="25"
-                  style={inputStyle}
-                />
-                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                  Flat shipping fee for Go Market orders
-                </p>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Go Market Base Delivery Fee (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.goMarketBaseDeliveryFee}
-                  onChange={(e) => set("goMarketBaseDeliveryFee", Number(e.target.value))}
-                  placeholder="10"
-                  style={inputStyle}
-                />
-                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                  Starting delivery fee (added to distance-based fee)
-                </p>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Go Market Delivery Fee / km (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.goMarketDeliveryFeePerKm}
-                  onChange={(e) => set("goMarketDeliveryFeePerKm", Number(e.target.value))}
-                  placeholder="8"
-                  style={inputStyle}
-                />
-                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                  Per-kilometer delivery fee (Distance × Rate)
-                </p>
-              </div>
-               <div>
-                <label style={labelStyle}>Go Market Rider Fee / km (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.goMarketRiderFeePerKm}
-                  onChange={(e) => set("goMarketRiderFeePerKm", Number(e.target.value))}
-                  placeholder="6"
-                  style={inputStyle}
-                />
-                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                  Per-kilometer rider earning for Go Market deliveries
-                </p>
-              </div>
-               <div>
-                <label style={labelStyle}>Go Market Rider Pickup Fee (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.goMarketRiderPickupFee}
-                  onChange={(e) => set("goMarketRiderPickupFee", Number(e.target.value))}
-                  placeholder="10"
-                  style={inputStyle}
-                />
-                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                  Flat pickup earning added to rider delivery earning
-                </p>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: 16,
-                padding: 12,
-                backgroundColor: "#eff6ff",
-                borderRadius: 8,
-                border: "1px solid #bfdbfe",
-              }}
-            >
-              <p style={{ fontSize: 13, color: "#1e40af", margin: 0 }}>
-                💡 <strong>Info:</strong> When order total ≥ "Free Shipping Above" amount, both
-                shipping and delivery fees become FREE automatically.
-              </p>
-            </div>
-
-            {/* First Order Free Delivery Toggle */}
-            <div
-              style={{
-                marginTop: 16,
-                padding: 16,
-                backgroundColor: "#f0fdf4",
-                borderRadius: 8,
-                border: "1px solid #bbf7d0",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <h4 style={{ fontSize: 14, fontWeight: 700, color: "#166534", margin: 0, marginBottom: 4 }}>
-                  🎁 First Order Free Delivery
-                </h4>
-                <p style={{ fontSize: 12, color: "#15803d", margin: 0 }}>
-                  When enabled, customers won't pay shipping & delivery fees on their first order
-                </p>
-              </div>
-              <label
-                style={{
-                  position: "relative",
-                  display: "inline-block",
-                  width: 52,
-                  height: 28,
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.firstOrderFreeDelivery}
-                  onChange={(e) => set("firstOrderFreeDelivery", e.target.checked)}
-                  style={{ opacity: 0, width: 0, height: 0 }}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    cursor: "pointer",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: form.firstOrderFreeDelivery ? "#16a34a" : "#cbd5e1",
-                    borderRadius: 28,
-                    transition: "0.3s",
-                  }}
-                >
-                  <span
-                    style={{
-                      position: "absolute",
-                      content: "",
-                      height: 22,
-                      width: 22,
-                      left: form.firstOrderFreeDelivery ? 26 : 3,
-                      bottom: 3,
-                      backgroundColor: "white",
-                      borderRadius: "50%",
-                      transition: "0.3s",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                    }}
-                  />
-                </span>
-              </label>
-            </div>
+        {/* First Order Free Delivery Toggle */}
+        <div className="cs-promo">
+          <div>
+            <h4>🎁 First Order Free Delivery</h4>
+            <p>When enabled, customers won't pay shipping & delivery fees on their first order</p>
           </div>
+          <label className="cs-switch">
+            <input
+              type="checkbox"
+              checked={form.firstOrderFreeDelivery}
+              onChange={(e) => set("firstOrderFreeDelivery", e.target.checked)}
+            />
+            <span className="cs-switch-track" />
+            <span className="cs-switch-knob" />
+          </label>
+        </div>
+      </div>
 
-          {/* Dynamic Collections */}
-          <div style={cardStyle}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 16,
-              }}
-            >
-              <h3 style={{ fontSize: 16, fontWeight: 800 }}>🎯 Dynamic Collections</h3>
+      {/* Dynamic Collections */}
+      <div className="cs-card" style={{ "--cc": "#ec4899", "--d": "80ms" }}>
+        <div className="cs-card-head">
+          <h3 className="cs-card-title"><span className="cs-chip-icon">🎯</span> Dynamic Collections</h3>
+          <button
+            type="button"
+            className="cs-btn-add"
+            onClick={() =>
+              set("collections", [
+                ...form.collections,
+                { title: "", type: "mixed", categoryId: "", image: "", isActive: true },
+              ])
+            }
+          >
+            + Add Collection
+          </button>
+        </div>
+
+        <div className="cs-coll-list">
+          {form.collections.map((c, i) => (
+            <div key={i} className="cs-coll-row">
+              <div>
+                <label>Title</label>
+                <input
+                  className="cs-input"
+                  placeholder="Collection name"
+                  value={c.title}
+                  onChange={(e) => updateCollection(i, { title: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label>Type</label>
+                <select
+                  className="cs-input"
+                  value={c.type}
+                  onChange={(e) => updateCollection(i, { type: e.target.value })}
+                >
+                  <option value="mixed">Mixed</option>
+                  <option value="grocery">Grocery</option>
+                  <option value="restaurant">Restaurant</option>
+                </select>
+              </div>
+
+              <div>
+                <label>Category ID</label>
+                <input
+                  className="cs-input"
+                  placeholder="Optional"
+                  value={c.categoryId}
+                  onChange={(e) => updateCollection(i, { categoryId: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label>Image URL</label>
+                <input
+                  className="cs-input"
+                  placeholder="https://..."
+                  value={c.image}
+                  onChange={(e) => updateCollection(i, { image: e.target.value })}
+                />
+              </div>
+
               <button
                 type="button"
-                className="btn-blue"
-                onClick={() =>
-                  set("collections", [
-                    ...form.collections,
-                    {
-                      title: "",
-                      type: "mixed",
-                      categoryId: "",
-                      image: "",
-                      isActive: true,
-                    },
-                  ])
-                }
+                className="cs-btn-remove"
+                onClick={() => set("collections", form.collections.filter((_, idx) => idx !== i))}
               >
-                + Add Collection
+                Remove
               </button>
             </div>
+          ))}
 
-            <div style={{ display: "grid", gap: 12 }}>
-              {form.collections.map((c, i) => (
-                <div
-                  key={i}
-                  style={{
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 12,
-                    padding: 14,
-                    display: "grid",
-                    gridTemplateColumns: "2fr 1fr 1.5fr 2fr auto",
-                    gap: 12,
-                    alignItems: "end",
-                  }}
-                >
-                  <div>
-                    <label style={{ ...labelStyle, fontSize: 11 }}>Title</label>
-                    <input
-                      placeholder="Collection name"
-                      value={c.title}
-                      onChange={(e) => updateCollection(i, { title: e.target.value })}
-                      style={{ ...inputStyle, padding: "8px 10px" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ ...labelStyle, fontSize: 11 }}>Type</label>
-                    <select
-                      value={c.type}
-                      onChange={(e) => updateCollection(i, { type: e.target.value })}
-                      style={{ ...inputStyle, padding: "8px 10px" }}
-                    >
-                      <option value="mixed">Mixed</option>
-                      <option value="grocery">Grocery</option>
-                      <option value="restaurant">Restaurant</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ ...labelStyle, fontSize: 11 }}>Category ID</label>
-                    <input
-                      placeholder="Optional"
-                      value={c.categoryId}
-                      onChange={(e) => updateCollection(i, { categoryId: e.target.value })}
-                      style={{ ...inputStyle, padding: "8px 10px" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ ...labelStyle, fontSize: 11 }}>Image URL</label>
-                    <input
-                      placeholder="https://..."
-                      value={c.image}
-                      onChange={(e) => updateCollection(i, { image: e.target.value })}
-                      style={{ ...inputStyle, padding: "8px 10px" }}
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    className="btn-red"
-                    onClick={() =>
-                      set(
-                        "collections",
-                        form.collections.filter((_, idx) => idx !== i)
-                      )
-                    }
-                    style={{ padding: "8px 14px", fontSize: 12 }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-
-              {form.collections.length === 0 && (
-                <p style={{ textAlign: "center", color: "#9ca3af", fontSize: 13, padding: 20 }}>
-                  No collections added yet. Click "Add Collection" to create one.
-                </p>
-              )}
+          {form.collections.length === 0 && (
+            <div className="cs-empty">
+              No collections added yet. Click "Add Collection" to create one.
             </div>
-          </div>
-
-          {/* Order Notification Sound */}
-          <div style={cardStyle}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>
-              🔔 Order Notifications
-            </h3>
-            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16, lineHeight: 1.6 }}>
-              Control sound alerts for new orders. Enable to get instant audio notifications when orders arrive.
-            </p>
-            <OrderSoundNotifier inline={true} />
-          </div>
-
-          {/* Save Button */}
-          <button
-            type="submit"
-            disabled={saving}
-            style={{
-              background: "#3b82f6",
-              color: "#fff",
-              border: "none",
-              borderRadius: 10,
-              padding: "14px 28px",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: saving ? "not-allowed" : "pointer",
-              opacity: saving ? 0.7 : 1,
-              width: "100%",
-            }}
-          >
-            {saving ? "Saving..." : "💾 Save Settings"}
-          </button>
-        </form>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Order Notification Sound */}
+      <div className="cs-card" style={{ "--cc": "#f59e0b", "--d": "160ms" }}>
+        <div className="cs-card-head">
+          <h3 className="cs-card-title"><span className="cs-chip-icon">🔔</span> Order Notifications</h3>
+        </div>
+        <p className="cs-desc">
+          Control sound alerts for new orders. Enable to get instant audio notifications when orders arrive.
+        </p>
+        <OrderSoundNotifier inline={true} />
+      </div>
+
+      {/* Save Button */}
+      <button type="submit" disabled={saving} className={`cs-save${saved ? " saved" : ""}`}>
+        {saving ? (
+          <><span className="cs-spinner" /> Saving...</>
+        ) : saved ? (
+          "✓ Saved"
+        ) : (
+          "💾 Save Settings"
+        )}
+      </button>
+    </form>
   );
 };
 
