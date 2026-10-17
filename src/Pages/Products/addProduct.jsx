@@ -69,7 +69,6 @@ const MarketplaceAddProduct = () => {
 
     const [formFields, setFormFields] = useState({
         name: '', description: '', images: [], brand: '', keywords: '',
-        marketIds: [],
         price: '', oldPrice: '', category: '', catName: '', catId: '',
         subCatId: '', subCat: '', thirdsubCat: '', thirdsubCatId: '',
         countInStock: '', isFeatured: false, discount: '', sale: 0,
@@ -102,7 +101,6 @@ const MarketplaceAddProduct = () => {
     const goMarketCategoryType = isRestaurantSeller ? 'restaurant' : '';
 
     const [goMarketCategories, setGoMarketCategories] = useState([]);
-    const [markets, setMarkets] = useState([]);
     const [goMarketSubCategories, setGoMarketSubCategories] = useState([]);
     const [goMarketCategoryId, setGoMarketCategoryId] = useState('');
     const [goMarketSubCategoryId, setGoMarketSubCategoryId] = useState('');
@@ -111,20 +109,6 @@ const MarketplaceAddProduct = () => {
     const availableSubCategories = selectedCategory?.children || [];
     const selectedSubCategory = availableSubCategories?.find((sc) => sc?._id === productSubCat);
     const availableThirdLevelCategories = selectedSubCategory?.children || [];
-
-    useEffect(() => {
-        fetchDataFromApi('/api/go-market/markets?limit=100&status=active').then((res) => {
-            if (res?.error === false) setMarkets(res?.data || []);
-        });
-    }, []);
-
-    useEffect(() => {
-        if (isAdmin) return;
-        const assignedMarketId = context?.userData?.storeProfile?.marketId;
-        if (assignedMarketId) {
-            setFormFields((current) => ({ ...current, marketIds: [String(assignedMarketId)] }));
-        }
-    }, [context?.userData?.storeProfile?.marketId, isAdmin]);
 
     useEffect(() => {
         if (!isGoMarketSeller) {
@@ -278,7 +262,6 @@ const MarketplaceAddProduct = () => {
                 [!formFields.name, 'Please enter product name'],
                 [!formFields.description, 'Please enter product description'],
                 [!formFields.catId, 'Please select product category'],
-                [!isGoMarketSeller && (!formFields.marketIds || formFields.marketIds.length === 0), 'Please select at least one market'],
                 [!formFields.price, 'Please enter product price'],
                 [!formFields.oldPrice, 'Please enter product MRP price'],
                 [!formFields.countInStock, 'Please enter product stock'],
@@ -290,7 +273,6 @@ const MarketplaceAddProduct = () => {
 
         const payload = {
             ...formFields,
-            marketIds: formFields.marketIds,
             goMarketCategoryId: goMarketCategoryId || undefined,
             goMarketSubCategoryId: goMarketSubCategoryId || undefined,
             oldPrice: isGoMarketSeller ? (formFields.oldPrice || formFields.price) : formFields.oldPrice,
@@ -416,33 +398,6 @@ const MarketplaceAddProduct = () => {
                             </div>
                         )}
                     </SectionCard>
-
-                    {!isGoMarketSeller && (
-                        <SectionCard icon={<MdCategory size={15} />} iconBg="#ecfdf5" iconColor="#15803d" title="Market Availability" subtitle="Choose which markets can display this product">
-                            {isAdmin ? (
-                                <Field label="Markets *">
-                                    <Select
-                                        multiple
-                                        size="small"
-                                        sx={selectSx}
-                                        value={formFields.marketIds || []}
-                                        onChange={(event) => setFormFields((current) => ({ ...current, marketIds: event.target.value }))}
-                                        renderValue={(selected) => markets.filter((market) => selected.includes(market._id)).map((market) => market.name).join(", ")}
-                                    >
-                                        {markets.map((market) => (
-                                            <MenuItem key={market._id} value={market._id}>
-                                                {market.name} — {market.city}, {market.state}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </Field>
-                            ) : (
-                                <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
-                                    Assigned market: {markets.find((market) => market._id === formFields.marketIds?.[0])?.name || 'Your seller market'}
-                                </p>
-                            )}
-                        </SectionCard>
-                    )}
 
                     {/* ── Pricing & Inventory ── */}
                     <SectionCard icon={<MdLocalOffer size={15} />} iconBg="#f0fdf4" iconColor="#15803d" title="Pricing & Inventory" subtitle="Set prices, stock and discount">

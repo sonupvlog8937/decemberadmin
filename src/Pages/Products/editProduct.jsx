@@ -57,8 +57,7 @@ const EditProduct = () => {
         seoDescription: "",
         attributes: "",
         title: "",
-        productType: "",
-        marketIds: []
+        productType: ""
     })
 
 
@@ -71,7 +70,6 @@ const EditProduct = () => {
     const [productSize, setProductSize] = React.useState([]);
     const [productSizeData, setProductSizeData] = React.useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [markets, setMarkets] = useState([]);
 
     const [productThirdLavelCat, setProductThirdLavelCat] = useState('');
 
@@ -83,7 +81,6 @@ const EditProduct = () => {
     const history = useNavigate();
 
     const context = useContext(MyContext);
-    const isAdmin = context?.userData?.role === 'ADMIN';
     const selectedCategory = context?.catData?.find((cat) => cat?._id === productCat);
     const availableSubCategories = selectedCategory?.children || [];
     const selectedSubCategory = availableSubCategories?.find((subCat) => subCat?._id === productSubCat);
@@ -91,10 +88,6 @@ const EditProduct = () => {
 
 
     useEffect(() => {
-
-        fetchDataFromApi('/api/go-market/markets?limit=100&status=active').then((res) => {
-            if (res?.error === false) setMarkets(res?.data || []);
-        });
 
         fetchDataFromApi("/api/product/productRAMS/get").then((res) => {
             if (res?.error === false) {
@@ -150,8 +143,7 @@ const EditProduct = () => {
                 seoDescription: res?.product?.seoDescription || '',
                 attributes: res?.product?.attributes || '',
                 title: res?.product?.title || '',
-                productType: res?.product?.productType || '',
-                marketIds: (res?.product?.marketIds || []).map((market) => String(market?._id || market))
+                productType: res?.product?.productType || ''
             })
 
 
@@ -442,10 +434,6 @@ const EditProduct = () => {
             context.alertBox("error", "Please select product images");
             return false;
         }
-        if (isAdmin && !formFields.marketIds?.length) {
-            context.alertBox("error", "Please select at least one market");
-            return false;
-        }
 
         const payload = {
             ...formFields,
@@ -556,31 +544,6 @@ const EditProduct = () => {
                                 <input type="text" placeholder='e.g. Electronics, Clothing, Home' className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="productType" value={formFields.productType} onChange={onChangeInput} />
                             </div>
                         </div>
-                    </div>
-
-                    <div className='bg-white border border-gray-200 rounded-lg mb-3 p-4'>
-                        <h3 className='text-[14px] font-[500] mb-1 text-black'>Market Availability *</h3>
-                        <p className='text-[12px] text-gray-500 mb-3'>This product is shown only in the selected markets.</p>
-                        {isAdmin ? (
-                            <Select
-                                multiple
-                                size="small"
-                                className='w-full'
-                                value={formFields.marketIds || []}
-                                onChange={(event) => setFormFields((current) => ({ ...current, marketIds: event.target.value }))}
-                                renderValue={(selected) => markets.filter((market) => selected.includes(market._id)).map((market) => market.name).join(', ')}
-                            >
-                                {markets.map((market) => (
-                                    <MenuItem key={market._id} value={market._id}>
-                                        {market.name} — {market.city}, {market.state}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        ) : (
-                            <p className='text-[13px] text-gray-700'>
-                                {markets.filter((market) => formFields.marketIds?.includes(market._id)).map((market) => market.name).join(', ') || 'Assigned by your seller market'}
-                            </p>
-                        )}
                     </div>
 
                     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-3 gap-4'>
