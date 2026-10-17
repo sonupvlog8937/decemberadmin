@@ -1,12 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect } from "react";
 import Button from "@mui/material/Button";
-import Badge from "@mui/material/Badge";
-import { styled } from "@mui/material/styles";
 import IconButton from "@mui/material/IconButton";
 
 import { RiMenu2Line } from "react-icons/ri";
 
-import { FaRegBell } from "react-icons/fa";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
@@ -23,14 +20,12 @@ import AddSubCategory from "../../Pages/Categegory/addSubCategory";
 import AddAddress from "../../Pages/Address/addAddress";
 import EditCategory from "../../Pages/Categegory/editCategory";
 
-
-
-import Dialog from '@mui/material/Dialog';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
+import Dialog from "@mui/material/Dialog";
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 import { IoMdClose } from "react-icons/io";
-import Slide from '@mui/material/Slide';
+import Slide from "@mui/material/Slide";
 import EditProduct from "../../Pages/Products/editProduct";
 import { AddBannerV1 } from "../../Pages/Banners/addBannerV1";
 import { EditBannerV1 } from "../../Pages/Banners/editBannerV1";
@@ -40,24 +35,38 @@ import AddBlog from "../../Pages/Blog/addBlog";
 import EditBlog from "../../Pages/Blog/editBlog";
 import EditHomeSlide from "../../Pages/HomeSliderBanners/editHomeSlide";
 
+import "../ui-theme.css";
+import "./header-theme.css";
+
 const Transition = React.forwardRef(function Transition(props, ref) {
-  return <Slide direction="up" ref={ref} {...props} />;
+  return (
+    <Slide
+      direction="up"
+      ref={ref}
+      {...props}
+      timeout={{ enter: 450, exit: 300 }}
+      easing={{ enter: "cubic-bezier(.2,.8,.2,1)", exit: "ease-in" }}
+    />
+  );
 });
 
-const StyledBadge = styled(Badge)(({ theme }) => ({
-  "& .MuiBadge-badge": {
-    right: -3,
-    top: 13,
-    border: `2px solid ${theme.palette.background.paper}`,
-    padding: "0 4px",
-  },
-}));
+const GO_MARKET_SHOP_SELLERS = [
+  "GROCERY_SELLER", "FASHION_SELLER", "ELECTRONICS_SELLER", "MEDICAL_SELLER",
+  "BEAUTY_SELLER", "HOME_KITCHEN_SELLER", "GIFTS_TOYS_SELLER",
+  "BOOKS_STATIONERY_SELLER", "JEWELLERY_SELLER", "HARDWARE_SELLER", "AUTOMOBILE_SELLER",
+];
 
+const prettyRole = (role) =>
+  (role || "")
+    .toLowerCase()
+    .split("_")
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(" ");
 
 const Header = () => {
   const [anchorMyAcc, setAnchorMyAcc] = React.useState(null);
   const openMyAcc = Boolean(anchorMyAcc);
-
 
   const history = useNavigate();
 
@@ -73,101 +82,84 @@ const Header = () => {
   const location = useLocation();
 
   useEffect(() => {
-
     fetchDataFromApi("/api/logo").then((res) => {
-      localStorage.setItem('logo', res?.logo[0]?.logo)
-    })
+      localStorage.setItem("logo", res?.logo[0]?.logo);
+    });
 
-
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
 
     if (token !== undefined && token !== null && token !== "") {
-      const url = window.location.href
-      history(location.pathname)
+      history(location.pathname);
     } else {
-      history("/login")
+      history("/login");
     }
-
   }, [context?.isLogin]);
-
 
   const logout = () => {
     setAnchorMyAcc(null);
 
-    fetchDataFromApi(`/api/user/logout?token=${localStorage.getItem('accessToken')}`, { withCredentials: true }).then((res) => {
+    fetchDataFromApi(`/api/user/logout?token=${localStorage.getItem("accessToken")}`, { withCredentials: true }).then((res) => {
       if (res?.error === false) {
         context.setIsLogin(false);
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
-        history("/login")
+        history("/login");
       }
-    })
-  }
+    });
+  };
+
+  const avatarSrc = context?.userData?.avatar || "/user.jpg";
+
+  const closePanel = () => context?.setIsOpenFullScreenPanel({ open: false });
+
+  const panelTitle = (() => {
+    const role = context?.userData?.role;
+    const model = context?.isOpenFullScreenPanel?.model;
+
+    if (model === "Add Product" && GO_MARKET_SHOP_SELLERS.includes(role)) return "Add Shop Product";
+    if (model === "Add Product" && role === "RESTAURANT_SELLER") return "Add Menu Item";
+    if (model === "Edit Product" && GO_MARKET_SHOP_SELLERS.includes(role)) return "Edit Shop Product";
+    if (model === "Edit Product" && role === "RESTAURANT_SELLER") return "Edit Menu Item";
+    return model;
+  })();
+
+  const model = context?.isOpenFullScreenPanel?.model;
 
   return (
     <>
       <header
-        className={`w-full h-[auto] py-0 ${context.isSidebarOpen === true ? "pl-[22%]" : "pl-5"
-          } ${context.isSidebarOpen === true && context?.windowWidth < 992 && '!pl-80'} shadow-md pr-7 bg-[#fff]  flex items-center justify-between transition-all fixed top-0 left-0 z-[50]`}
+        className={`hd dx w-full h-[auto] py-0 ${context.isSidebarOpen === true ? "pl-[22%]" : "pl-5"} ${
+          context.isSidebarOpen === true && context?.windowWidth < 992 ? "!pl-80" : ""
+        } pr-7 flex items-center justify-between transition-all fixed top-0 left-0 z-[50]`}
       >
         <div className="part1 flex items-center gap-4">
-
-          {
-            context.isSidebarOpen === false && context?.windowWidth > 992 &&
-            <div className="col"
+          {context.isSidebarOpen === false && context?.windowWidth > 992 && (
+            <div
+              className="col"
               onClick={() => {
-                context?.windowWidth < 992 && context?.setisSidebarOpen(false)
+                context?.windowWidth < 992 && context?.setisSidebarOpen(false);
               }}
             >
               <Link to="/">
-                <img
-                  src={localStorage.getItem('logo')}
-                  className="w-[170px] md:w-[150px]"
-                />
+                <img src={localStorage.getItem("logo")} className="hd-logo w-[170px] md:w-[150px]" alt="logo" />
               </Link>
             </div>
-          }
-
-
+          )}
 
           <Button
-            className="!w-[40px] !h-[40px] !rounded-full !min-w-[40px] !text-[rgba(0,0,0,0.8)]"
+            className="hd-menu-btn !w-[36px] !h-[36px] !rounded-full !min-w-[36px]"
             onClick={() => context.setisSidebarOpen(!context.isSidebarOpen)}
           >
-            <RiMenu2Line className="text-[18px] text-[rgba(0,0,0,0.8)]" />
+            <RiMenu2Line />
           </Button>
         </div>
 
-        <div className="part2  flex items-center justify-end gap-5">
-          {/* <IconButton aria-label="cart">
-            <StyledBadge badgeContent={4} color="secondary">
-              <FaRegBell />
-            </StyledBadge>
-          </IconButton> */}
-
+        <div className="part2 flex items-center justify-end gap-5">
           {context.isLogin === true ? (
             <div className="relative">
-              <div
-                className="rounded-full w-[35px] h-[35px] overflow-hidden cursor-pointer"
-                onClick={handleClickMyAcc}
-              >
-                {
-                  context?.userData?.avatar !== "" && context?.userData?.avatar !== null && context?.userData?.avatar !== undefined ?
-                    <img
-                      src={context?.userData?.avatar}
-                      className="w-full h-full object-cover"
-                    />
-
-                    :
-
-                    <img
-                      src="/user.jpg"
-                      className="w-full h-full object-cover"
-                    />
-
-                }
-
-              </div>
+              <span className="hd-avatar" onClick={handleClickMyAcc} role="button" aria-label="Account menu">
+                <img src={avatarSrc} alt="" />
+              </span>
 
               <Menu
                 anchorEl={anchorMyAcc}
@@ -177,9 +169,10 @@ const Header = () => {
                 slotProps={{
                   paper: {
                     elevation: 0,
+                    className: "hd-menu dx",
                     sx: {
                       overflow: "visible",
-                      filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+                      filter: "drop-shadow(0px 14px 28px rgba(79,70,229,0.25))",
                       mt: 1.5,
                       "& .MuiAvatar-root": {
                         width: 32,
@@ -195,7 +188,7 @@ const Header = () => {
                         right: 14,
                         width: 10,
                         height: 10,
-                        bgcolor: "background.paper",
+                        bgcolor: "#f4f6ff",
                         transform: "translateY(-50%) rotate(45deg)",
                         zIndex: 0,
                       },
@@ -205,45 +198,29 @@ const Header = () => {
                 transformOrigin={{ horizontal: "right", vertical: "top" }}
                 anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
               >
-                <MenuItem onClick={handleCloseMyAcc} className="!bg-white">
+                <MenuItem onClick={handleCloseMyAcc} className="hd-profile" disableRipple>
                   <div className="flex items-center gap-3">
-                    <div className="rounded-full w-[35px] h-[35px] overflow-hidden cursor-pointer">
-                      {
-                        context?.userData?.avatar !== "" && context?.userData?.avatar !== null && context?.userData?.avatar !== undefined ?
-                          <img
-                            src={context?.userData?.avatar}
-                            className="w-full h-full object-cover"
-                          />
-
-                          :
-
-                          <img
-                            src="/user.jpg"
-                            className="w-full h-full object-cover"
-                          />
-
-                      }
+                    <div className="hd-profile-avatar">
+                      <img src={avatarSrc} alt="" />
                     </div>
 
                     <div className="info">
-                      <h3 className="text-[15px] font-[500] leading-5">
-                        {context?.userData?.name}
-                      </h3>
-                      <p className="text-[12px] font-[400] opacity-70">
-                        {context?.userData?.email}
-                      </p>
+                      <h3 className="hd-name">{context?.userData?.name}</h3>
+                      <p className="hd-email">{context?.userData?.email}</p>
+                      {context?.userData?.role && <span className="hd-role">{prettyRole(context.userData.role)}</span>}
                     </div>
                   </div>
                 </MenuItem>
-                <Divider />
+                <Divider sx={{ m: "0 !important" }} />
 
                 <Link to="/profile">
                   <MenuItem
                     onClick={handleCloseMyAcc}
-                    className="flex items-center gap-3"
+                    className="hd-item hd-item--profile flex items-center gap-3"
+                    style={{ "--d": "40ms" }}
                   >
-                    <FaRegUser className="text-[16px]" />{" "}
-                    <span className="text-[14px]">Profile</span>
+                    <span className="hd-item-icon"><FaRegUser /></span>
+                    <span className="hd-item-text">Profile</span>
                   </MenuItem>
                 </Link>
 
@@ -251,141 +228,55 @@ const Header = () => {
 
                 <MenuItem
                   onClick={logout}
-                  className="flex items-center gap-3"
+                  className="hd-item hd-item--out flex items-center gap-3"
+                  style={{ "--d": "100ms" }}
                 >
-                  <IoMdLogOut className="text-[18px]" />{" "}
-                  <span className="text-[14px]">Sign Out</span>
+                  <span className="hd-item-icon"><IoMdLogOut /></span>
+                  <span className="hd-item-text">Sign Out</span>
                 </MenuItem>
               </Menu>
             </div>
           ) : (
             <Link to="/login">
-              <Button className="btn-blue btn-sm !rounded-full">Sign In</Button>
+              <Button className="hd-signin !rounded-full">Sign In</Button>
             </Link>
           )}
         </div>
       </header>
 
-
-
-
-
       <Dialog
         fullScreen
         open={context?.isOpenFullScreenPanel.open}
-        onClose={() => context?.setIsOpenFullScreenPanel({
-          open: false
-        })}
+        onClose={closePanel}
         TransitionComponent={Transition}
+        PaperProps={{ className: "dx hd-dialog" }}
       >
-        <AppBar sx={{ position: 'relative' }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={() => context?.setIsOpenFullScreenPanel({
-                open: false
-              })}
-              aria-label="close"
-            >
-              <IoMdClose className="text-gray-800" />
+        <AppBar className="hd-appbar" sx={{ position: "relative" }} elevation={0}>
+          <Toolbar sx={{ minHeight: "48px !important" }}>
+            <IconButton edge="start" color="inherit" className="hd-close" onClick={closePanel} aria-label="close">
+              <IoMdClose />
             </IconButton>
-            <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-              <span className="text-gray-800">
-                {(() => {
-                  const GO_MARKET_SHOP_SELLERS = [
-                    'GROCERY_SELLER', 'FASHION_SELLER', 'ELECTRONICS_SELLER', 'MEDICAL_SELLER',
-                    'BEAUTY_SELLER', 'HOME_KITCHEN_SELLER', 'GIFTS_TOYS_SELLER',
-                    'BOOKS_STATIONERY_SELLER', 'JEWELLERY_SELLER', 'HARDWARE_SELLER', 'AUTOMOBILE_SELLER'
-                  ];
-                  const role = context?.userData?.role;
-                  const model = context?.isOpenFullScreenPanel?.model;
-                  
-                  if (model === "Add Product" && GO_MARKET_SHOP_SELLERS.includes(role)) {
-                    return "Add Shop Product";
-                  }
-                  if (model === "Add Product" && role === "RESTAURANT_SELLER") {
-                    return "Add Menu Item";
-                  }
-                  if (model === "Edit Product" && GO_MARKET_SHOP_SELLERS.includes(role)) {
-                    return "Edit Shop Product";
-                  }
-                  if (model === "Edit Product" && role === "RESTAURANT_SELLER") {
-                    return "Edit Menu Item";
-                  }
-                  return model;
-                })()}
-              </span>
+            <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div" className="hd-title" key={panelTitle}>
+              <span>{panelTitle}</span>
             </Typography>
-
           </Toolbar>
         </AppBar>
 
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Add Product" && <AddProduct />
-        }
-
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Add Home Slide" && <AddHomeSlide />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Edit Home Slide" && <EditHomeSlide />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Add New Category" && <AddCategory />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Add New Sub Category" && <AddSubCategory />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Add New Address" && <AddAddress />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Edit Category" && <EditCategory />
-        }
-
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Edit Product" && <EditProduct />
-        }
-
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Add Home Banner List 1" && <AddBannerV1 />
-        }
-
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Edit BannerV1" && <EditBannerV1 />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Add Home Banner List2" && <BannerList2_AddBanner />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Edit bannerList2" && <BannerList2_Edit_Banner />
-        }
-
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Add Blog" && <AddBlog />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Edit Blog" && <EditBlog />
-        }
-
-
+        {model === "Add Product" && <AddProduct />}
+        {model === "Add Home Slide" && <AddHomeSlide />}
+        {model === "Edit Home Slide" && <EditHomeSlide />}
+        {model === "Add New Category" && <AddCategory />}
+        {model === "Add New Sub Category" && <AddSubCategory />}
+        {model === "Add New Address" && <AddAddress />}
+        {model === "Edit Category" && <EditCategory />}
+        {model === "Edit Product" && <EditProduct />}
+        {model === "Add Home Banner List 1" && <AddBannerV1 />}
+        {model === "Edit BannerV1" && <EditBannerV1 />}
+        {model === "Add Home Banner List2" && <BannerList2_AddBanner />}
+        {model === "Edit bannerList2" && <BannerList2_Edit_Banner />}
+        {model === "Add Blog" && <AddBlog />}
+        {model === "Edit Blog" && <EditBlog />}
       </Dialog>
-
     </>
   );
 };
