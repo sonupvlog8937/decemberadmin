@@ -300,6 +300,32 @@ export const Products = () => {
         });
     };
 
+    const quickToggleSponsored = async (product) => {
+        if (context?.userData?.role !== 'ADMIN') {
+            context.alertBox('error', 'Only admin can manage sponsored products');
+            return;
+        }
+
+        const nextSponsored = !product.isSponsored;
+        try {
+            const res = await patchData(`/api/product/sponsored/${product._id}`, {
+                isSponsored: nextSponsored,
+            });
+            const body = res?.data || res;
+            if (body?.success || body?.error === false) {
+                context.alertBox(
+                    'success',
+                    nextSponsored ? 'Product sponsored in search results' : 'Product removed from sponsored results',
+                );
+                getProducts(page, rowsPerPage);
+            } else {
+                context.alertBox('error', body?.message || 'Could not update sponsored status');
+            }
+        } catch (error) {
+            context.alertBox('error', error?.response?.data?.message || 'Could not update sponsored status');
+        }
+    };
+
     return (
         <>
             {/* ── Page Header ── */}
@@ -488,6 +514,28 @@ export const Products = () => {
                                                                 title={product?.isFeatured ? 'Click to remove from featured' : 'Click to mark as featured'}
                                                             >
                                                                 {product?.isFeatured ? '★ Featured' : '☆ Feature'}
+                                                            </button>
+                                                        )}
+                                                        {context?.userData?.role === 'ADMIN' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => quickToggleSponsored(product)}
+                                                                style={{
+                                                                    display: 'block',
+                                                                    fontSize: 10,
+                                                                    fontWeight: 700,
+                                                                    background: product?.isSponsored ? '#dbeafe' : '#f3f4f6',
+                                                                    color: product?.isSponsored ? '#1d4ed8' : '#6b7280',
+                                                                    padding: '2px 7px',
+                                                                    borderRadius: 10,
+                                                                    marginTop: 3,
+                                                                    border: 'none',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.2s',
+                                                                }}
+                                                                title={product?.isSponsored ? 'Remove sponsored placement' : 'Promote this product in search'}
+                                                            >
+                                                                {product?.isSponsored ? '◆ Sponsored' : '◇ Sponsor'}
                                                             </button>
                                                         )}
                                                     </div>
