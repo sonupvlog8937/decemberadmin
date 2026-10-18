@@ -470,6 +470,13 @@ const WalletPage = () => {
           </div>
         </div>
 
+        <div className="info">
+          <MdOutlinePercent size={15} color={COLORS.indigo} />
+          <p>
+            Seller commission rate: {overview?.commissionRate ?? 20}% on applicable orders.
+          </p>
+        </div>
+
         {/* ── SELLER VIEW ── */}
         {!isAdmin && (
           <>
