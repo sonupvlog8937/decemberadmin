@@ -19,7 +19,7 @@ import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
-import '../../styles/productUi.css';
+import '../../Components/productUi.css';
 
 const label = { inputProps: { 'aria-label': 'Select product' } };
 
