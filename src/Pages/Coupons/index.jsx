@@ -106,6 +106,39 @@ const CSS = `
 .cp-empty{text-align:center;padding:36px 0;color:#B8BCDA}
 .cp-note{display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:linear-gradient(90deg,#EEF2FF,#FDF2F8);border:1px solid #E0E7FF;animation:cpRise .5s both}
 .cp-note p{font-size:11.5px;color:#4B5563;line-height:1.55}
+.cp{width:100%;min-width:0;isolation:isolate}
+.cp-in{width:min(100%,1360px);padding:24px clamp(14px,2vw,28px) 44px}
+.cp-banner{background:linear-gradient(115deg,#6256e8,#8154e8 66%,#a261e9);background-size:auto;animation:cpRise .5s both;box-shadow:0 10px 24px rgba(99,102,241,.2)}
+.cp-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.cp-stat{min-height:70px;padding:14px 16px}
+.cp-card{padding:clamp(15px,2vw,22px);box-shadow:0 5px 18px rgba(30,27,75,.045)}
+.cp-card h2{margin:0}
+.cp-sub{margin-bottom:16px}
+.cp form{align-items:start}
+.cp form > *{min-width:0}
+.cp-ticket{max-width:440px}
+.cp-head{gap:10px;flex-wrap:wrap}
+.cp-table-wrap{width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+.cp-table{min-width:870px;border-spacing:0 5px}
+.cp-table th{position:sticky;top:0;background:#fff;z-index:1}
+.cp-table td{max-width:280px}
+.cp-table td:nth-child(2){min-width:170px}
+.cp-code{white-space:nowrap}
+.cp-note{align-items:flex-start}
+.cp button:focus-visible,.cp a:focus-visible{outline:3px solid rgba(99,102,241,.35);outline-offset:2px}
+@media(max-width:900px){.cp-in{padding-top:18px}.cp-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+  .cp-in{padding:14px 11px 30px}
+  .cp-banner{padding:16px;border-radius:14px}
+  .cp-banner h1{font-size:16px}
+  .cp-stats{gap:8px}
+  .cp-stat{padding:10px;gap:8px}
+  .cp-stat b{font-size:17px}
+  .cp-card{padding:14px;border-radius:13px}
+  .cp-ticket{max-width:none;width:100%}
+  .cp-t-l{min-width:82px;padding:9px;font-size:16px}
+  .cp-table{min-width:850px}
+}
 @media(prefers-reduced-motion:reduce){.cp *,.cp *::before,.cp *::after{animation:none!important;transition:none!important}}
 `;
 
@@ -394,7 +427,7 @@ const CouponsPage = () => {
               <p style={{ fontSize: 11 }}>Create your first coupon above</p>
             </div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
+            <div className="cp-table-wrap">
               <table className="cp-table">
                 <thead>
                   <tr>
