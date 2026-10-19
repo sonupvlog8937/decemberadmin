@@ -75,11 +75,11 @@ const StatCard = ({ icon, label, value, accent, trend, trendLabel, delay = 0, lo
 // ─── Quick Access ─────────────────────────────────────────────────────────────
 const QuickAccess = ({ onAddProduct }) => {
   const items = [
-    { label: "Products",    icon: <IconBox />,          to: "/product",         color: "#6366f1" },
+    { label: "Products",    icon: <IconBox />,          to: "/products",         color: "#6366f1" },
     { label: "Orders",      icon: <IconOrders />,       to: "/orders",          color: "#0ea5e9" },
-    { label: "Wallet",      icon: <IconWallet />,       to: "/wallet",          color: "#10b981" },
+    { label: "Wallet",      icon: <IconWallet />,       to: "/wallet/transactions",          color: "#10b981" },
     { label: "Users",       icon: <IconUsers />,        to: "/users",           color: "#8b5cf6" },
-    { label: "Categories",  icon: <IconCategory />,     to: "/category",        color: "#f97316" },
+    { label: "Categories",  icon: <IconCategory />,     to: "/category/list",        color: "#f97316" },
     { label: "Reviews",     icon: <IconStar fill />,    to: "/reviews",         color: "#ec4899" },
     { label: "Add Product", icon: <FaPlus size={15} />, onClick: onAddProduct,   color: "#14b8a6" },
     { label: "Analytics",   icon: <IconRevenue />,      to: "/order-analytics", color: "#f59e0b" },

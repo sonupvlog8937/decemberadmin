@@ -17,7 +17,7 @@ import CategoryList from "./Pages/Categegory";
 import SubCategoryList from "./Pages/Categegory/subCatList";
 import Users from "./Pages/Users";
 import Orders from "./Pages/Orders";
-import OrderAnalytics from "./Pages/Orders/OrderAnalytics";
+import OrderAnalytics from "./Pages/Orders/OrderAnalyticsDashboard";
 import ForgotPassword from "./Pages/ForgotPassword";
 import VerifyAccount from "./Pages/VerifyAccount";
 import ChangePassword from "./Pages/ChangePassword";
